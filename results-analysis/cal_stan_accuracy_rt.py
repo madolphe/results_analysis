@@ -65,11 +65,12 @@ class CalStan_accuracy():
 
 
 class CalStan_rt():
-    def __init__(self,dataframe,ind_rt='rt',num_chains=4,num_samples=10000):
+    def __init__(self,dataframe,ind_rt='rt',max_rt = 1400,num_chains=4,num_samples=10000):
         self.binomial_code = """
         data {
           int nums;  //total number of participants
           real rt[nums];  //rt distributions
+          real max_rt; //max rt value used for the prior distributions
         }
         parameters {
           real<lower=0> mu; //mean
@@ -81,8 +82,8 @@ class CalStan_rt():
             rt ~ normal(mu,sigma);
           
           //priors
-            mu ~ uniform(0,1400);
-            sigma ~ uniform(0,1400);
+            mu ~ uniform(0,max_rt);
+            sigma ~ uniform(0,max_rt);
         }
 
         generated quantities{
@@ -91,6 +92,7 @@ class CalStan_rt():
         #df_read = pd.read_csv(fname_csv1)
         self.binomial_data = {"nums": len(dataframe),
                         "rt":dataframe.loc[:,ind_rt].tolist(),
+                        "max_rt":max_rt
                         }
         print(self.binomial_data)
         self.posterior = stan.build(self.binomial_code, data=self.binomial_data)
