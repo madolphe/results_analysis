@@ -131,7 +131,7 @@ def compute_number_of_omissions(row: pd.core.series.Series) -> int:
 
 
 if __name__ == '__main__':
-    csv_path = "results/gonogo/gonogo.csv"
+    csv_path = "../outputs/gonogo/gonogo.csv"
     dataframe = pd.read_csv(csv_path)
 
     dataframe = dataframe.apply(lambda row: transform_str_to_list(row, [
@@ -157,7 +157,7 @@ if __name__ == '__main__':
     dataframe.groupby(["task_status", "result_commission_errors"]).count()["participant_id"].unstack(
         "task_status")[['PRE_TEST', 'POST_TEST']].plot.bar()
     plt.title("Participants in number of commission errors c")
-    plt.savefig("results/gonogo/gonogo_commissions.png")
+    plt.savefig("../outputs/gonogo/gonogo_commissions.png")
     plt.close()
 
     # Reaction times in or the number of correct go-trials (i.e., hits):
@@ -172,7 +172,7 @@ if __name__ == '__main__':
              reg.predict(np.expand_dims([pre_test.values.min(), pre_test.values.max()], axis=1)), color='blue',
              linewidth=3)
     plt.title(f"R**2 : {score}")
-    plt.savefig("results/gonogo/rt_pre_post_gonogo.png")
+    plt.savefig("../outputs/gonogo/rt_pre_post_gonogo.png")
     plt.close()
 
     # omission errors (i.e., falsely not pressing the button in go trials; also called misses):
@@ -180,8 +180,8 @@ if __name__ == '__main__':
     dataframe.groupby(["task_status", "result_nb_omission"]).count()["participant_id"].unstack("task_status")[
         ['PRE_TEST', 'POST_TEST']].plot.bar()
     plt.title("Number of omission errors per participant")
-    plt.savefig("results/gonogo/gonogo_ommissions.png")
+    plt.savefig("../outputs/gonogo/gonogo_ommissions.png")
     plt.close()
 
     # Save data
-    dataframe.to_csv("results/gonogo/gonogo_treatment.csv")
+    dataframe.to_csv("../outputs/gonogo/gonogo_treatment.csv")

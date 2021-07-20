@@ -21,7 +21,7 @@ def compute_std_per_row(row):
 
 
 if __name__ == '__main__':
-    csv_path = "results/enumeration/enumeration.csv"
+    csv_path = "../outputs/enumeration/enumeration.csv"
     dataframe = pd.read_csv(csv_path)
     dataframe['result_response_exact'] = dataframe.apply(compute_result_exact_answers, axis=1)
 

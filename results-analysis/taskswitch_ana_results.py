@@ -99,7 +99,7 @@ def linear_reg_and_plot(column, figname):
 
 
 if __name__ == '__main__':
-    csv_path = "results/taskswitch/taskswitch.csv"
+    csv_path = "../outputs/taskswitch/taskswitch.csv"
     dataframe = pd.read_csv(csv_path)
     dataframe = delete_uncomplete_participants(dataframe)
     dataframe["results_responses"] = dataframe.apply(lambda row: transform_string_to_row(row, "results_responses"),
@@ -141,5 +141,5 @@ if __name__ == '__main__':
     boxplot_pre_post("mean_RT", "reaction_time_mean")
     linear_reg_and_plot("mean_RT", "linear_reg_RT")
 
-    dataframe.to_csv("results/taskswitch/taskswitch_treatment.csv")
+    dataframe.to_csv("../outputs/taskswitch/taskswitch_treatment.csv")
 
