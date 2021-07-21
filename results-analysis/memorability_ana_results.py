@@ -86,11 +86,11 @@ def extract_mu_ci_from_summary_rt(dataframe,ind_cond):
     return outs
 if __name__=='__main__':
 
-    csv_path_1 = "results/memorability_1.csv"
+    csv_path_1 = "outputs/memorability/memorability_1.csv"
     dataframe_1 = pd.read_csv(csv_path_1)
     dataframe_1 = delete_uncomplete_participants(dataframe_1)
 
-    csv_path_2 = "results/memorability_2.csv"
+    csv_path_2 = "outputs/memorability/memorability_2.csv"
     dataframe_2 = pd.read_csv(csv_path_2)
     dataframe_2 = delete_uncomplete_participants(dataframe_2)
 
@@ -115,7 +115,7 @@ if __name__=='__main__':
 
     #import pdb;pdb.set_trace()
     class_stan_accuracy = [CalStan_accuracy(sum_observers,ind_corr_resp=n) for n in range(10)]
-    class_stan_rt = [CalStan_rt(sum_observers,ind_rt=10+n) for n in range(5)]
+    class_stan_rt = [CalStan_rt(sum_observers,ind_rt=10+n,max_rt=1400) for n in range(5)]
     
 
     #for hr data
