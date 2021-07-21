@@ -112,7 +112,6 @@ if __name__ == '__main__':
         sum_observers.append([np.sum(tmp_df.sum5),np.sum(tmp_df.sum6),np.sum(tmp_df.sum7),np.sum(tmp_df.sum8),np.sum(tmp_df.sum9)])
         
     sum_observers = pd.DataFrame(sum_observers)
-    import pdb;pdb.set_trace()
     #for save summary data
     tmp = sum_observers/40.
     tmp.to_csv('../outputs/enumeration/sumdata_enumeration.csv',header=False, index=False)
