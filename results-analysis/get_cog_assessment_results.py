@@ -1,20 +1,20 @@
 import os
-import django
+# import django
 import copy
 import pandas as pd
 import importlib
 import argparse
 
 # Connection to flowers-DB:
-flowers_ol = importlib.import_module("flowers-ol.settings")
+# flowers_ol = importlib.import_module("flowers-ol.settings")
+#
+# os.environ.setdefault(
+#     "DJANGO_SETTINGS_MODULE",
+#     "flowers-ol.settings"
+# )
+# django.setup()
 
-os.environ.setdefault(
-    "DJANGO_SETTINGS_MODULE",
-    "flowers-ol.settings"
-)
-django.setup()
-
-from mot_app.models import CognitiveResult, CognitiveTask
+# from mot_app.models import CognitiveResult, CognitiveTask
 
 p = argparse.ArgumentParser("Connector to django DB for cognitive assessment", formatter_class=argparse.RawDescriptionHelpFormatter)
 p.add_argument('-a', '--export_all', action='store_true', help='Boolean flag to export all the cog assessments to CSV')
@@ -126,25 +126,25 @@ def delete_uncomplete_participants(dataframe: pd.DataFrame) -> pd.DataFrame:
         dataframe = dataframe[dataframe['participant_id'] != id]
     return dataframe
 
-all_cognitive_results = CognitiveResult.objects.all()
+# all_cognitive_results = CognitiveResult.objects.all()
 # Create a dictionnary with participant_id as key and a list of CognitiveResults objects as values
-dataset = connect_db_python_dict(all_cognitive_results)
-# Just sort the participant according to their progression and keep just completed_sessions
-completed_session, half_completed_session, other = count_number_of_completed_session(dataset)
-# Reformat this dictionnary to get {"participant_id":[{'task_name':[idx, {results}, status], ...., }]}
-completed_session = format_dictionnary(completed_session)
-
-if __name__ == '__main__':
-
-    print(f"Complete: {len(completed_session)}, Half:{len(half_completed_session)}, Other:{len(other)}")
-    # Get multiple tables for each task
-    # The format used for one task is: participant_id, [idx, {results}, status], ...., }]
-    # (==> better to have separate columns for csv export)
-    # print(retrieve_all_results_for_one_task(completed_session, 'workingmemory')[0])
-    # if args.export_all:
-    if True:
-        task_list = ['moteval', 'workingmemory', 'memorability_1', 'memorability_2', 'taskswitch', 'enumeration',
-                     'loadblindness', 'gonogo']
-        for task_name in task_list:
-            dataset = retrieve_all_results_for_one_task(completed_session, task_name)
-            export_to_csv_for_task(dataset, task_name)
+# dataset = connect_db_python_dict(all_cognitive_results)
+# # Just sort the participant according to their progression and keep just completed_sessions
+# completed_session, half_completed_session, other = count_number_of_completed_session(dataset)
+# # Reformat this dictionnary to get {"participant_id":[{'task_name':[idx, {results}, status], ...., }]}
+# completed_session = format_dictionnary(completed_session)
+#
+# if __name__ == '__main__':
+#
+#     print(f"Complete: {len(completed_session)}, Half:{len(half_completed_session)}, Other:{len(other)}")
+#     # Get multiple tables for each task
+#     # The format used for one task is: participant_id, [idx, {results}, status], ...., }]
+#     # (==> better to have separate columns for csv export)
+#     # print(retrieve_all_results_for_one_task(completed_session, 'workingmemory')[0])
+#     # if args.export_all:
+#     if True:
+#         task_list = ['moteval', 'workingmemory', 'memorability_1', 'memorability_2', 'taskswitch', 'enumeration',
+#                      'loadblindness', 'gonogo']
+#         for task_name in task_list:
+#             dataset = retrieve_all_results_for_one_task(completed_session, task_name)
+#             export_to_csv_for_task(dataset, task_name)
