@@ -10,6 +10,7 @@ pandas = "*"
 numpy = "*"
 matplotlib = "*"
 scikit-learn = "*"
-
-[requires]
-python_version = "3.8"
+seaborn = "*"
+poetry = "*"
+httpstan = {path = "/Users/adolphemaxime/.local/share/virtualenvs/Results_analysis-p2E4xjeV/lib/python3.8/site-packages/httpstan/dist/httpstan-4.5.0-cp38-cp38-macosx_10_14_x86_64.whl"}
+pystan = "==3.2.0"
