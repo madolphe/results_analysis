@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
+from utils import *
 from cal_stan_accuracy_rt import CalStan_accuracy, CalStan_rt
 
 
@@ -168,49 +169,6 @@ def extract_mu_ci_from_summary_accuracy(dataframe, ind_cond):
     return out
 
 
-def draw_all_distributions(dist_ind, dist_summary, num_dist, num_cond, std_val=0.05,
-                           fname_save='workingmemory_accuracy.png'):
-    # dist_ind is the matrix of (num_observers x num_conditions)
-    # dist_summary is the mu (numb_conditions), ci_min, and ci_max
-    x = [j + 1 + std_val * np.random.randn() for j in range(num_cond) for t in range(num_dist)]
-    dist_ind = dist_ind.T.flatten()
-    x_sum = np.linspace(1, num_cond, num_cond)
-    fig = plt.figure(figsize=(5, 5))
-    axes = fig.add_subplot(1, 1, 1)
-    axes.scatter(x, dist_ind, s=10, c='blue')
-    axes.errorbar(x_sum, dist_summary[:, 0],
-                  yerr=[dist_summary[:, 0] - dist_summary[:, 1], dist_summary[:, 2] - dist_summary[:, 0]], capsize=5,
-                  fmt='o', markersize=15, ecolor='red', markeredgecolor="red", color='w')
-    axes.set_xticks([1, 2])
-    axes.set_xlim([0.5, 2.5])
-    axes.set_xticklabels(['HR', 'FAR'], fontsize=20)
-    axes.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
-    axes.set_yticklabels(['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'], fontsize=20)
-    fig.savefig(fname_save)
-    plt.show()
-
-
-def draw_all_distributions_rt(dist_ind, dist_summary, num_dist, num_cond, std_val=0.05,
-                              fname_save='memorability_rt.png'):
-    # dist_ind is the matrix of (num_observers x num_conditions)
-    # dist_summary is the mu (numb_conditions), ci_min, and ci_max
-    x = [j + 1 + std_val * np.random.randn() for j in range(num_cond) for t in range(num_dist)]
-    dist_ind = dist_ind.T.flatten()
-    x_sum = np.linspace(1, num_cond, num_cond)
-    fig = plt.figure(figsize=(5, 5))
-    axes = fig.add_subplot(1, 1, 1)
-    axes.scatter(x, dist_ind, s=10, c='blue')
-    axes.errorbar(x_sum, dist_summary[:, 0],
-                  yerr=[dist_summary[:, 0] - dist_summary[:, 1], dist_summary[:, 2] - dist_summary[:, 0]], capsize=5,
-                  fmt='o', markersize=15, ecolor='red', markeredgecolor="red", color='w')
-    axes.set_xlim([0.5, 1.5])
-    axes.set_xticks([1])
-    axes.set_xticklabels(['HR'], fontsize=20)
-    axes.set_yticks([0, 250, 500, 750])
-    axes.set_yticklabels(['0', '250', '500', '750'], fontsize=20)
-    fig.savefig(fname_save)
-    plt.show()
-
 
 def extract_mu_ci_from_summary_rt(dataframe):
     out = np.zeros((1, 3))  # 3 means the mu, ci_min, and ci_max
@@ -308,10 +266,18 @@ if __name__ == '__main__':
     dist_ind = sum_observers.iloc[0:len(sum_observers), 0:2].values / 36.
     dist_summary = extract_mu_ci_from_summary_accuracy(class_stan_accuracy, [0, 1])
     draw_all_distributions(dist_ind, dist_summary, len(sum_observers), num_cond=2, std_val=0.05,
+                            list_xlim=[0.5,2.5],list_ylim=[0,1],
+                            list_set_xticklabels=['HR','FAR'],list_set_xticks=[1,2],
+                            list_set_yticklabels=['0.0','0.2','0.4','0.6','0.8','1.0'],list_set_yticks=[0,0.2,0.4,0.6,0.8,1.0],
                            fname_save='../outputs/gonogo/gonogo_hrfar.png')
 
     dist_ind = sum_observers.iloc[0:len(sum_observers), 2].values
     dist_summary = extract_mu_ci_from_summary_rt(class_stan_rt)
-    draw_all_distributions_rt(dist_ind, dist_summary, len(sum_observers), num_cond=1, std_val=0.05,
-                              fname_save='../outputs/gonogo/gonogo_rt.png')
+    draw_all_distributions(dist_ind, dist_summary, len(sum_observers), num_cond=1, std_val=0.05,
+                            list_xlim=[0.5,1.5],list_ylim=[0,1],
+                            list_set_xticklabels=['HR'],list_set_xticks=[1],
+                            list_set_yticklabels=['0', '250', '500', '750'],list_set_yticks=[0, 250, 500, 750],
+                            val_ticks=25,
+                            fname_save='../outputs/gonogo/gonogo_rt.png')
+
     print('finished')

@@ -4,6 +4,7 @@ import numpy as np
 import copy
 #from get_cog_assessment_results import delete_uncomplete_participants
 from sklearn.linear_model import LinearRegression
+from utils import *
 from cal_stan_accuracy_rt import CalStan_accuracy,CalStan_rt
 
 
@@ -212,43 +213,6 @@ def extract_id(dataframe,num_count):
     indices_id = mask[mask['participant_id'] == True].index.tolist()
     return indices_id
 
-def draw_all_distributions(dist_ind,dist_summary,num_dist,num_cond,std_val = 0.05,fname_save='memorability_accuracy.png'):
-    # dist_ind is the matrix of (num_observers x num_conditions)
-    # dist_summary is the mu (numb_conditions), ci_min, and ci_max
-    x = [j+1+std_val*np.random.randn() for j in range(num_cond) for t in range(num_dist)]
-    dist_ind = dist_ind.T.flatten()
-    x_sum = np.linspace(1,num_cond,num_cond)
-    fig = plt.figure(figsize=(5,5))
-    axes = fig.add_subplot(1,1,1)
-    axes.scatter(x,dist_ind,s=10,c='blue')
-    axes.errorbar(x_sum, dist_summary[:,0], yerr = [dist_summary[:,0]-dist_summary[:,1], dist_summary[:,2]-dist_summary[:,0]], capsize=5, fmt='o', markersize=15, ecolor='red', markeredgecolor = "red", color='w')
-    axes.set_xticks([1,2,3,4])
-    axes.set_xticklabels(['sw/oe','no-sw/oe','sw/hl','no-sw/hl'],fontsize=12)
-    axes.set_yticks([0,0.2,0.4,0.6,0.8,1.0])
-    axes.set_yticklabels(['0.0','0.2','0.4','0.6','0.8','1.0'],fontsize=20)
-    fig.savefig(fname_save)
-    plt.show()
-
-
-def draw_all_distributions_rt(dist_ind,dist_summary,num_dist,num_cond,std_val = 0.05,fname_save='memorability_rt.png'):
-    # dist_ind is the matrix of (num_observers x num_conditions)
-    # dist_summary is the mu (numb_conditions), ci_min, and ci_max
-    x = [j+1+std_val*np.random.randn() for j in range(num_cond) for t in range(num_dist)]
-    dist_ind = dist_ind.T.flatten()
-    x_sum = np.linspace(1,num_cond,num_cond)
-    fig = plt.figure(figsize=(5,5))
-    axes = fig.add_subplot(1,1,1)
-    axes.scatter(x,dist_ind,s=10,c='blue')
-    axes.errorbar(x_sum, dist_summary[:,0], yerr = [dist_summary[:,0]-dist_summary[:,1], dist_summary[:,2]-dist_summary[:,0]], capsize=5, fmt='o', markersize=15, ecolor='red', markeredgecolor = "red", color='w')
-    axes.set_xlim([0.5,2.5])
-    axes.set_ylim([-100,250])
-    axes.set_xticks([1,2])
-    axes.set_xticklabels(['odd-even','high-low'],fontsize=14)
-    axes.set_yticks([-100,0,100,200])
-    axes.set_yticklabels(['-100','0','100','200'],fontsize=14)
-    fig.savefig(fname_save)
-    plt.show()
-
 def extract_mu_ci_from_summary_accuracy(dataframe,ind_cond):
     outs = np.zeros((len(ind_cond),3)) #3 means the mu, ci_min, and ci_max
     for t,ind in enumerate(ind_cond):
@@ -382,11 +346,21 @@ if __name__ == '__main__':
     #for accuracy data
     dist_ind = sum_observers_forsave.iloc[0:len(sum_observers_forsave),0:4].values
     dist_summary = extract_mu_ci_from_summary_accuracy(class_stan_accuracy,[0,1,2,3])
-    draw_all_distributions(dist_ind,dist_summary,len(sum_observers),num_cond=4,std_val = 0.05,fname_save='../outputs/taskswitch/taskswitch_hrfar.png')
+    draw_all_distributions(dist_ind,dist_summary,len(sum_observers),num_cond=4,std_val = 0.05,
+                        list_xlim=[0.75,4.25],list_ylim=[0,1],
+                        list_set_xticklabels=['sw/oe','no-sw/oe','sw/hl','no-sw/hl'],list_set_xticks=[1,2,3,4],
+                        list_set_yticklabels=['0.0','0.2','0.4','0.6','0.8','1.0'],list_set_yticks=[0,0.2,0.4,0.6,0.8,1.0],
+                        fname_save='../outputs/taskswitch/taskswitch_hrfar.png')
     
     dist_ind = sum_observers.iloc[0:len(sum_observers_forsave),14:16].values
     dist_summary = extract_mu_ci_from_summary_rt(class_stan_rt,[0,1])
-    draw_all_distributions_rt(dist_ind,dist_summary,len(sum_observers),num_cond=2,std_val = 0.05,fname_save='../outputs/taskswitch/taskswitch_rt.png')
-    import pdb;pdb.set_trace()
+    draw_all_distributions(dist_ind,dist_summary,len(sum_observers),num_cond=2,std_val = 0.05,
+                        list_xlim=[0.5,2.5],list_ylim=[-100,250],
+                        list_set_xticklabels=['odd-even','high-low'],list_set_xticks=[1,2],
+                        list_set_yticklabels=['-100','0','100','200'],list_set_yticks=[-100,0,100,200],
+                        val_ticks=10,
+                        fname_save='../outputs/taskswitch/taskswitch_rt.png')
+
+    
     print('finished')
 
