@@ -32,15 +32,6 @@ def compute_result_sum_hr(row):
     return 18 - row['result_nb_omission']
 
 
-def extract_mu_ci_from_summary_accuracy(dataframe, ind_cond):
-    out = np.zeros((len(ind_cond), 3))  # 3 means the mu, ci_min, and ci_max
-    for t, ind in enumerate(ind_cond):
-        out[t, 0] = dataframe[ind].mu_theta
-        out[t, 1] = dataframe[ind].ci_min
-        out[t, 2] = dataframe[ind].ci_max
-    return out
-
-
 def extract_mu_ci_from_summary_rt(dataframe):
     out = np.zeros((1, 3))  # 3 means the mu, ci_min, and ci_max
     out[0, 0] = dataframe.mu_rt
@@ -51,6 +42,8 @@ def extract_mu_ci_from_summary_rt(dataframe):
 
 
 if __name__ == '__main__':
+    # -------------------------------------------------------------------#
+    # FIRST TREAT THE CSV AND PARSE IT TO DF
     csv_path = "../outputs/moteval/moteval.csv"
     dataframe = pd.read_csv(csv_path)
     dataframe = dataframe.apply(lambda row: transform_str_to_list(row, [
@@ -58,39 +51,43 @@ if __name__ == '__main__':
     dataframe = delete_uncomplete_participants(dataframe)
     dataframe = dataframe.apply(compute_mean_per_condition, axis=1)
     dataframe.to_csv('../outputs/moteval/moteval_treat.csv')
+    # -------------------------------------------------------------------#
 
-    # from here written by mswym
-    # condition extraction
-    # dataframe['result_correct'] = dataframe.apply(compute_result_sum_hr, axis=1)
-    # dataframe['result_nb_omission']
-
+    # -------------------------------------------------------------------#
+    # THEN EXTRACT COLUMNS FOR FUTURE LATENT FACTOR ANALYSIS
     # extract observer index information
     indices_id = extract_id(dataframe, num_count=2)
-
-    # sumirize two days experiments
+    # summarize two days experiments for Latent Factor Analysis
     sum_observers = []
     outcomes_names = ["1-RT", "1-accuracy", "4-RT", "4-accuracy", "8-RT", "8-accuracy"]
     for ob in indices_id:
-        print(ob)
         tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
         sum_observers.append([np.mean(tmp_df[index]) for index in outcomes_names])
-
     sum_observers = pd.DataFrame(sum_observers, columns=outcomes_names)
-
     sum_observers['total_resp'] = dataframe.apply(count_number_of_trials, axis=1)  # two days task
-
+    # Transform accuracy into nb of success:
     for col in outcomes_names:
         if 'accuracy' in col:
             sum_observers[col] = sum_observers[col] * sum_observers['total_resp']
-
     # for save summary data
     sum_observers.to_csv('../outputs/moteval/sumdata_moteval.csv')
+    # -------------------------------------------------------------------#
 
-    # calculate the mean distribution and the credible interval
+    # -------------------------------------------------------------------#
+    # BAYES ACCURACY ANALYSIS
+    # For accuracy analysis, let's focus on the outcomes:
+    outcomes_names = ["1-accuracy", "4-accuracy", "8-accuracy"]
+    nb_trials = len(dataframe['results_correct'][0])
+    stan_distributions = get_stan_accuracy_distributions(dataframe, outcomes_names, nb_trials)
+    # Draw figures for accuracy data
+    plot_all_accuracy_figures(stan_distributions, outcomes_names, 'moteval', sum_observers, nb_trials)
+    # -------------------------------------------------------------------#
 
+    # -------------------------------------------------------------------#
+    # BAYES RT ANALYSIS:
+    # class_stan_rt_overall = CalStan_rt(sum_observers, ind_rt=2, max_rt=1000)
     class_stan_accuracy = [CalStan_accuracy(sum_observers, ind_corr_resp=n) for n in
                            [f"{elt}-accuracy" for elt in [1, 4, 8]]]
-    # class_stan_rt = CalStan_rt(sum_observers, ind_rt=2, max_rt=1000)
 
     # draw figures
     # for accuracy data
@@ -103,7 +100,6 @@ if __name__ == '__main__':
                             fname_save='../outputs/moteval/moteval_hrfar.png')
 
     # dist_ind = sum_observers.iloc[0:len(sum_observers), 2].values
-    # dist_summary = extract_mu_ci_from_summary_rt(class_stan_rt)
+    # dist_summary = extract_mu_ci_from_summary_rt(class_stan_rt_overall)
     # draw_all_distributions_rt(dist_ind, dist_summary, len(sum_observers), num_cond=1, std_val=0.05,
     #                           fname_save='../outputs/moteval/moteval_rt.png')
-    print('finished')

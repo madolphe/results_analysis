@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from utils import *
 from cal_stan_accuracy_rt import CalStan_accuracy, CalStan_rt
+import seaborn as sns
+from utils import *
 
 
 def transform_str_to_list(row, columns):
@@ -236,7 +238,7 @@ if __name__ == '__main__':
 
     # from here written by mswym
     # condition extraction
-    dataframe['result_correct'] = dataframe.apply(compute_result_sum_hr, axis=1)
+    dataframe['results_correct'] = dataframe.apply(compute_result_sum_hr, axis=1)
     # dataframe['result_nb_omission']
 
     # extract observer index information
@@ -248,7 +250,7 @@ if __name__ == '__main__':
         print(ob)
         tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
         sum_observers.append(
-            [np.sum(tmp_df.result_correct), np.sum(tmp_df.result_nb_omission), np.mean(tmp_df.mean_result_clean_rt)])
+            [np.sum(tmp_df.results_correct), np.sum(tmp_df.result_nb_omission), np.mean(tmp_df.mean_result_clean_rt)])
 
     sum_observers = pd.DataFrame(sum_observers)
     # for save summary data
@@ -256,10 +258,32 @@ if __name__ == '__main__':
     tmp.loc[:, 2] = tmp.loc[:, 2] * 36
     tmp.to_csv('../outputs/gonogo/sumdata_egonogo.csv', header=False, index=False)
     sum_observers['total_resp'] = sum_observers.apply(lambda row: 36, axis=1)  # two days task
+    # -------------------------------------------------------------------#
+    # Bayes accuracy analysis:
+    outcomes_names = ["accuracy"]
+    nb_trials = len(dataframe['results_responses'][0])
+    dataframe['accuracy'] = dataframe.apply(lambda row: row['results_correct'] / nb_trials, axis=1)
+    stan_distributions = get_stan_accuracy_distributions(dataframe, outcomes_names, nb_trials)
+    # Draw figures for accuracy data
+    plot_all_accuracy_figures(stan_distributions, outcomes_names, 'gonogo', sum_observers, nb_trials)
 
+    # -------------------------------------------------------------------#
+    # Masataka
     # calculate the mean distribution and the credible interval
-    class_stan_accuracy = [CalStan_accuracy(sum_observers, ind_corr_resp=n) for n in range(2)]
-    class_stan_rt = CalStan_rt(sum_observers, ind_rt=2, max_rt=1000)
+    # class_stan_accuracy = [CalStan_accuracy(sum_observers, ind_corr_resp=n) for n in range(2)]
+    # class_stan_rt = CalStan_rt(sum_observers, ind_rt=2, max_rt=1000)
+    #
+    # # draw figures
+    # # for accuracy data
+    # dist_ind = sum_observers.iloc[0:len(sum_observers), 0:2].values / 36.
+    # dist_summary = extract_mu_ci_from_summary_accuracy(class_stan_accuracy, [0, 1])
+    # draw_all_distributions(dist_ind, dist_summary, len(sum_observers), num_cond=2, std_val=0.05,
+    #                        fname_save='../outputs/gonogo/gonogo_hrfar.png')
+    #
+    # dist_ind = sum_observers.iloc[0:len(sum_observers), 2].values
+    # dist_summary = extract_mu_ci_from_summary_rt(class_stan_rt)
+    # draw_all_distributions_rt(dist_ind, dist_summary, len(sum_observers), num_cond=1, std_val=0.05,
+    #                           fname_save='../outputs/gonogo/gonogo_rt.png')
 
     # draw figures
     # for accuracy data
