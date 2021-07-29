@@ -40,7 +40,6 @@ def extract_mu_ci_from_summary_rt(dataframe):
     return out
 
 
-
 if __name__ == '__main__':
     # -------------------------------------------------------------------#
     # FIRST TREAT THE CSV AND PARSE IT TO DF
@@ -65,10 +64,6 @@ if __name__ == '__main__':
         sum_observers.append([np.mean(tmp_df[index]) for index in outcomes_names])
     sum_observers = pd.DataFrame(sum_observers, columns=outcomes_names)
     sum_observers['total_resp'] = dataframe.apply(count_number_of_trials, axis=1)  # two days task
-    # Transform accuracy into nb of success:
-    for col in outcomes_names:
-        if 'accuracy' in col:
-            sum_observers[col] = sum_observers[col] * sum_observers['total_resp']
     # for save summary data
     sum_observers.to_csv('../outputs/moteval/sumdata_moteval.csv')
     # -------------------------------------------------------------------#
@@ -80,25 +75,16 @@ if __name__ == '__main__':
     nb_trials = len(dataframe['results_correct'][0])
     stan_distributions = get_stan_accuracy_distributions(dataframe, outcomes_names, nb_trials)
     # Draw figures for accuracy data
-    plot_all_accuracy_figures(stan_distributions, outcomes_names, 'moteval', sum_observers, nb_trials)
+    plt_args = {'list_xlim': [0.75, 3.25], 'list_ylim': [0, 1],
+                'list_set_xticklabels': ['1', '4', '8'], 'list_set_xticks': [1, 2, 3],
+                'list_set_yticklabels': ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
+                'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0], }
+    plot_all_accuracy_figures(stan_distributions, outcomes_names, 'moteval', dataframe, nb_trials, plt_args)
     # -------------------------------------------------------------------#
 
     # -------------------------------------------------------------------#
     # BAYES RT ANALYSIS:
     # class_stan_rt_overall = CalStan_rt(sum_observers, ind_rt=2, max_rt=1000)
-    class_stan_accuracy = [CalStan_accuracy(sum_observers, ind_corr_resp=n) for n in
-                           [f"{elt}-accuracy" for elt in [1, 4, 8]]]
-
-    # draw figures
-    # for accuracy data
-    dist_ind = sum_observers.loc[:, [f"{elt}-accuracy" for elt in [1, 4, 8]]].values / 45
-    dist_summary = extract_mu_ci_from_summary_accuracy(class_stan_accuracy, [0, 1, 2])
-    draw_all_distributions(dist_ind, dist_summary, len(sum_observers), num_cond=3, std_val=0.05,
-                            list_xlim=[0.75,3.25],list_ylim=[0,1],
-                            list_set_xticklabels=['1','4','8'],list_set_xticks=[1,2,3],
-                            list_set_yticklabels=['0.0','0.2','0.4','0.6','0.8','1.0'],list_set_yticks=[0,0.2,0.4,0.6,0.8,1.0],
-                            fname_save='../outputs/moteval/moteval_hrfar.png')
-
     # dist_ind = sum_observers.iloc[0:len(sum_observers), 2].values
     # dist_summary = extract_mu_ci_from_summary_rt(class_stan_rt_overall)
     # draw_all_distributions_rt(dist_ind, dist_summary, len(sum_observers), num_cond=1, std_val=0.05,

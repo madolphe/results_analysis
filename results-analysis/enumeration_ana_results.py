@@ -58,7 +58,6 @@ def extract_mu_ci_from_summary_accuracy(dataframe, ind_cond):
     return out
 
 
-
 if __name__ == '__main__':
     # -------------------------------------------------------------------#
     # FIRST TREAT THE CSV AND PARSE IT TO DF
@@ -124,17 +123,12 @@ if __name__ == '__main__':
     nb_trials = len(dataframe['5'][0])
     stan_distributions = get_stan_accuracy_distributions(dataframe, condition_names, nb_trials)
     # Draw figures for accuracy data
-    plot_all_accuracy_figures(stan_distributions, condition_names, 'enumeration', dataframe, nb_trials)
-
-    #draw figures
-    #for accuracy data
-    dist_ind = sum_observers.iloc[0:len(sum_observers),0:5].values/40.
-    dist_summary = extract_mu_ci_from_summary_accuracy(class_stan_accuracy,[0,1,2,3,4])
-    draw_all_distributions(dist_ind,dist_summary,len(sum_observers),num_cond=5,std_val = 0.05,
-                                list_xlim=[0.75,5.25],list_ylim=[0,1],
-                                list_set_xticklabels=['5','6','7','8','9'],list_set_xticks=[1,2,3,4,5],
-                                list_set_yticklabels=['0.0','0.2','0.4','0.6','0.8','1.0'],list_set_yticks=[0,0.2,0.4,0.6,0.8,1.0],
-                                fname_save='../outputs/enumeration/enumeration_accuracy.png')
+    plot_args = {'list_xlim': [0.75, 5.25], 'list_ylim': [0, 1],
+                 'list_set_xticklabels': [str(i) for i in range(5, 10)],
+                 'list_set_xticks': [i for i in range(1, 6)],
+                 'list_set_yticklabels': ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
+                 'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]}
+    plot_all_accuracy_figures(stan_distributions, condition_names, 'enumeration', dataframe, nb_trials, plot_args)
     print('finished')
     # -------------------------------------------------------------------#
     # Masataka :

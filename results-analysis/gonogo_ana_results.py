@@ -171,7 +171,6 @@ def extract_mu_ci_from_summary_accuracy(dataframe, ind_cond):
     return out
 
 
-
 def extract_mu_ci_from_summary_rt(dataframe):
     out = np.zeros((1, 3))  # 3 means the mu, ci_min, and ci_max
     out[0, 0] = dataframe.mu_rt
@@ -232,41 +231,45 @@ if __name__ == '__main__':
     plt.title("Number of omission errors per participant")
     plt.savefig("../outputs/gonogo/gonogo_ommissions.png")
     plt.close()
-
     # Save data
     dataframe.to_csv("../outputs/gonogo/gonogo_treatment.csv")
 
-    # from here written by mswym
-    # condition extraction
+    # -------------------------------------------------------------------#
+    # LATENT FACTOR ANALYSIS
+    # Condition extraction
     dataframe['results_correct'] = dataframe.apply(compute_result_sum_hr, axis=1)
-    # dataframe['result_nb_omission']
-
-    # extract observer index information
-    indices_id = extract_id(dataframe, num_count=2)
 
     # sumirize two days experiments
+    condition_names = ["HR-accuracy", "FAR-accuracy", 'mean_rt']
     sum_observers = []
+    # extract observer index information
+    indices_id = extract_id(dataframe, num_count=2)
     for ob in indices_id:
         print(ob)
         tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
         sum_observers.append(
-            [np.sum(tmp_df.results_correct), np.sum(tmp_df.result_nb_omission), np.mean(tmp_df.mean_result_clean_rt)])
+            [np.sum(tmp_df.results_correct) / 36., np.sum(tmp_df.result_nb_omission) / 36.,
+             np.mean(tmp_df.mean_result_clean_rt)])
 
-    sum_observers = pd.DataFrame(sum_observers)
+    sum_observers = pd.DataFrame(sum_observers, columns=condition_names)
     # for save summary data
-    tmp = sum_observers / 36.
-    tmp.loc[:, 2] = tmp.loc[:, 2] * 36
-    tmp.to_csv('../outputs/gonogo/sumdata_egonogo.csv', header=False, index=False)
+    sum_observers.to_csv('../outputs/gonogo/sumdata_egonogo.csv', header=True, index=False)
     sum_observers['total_resp'] = sum_observers.apply(lambda row: 36, axis=1)  # two days task
+
     # -------------------------------------------------------------------#
     # Bayes accuracy analysis:
-    outcomes_names = ["accuracy"]
+    outcomes_names = ["HR-accuracy", "FAR-accuracy"]
     nb_trials = len(dataframe['results_responses'][0])
-    dataframe['accuracy'] = dataframe.apply(lambda row: row['results_correct'] / nb_trials, axis=1)
+    print(nb_trials)
+    dataframe['HR-accuracy'] = dataframe.apply(lambda row: row['results_correct'] / nb_trials, axis=1)
+    dataframe["FAR-accuracy"] = dataframe.apply(lambda row: row['result_nb_omission'] / nb_trials, axis=1)
     stan_distributions = get_stan_accuracy_distributions(dataframe, outcomes_names, nb_trials)
     # Draw figures for accuracy data
-    plot_all_accuracy_figures(stan_distributions, outcomes_names, 'gonogo', sum_observers, nb_trials)
-
+    plot_args = {'list_xlim': [0.5, 2.5], 'list_ylim': [0, 1],
+                 'list_set_xticklabels': ['HR', 'FAR'], 'list_set_xticks': [1, 2],
+                 'list_set_yticklabels': ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
+                 'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]}
+    plot_all_accuracy_figures(stan_distributions, outcomes_names, 'gonogo', dataframe, nb_trials, plot_args)
     # -------------------------------------------------------------------#
     # Masataka
     # calculate the mean distribution and the credible interval
@@ -285,23 +288,13 @@ if __name__ == '__main__':
     # draw_all_distributions_rt(dist_ind, dist_summary, len(sum_observers), num_cond=1, std_val=0.05,
     #                           fname_save='../outputs/gonogo/gonogo_rt.png')
 
-    # draw figures
-    # for accuracy data
-    dist_ind = sum_observers.iloc[0:len(sum_observers), 0:2].values / 36.
-    dist_summary = extract_mu_ci_from_summary_accuracy(class_stan_accuracy, [0, 1])
-    draw_all_distributions(dist_ind, dist_summary, len(sum_observers), num_cond=2, std_val=0.05,
-                            list_xlim=[0.5,2.5],list_ylim=[0,1],
-                            list_set_xticklabels=['HR','FAR'],list_set_xticks=[1,2],
-                            list_set_yticklabels=['0.0','0.2','0.4','0.6','0.8','1.0'],list_set_yticks=[0,0.2,0.4,0.6,0.8,1.0],
-                           fname_save='../outputs/gonogo/gonogo_hrfar.png')
-
-    dist_ind = sum_observers.iloc[0:len(sum_observers), 2].values
-    dist_summary = extract_mu_ci_from_summary_rt(class_stan_rt)
-    draw_all_distributions(dist_ind, dist_summary, len(sum_observers), num_cond=1, std_val=0.05,
-                            list_xlim=[0.5,1.5],list_ylim=[0,1],
-                            list_set_xticklabels=['HR'],list_set_xticks=[1],
-                            list_set_yticklabels=['0', '250', '500', '750'],list_set_yticks=[0, 250, 500, 750],
-                            val_ticks=25,
-                            fname_save='../outputs/gonogo/gonogo_rt.png')
+    # dist_ind = sum_observers.iloc[0:len(sum_observers), 2].values
+    # dist_summary = extract_mu_ci_from_summary_rt(class_stan_rt)
+    # draw_all_distributions(dist_ind, dist_summary, len(sum_observers), num_cond=1, std_val=0.05,
+    #                         list_xlim=[0.5,1.5],list_ylim=[0,1],
+    #                         list_set_xticklabels=['HR'],list_set_xticks=[1],
+    #                         list_set_yticklabels=['0', '250', '500', '750'],list_set_yticks=[0, 250, 500, 750],
+    #                         val_ticks=25,
+    #                         fname_save='../outputs/gonogo/gonogo_rt.png')
 
     print('finished')

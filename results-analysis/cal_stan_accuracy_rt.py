@@ -22,7 +22,7 @@ self.ci_max
 # fname_csv1 = 'accuracy_data.csv'
 class CalStan_accuracy():
     def __init__(self, dataframe, ind_corr_resp='corr_resp', ind_total_resp='total_resp', num_chains=4,
-                 num_samples=10):
+                 num_samples=10000):
         self.binomial_code = """
         data {
           int nums;  //total number of participants
