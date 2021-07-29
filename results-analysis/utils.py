@@ -16,6 +16,12 @@ def extract_mu_ci_from_summary_accuracy(dataframe, ind_cond):
     return out
 
 
+def extract_id(dataframe, num_count):
+    mask = pd.DataFrame(dataframe.participant_id.value_counts() == num_count)
+    indices_id = mask[mask['participant_id'] == True].index.tolist()
+    return indices_id
+
+
 def plot_all_accuracy_figures(stan_distributions, outcomes_names, task_name, overall_initial_data, nb_trials,
                               plot_args):
     plot_prepost_mean_accuracy_distribution(outcomes_names, stan_distributions,
