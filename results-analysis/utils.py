@@ -42,6 +42,7 @@ def get_stan_accuracy_distributions(dataframe, outcomes_names, nb_trials):
     # Get mean data for
     sum_observers = get_overall_dataframe(dataframe, outcomes_names)
 
+    # If data are passed in forms of accuracy measures, we need to consider
     # Add column of number of trials :
     sum_observers['total_resp'], pretest['total_resp'], posttest['total_resp'] = (nb_trials for i in range(3))
 

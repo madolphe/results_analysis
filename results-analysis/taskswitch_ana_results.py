@@ -2,10 +2,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import copy
-#from get_cog_assessment_results import delete_uncomplete_participants
+# from get_cog_assessment_results import delete_uncomplete_participants
 from sklearn.linear_model import LinearRegression
 from utils import *
-from cal_stan_accuracy_rt import CalStan_accuracy,CalStan_rt
+from cal_stan_accuracy_rt import CalStan_accuracy, CalStan_rt
 
 
 # keyRes1 = F => 1 (ODD impair - LOW)
@@ -22,6 +22,7 @@ def delete_uncomplete_participants(dataframe):
     for id in participants_to_delete:
         dataframe = dataframe[dataframe['participant_id'] != id]
     return dataframe
+
 
 def delete_beggining_of_block(row):
     results = row["results_ind_switch"].split(",")
@@ -44,10 +45,12 @@ def correct_sequence_of_answers(row):
     seq_parity_switch = []
     seq_relative_rt = []
     seq_parity_rt = []
-    for response, task, target, switch,rt,ind in zip(row.results_responses, row.results_indtask, row.results_trial_target,
-                                              row.results_ind_switch_clean,row.results_rt,range(len(row.results_ind_switch_clean))):
-        
-        if ind!=0 and ind!=33 and ind!=66: #to exclude the first trials
+    for response, task, target, switch, rt, ind in zip(row.results_responses, row.results_indtask,
+                                                       row.results_trial_target,
+                                                       row.results_ind_switch_clean, row.results_rt,
+                                                       range(len(row.results_ind_switch_clean))):
+
+        if ind != 0 and ind != 33 and ind != 66:  # to exclude the first trials
             # First check what activity is requested - if None => do not consider the trial
             if task == 1:
                 seq_relative_switch.append(switch)
@@ -63,11 +66,12 @@ def correct_sequence_of_answers(row):
                     seq_answer_parity.append(1)
                 else:
                     seq_answer_parity.append(0)
-    return seq_answer_relative, seq_answer_parity, seq_relative_switch, seq_parity_switch,seq_relative_rt,seq_parity_rt
+    return seq_answer_relative, seq_answer_parity, seq_relative_switch, seq_parity_switch, seq_relative_rt, seq_parity_rt
 
 
 def compute_correct_answer(row, answer_type):
-    seq_answer_relative, seq_answer_parity, seq_relative_switch, seq_parity_switch,seq_relative_rt,seq_parity_rt = correct_sequence_of_answers(row)
+    seq_answer_relative, seq_answer_parity, seq_relative_switch, seq_parity_switch, seq_relative_rt, seq_parity_rt = correct_sequence_of_answers(
+        row)
     if answer_type == "correct_total":
         return seq_answer_relative.count(1) + seq_answer_parity.count(1)
     elif answer_type == "correct_relative":
@@ -86,7 +90,7 @@ def compute_correct_answer(row, answer_type):
         relative_errors_switch = sum(
             [1 for elt, sw in zip(seq_answer_relative, seq_relative_switch) if (sw == 1 and elt == 0)])
         return parity_errors_switch + relative_errors_switch
-    #summarize the relative and parity condition for accuracy
+    # summarize the relative and parity condition for accuracy
     elif answer_type == "check_switch_hit":
         parity_hit_switch = sum(
             [1 for elt, sw in zip(seq_answer_parity, seq_parity_switch) if (sw == 1 and elt == 1)])
@@ -99,7 +103,7 @@ def compute_correct_answer(row, answer_type):
         relative_hit_unswitch = sum(
             [1 for elt, sw in zip(seq_answer_relative, seq_relative_switch) if (sw == 0 and elt == 1)])
         return parity_hit_unswitch + relative_hit_unswitch
-    #separate the relative and parity condition for accuracy
+    # separate the relative and parity condition for accuracy
     elif answer_type == "parity_check_switch_hit":
         parity_hit_switch = sum(
             [1 for elt, sw in zip(seq_answer_parity, seq_parity_switch) if (sw == 1 and elt == 1)])
@@ -116,7 +120,7 @@ def compute_correct_answer(row, answer_type):
         relative_hit_unswitch = sum(
             [1 for elt, sw in zip(seq_answer_relative, seq_relative_switch) if (sw == 0 and elt == 1)])
         return relative_hit_unswitch
-    #total number for each conditions
+    # total number for each conditions
     elif answer_type == "parity_check_switch_total":
         parity_total_switch = sum(
             [1 for elt, sw in zip(seq_answer_parity, seq_parity_switch) if (sw == 1)])
@@ -133,20 +137,20 @@ def compute_correct_answer(row, answer_type):
         relative_hit_unswitch = sum(
             [1 for elt, sw in zip(seq_answer_relative, seq_relative_switch) if (sw == 0)])
         return relative_hit_unswitch
-    #summarize the relative and parity condition for rt
+    # summarize the relative and parity condition for rt
     elif answer_type == "check_switch_rt":
         parity_rt_switch = sum(
-            [rt for elt,rt, sw in zip(seq_answer_parity,seq_parity_rt, seq_parity_switch) if (sw == 1)])
+            [rt for elt, rt, sw in zip(seq_answer_parity, seq_parity_rt, seq_parity_switch) if (sw == 1)])
         relative_rt_switch = sum(
-            [rt for elt,rt, sw in zip(seq_answer_relative,seq_relative_rt, seq_relative_switch) if (sw == 1)])
-        return (parity_rt_switch + relative_rt_switch)/(len(seq_parity_rt)+len(seq_relative_rt))
+            [rt for elt, rt, sw in zip(seq_answer_relative, seq_relative_rt, seq_relative_switch) if (sw == 1)])
+        return (parity_rt_switch + relative_rt_switch) / (len(seq_parity_rt) + len(seq_relative_rt))
     elif answer_type == "check_unswitch_rt":
         parity_rt_unswitch = sum(
-            [rt for elt,rt, sw in zip(seq_answer_parity,seq_parity_rt, seq_parity_switch) if (sw == 0 and elt == 1)])
+            [rt for elt, rt, sw in zip(seq_answer_parity, seq_parity_rt, seq_parity_switch) if (sw == 0 and elt == 1)])
         relative_rt_unswitch = sum(
-            [rt for elt,rt, sw in zip(seq_answer_relative,seq_relative_rt, seq_relative_switch) if (sw == 0)])
-        return (parity_rt_unswitch + relative_rt_unswitch)/(len(seq_parity_rt)+len(seq_relative_rt))
-    #separate the relative and parity condition for rt
+            [rt for elt, rt, sw in zip(seq_answer_relative, seq_relative_rt, seq_relative_switch) if (sw == 0)])
+        return (parity_rt_unswitch + relative_rt_unswitch) / (len(seq_parity_rt) + len(seq_relative_rt))
+    # separate the relative and parity condition for rt
     elif answer_type == "parity_check_switch_hit":
         parity_hit_switch = sum(
             [1 for elt, sw in zip(seq_answer_parity, seq_parity_switch) if (sw == 1 and elt == 1)])
@@ -165,21 +169,20 @@ def compute_correct_answer(row, answer_type):
         return relative_hit_unswitch
     elif answer_type == "parity_check_switch_rt":
         parity_rt_switch = sum(
-            [rt for elt,rt, sw in zip(seq_answer_parity,seq_parity_rt, seq_parity_switch) if (sw == 1)])
-        return (parity_rt_switch)/len(seq_parity_rt)
+            [rt for elt, rt, sw in zip(seq_answer_parity, seq_parity_rt, seq_parity_switch) if (sw == 1)])
+        return (parity_rt_switch) / len(seq_parity_rt)
     elif answer_type == "relative_check_switch_rt":
         relative_rt_switch = sum(
-            [rt for elt,rt, sw in zip(seq_answer_relative,seq_relative_rt, seq_relative_switch) if (sw == 1)])
-        return (relative_rt_switch)/len(seq_relative_rt)
+            [rt for elt, rt, sw in zip(seq_answer_relative, seq_relative_rt, seq_relative_switch) if (sw == 1)])
+        return (relative_rt_switch) / len(seq_relative_rt)
     elif answer_type == "parity_check_unswitch_rt":
         parity_rt_unswitch = sum(
-            [rt for elt,rt, sw in zip(seq_answer_parity,seq_parity_rt, seq_parity_switch) if (sw == 0 and elt == 1)])
-        return (parity_rt_unswitch)/len(seq_parity_rt)
+            [rt for elt, rt, sw in zip(seq_answer_parity, seq_parity_rt, seq_parity_switch) if (sw == 0 and elt == 1)])
+        return (parity_rt_unswitch) / len(seq_parity_rt)
     elif answer_type == "relative_check_unswitch_rt":
         relative_rt_unswitch = sum(
-            [rt for elt,rt, sw in zip(seq_answer_relative,seq_relative_rt, seq_relative_switch) if (sw == 0)])
-        return (relative_rt_unswitch)/len(seq_relative_rt)
-
+            [rt for elt, rt, sw in zip(seq_answer_relative, seq_relative_rt, seq_relative_switch) if (sw == 0)])
+        return (relative_rt_unswitch) / len(seq_relative_rt)
 
 
 def compute_mean(row):
@@ -208,28 +211,45 @@ def linear_reg_and_plot(column, figname):
     plt.savefig(f"../outputs/taskswitch/{figname}.png")
     plt.close()
 
-def extract_id(dataframe,num_count):
+
+def extract_id(dataframe, num_count):
     mask = pd.DataFrame(dataframe.participant_id.value_counts() == num_count)
     indices_id = mask[mask['participant_id'] == True].index.tolist()
     return indices_id
 
-def extract_mu_ci_from_summary_accuracy(dataframe,ind_cond):
-    outs = np.zeros((len(ind_cond),3)) #3 means the mu, ci_min, and ci_max
-    for t,ind in enumerate(ind_cond):
-        outs[t,0] = dataframe[ind].mu_theta
-        outs[t,1] = dataframe[ind].ci_min
-        outs[t,2] = dataframe[ind].ci_max
+
+def extract_mu_ci_from_summary_accuracy(dataframe, ind_cond):
+    outs = np.zeros((len(ind_cond), 3))  # 3 means the mu, ci_min, and ci_max
+    for t, ind in enumerate(ind_cond):
+        outs[t, 0] = dataframe[ind].mu_theta
+        outs[t, 1] = dataframe[ind].ci_min
+        outs[t, 2] = dataframe[ind].ci_max
     return outs
 
-def extract_mu_ci_from_summary_rt(dataframe,ind_cond):
-    outs = np.zeros((len(ind_cond),3)) #3 means the mu, ci_min, and ci_max
-    for t,ind in enumerate(ind_cond):
-        outs[t,0] = dataframe[ind].mu_rt
-        outs[t,1] = dataframe[ind].ci_min
-        outs[t,2] = dataframe[ind].ci_max
+
+def extract_mu_ci_from_summary_rt(dataframe, ind_cond):
+    outs = np.zeros((len(ind_cond), 3))  # 3 means the mu, ci_min, and ci_max
+    for t, ind in enumerate(ind_cond):
+        outs[t, 0] = dataframe[ind].mu_rt
+        outs[t, 1] = dataframe[ind].ci_min
+        outs[t, 2] = dataframe[ind].ci_max
     return outs
+
+
+def get_overall_dataframe_taskswitch(dataframe, outcomes_names):
+    # summarize two days experiments
+    indices_id = extract_id(dataframe, num_count=2)
+    sum_observers, tmp_nb = [], []
+    for ob in indices_id:
+        tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
+        sum_observers.append([np.sum(tmp_df[index]) for index in outcomes_names])
+    sum_observers = pd.DataFrame(sum_observers, columns=outcomes_names)
+    return sum_observers
+
 
 if __name__ == '__main__':
+    # -------------------------------------------------------------------#
+    # DATAFRAME CREATION
     csv_path = "../outputs/taskswitch/taskswitch.csv"
     dataframe = pd.read_csv(csv_path)
     dataframe = delete_uncomplete_participants(dataframe)
@@ -271,96 +291,158 @@ if __name__ == '__main__':
     dataframe["mean_RT"] = dataframe.apply(compute_mean, axis=1)
     boxplot_pre_post("mean_RT", "reaction_time_mean")
     linear_reg_and_plot("mean_RT", "linear_reg_RT")
+    plt.close()
 
     dataframe.to_csv("../outputs/taskswitch/taskswitch_treatment.csv")
 
-    #from here written by mswym
-    #condition extraction
-
-    plt.close()
-    dataframe["correct_in_switch"] = dataframe.apply(lambda row: compute_correct_answer(row, "check_switch_hit"), axis=1)
-    dataframe["correct_in_unswitch"] = dataframe.apply(lambda row: compute_correct_answer(row, "check_unswitch_hit"), axis=1)
+    # -------------------------------------------------------------------#
+    # LATENT FACTOR ANALYSIS DF CREATION
+    # from here written by mswym
+    # Additional condition extration:
+    dataframe["correct_in_switch"] = dataframe.apply(lambda row: compute_correct_answer(row, "check_switch_hit"),
+                                                     axis=1)
+    dataframe["correct_in_unswitch"] = dataframe.apply(lambda row: compute_correct_answer(row, "check_unswitch_hit"),
+                                                       axis=1)
     dataframe["rt_in_switch"] = dataframe.apply(lambda row: compute_correct_answer(row, "check_switch_rt"), axis=1)
     dataframe["rt_in_unswitch"] = dataframe.apply(lambda row: compute_correct_answer(row, "check_unswitch_rt"), axis=1)
-    
-    dataframe["relative_correct_in_switch"] = dataframe.apply(lambda row: compute_correct_answer(row, "relative_check_switch_hit"), axis=1)
-    dataframe["relative_correct_in_unswitch"] = dataframe.apply(lambda row: compute_correct_answer(row, "relative_check_unswitch_hit"), axis=1)
-    dataframe["relative_total_in_switch"] = dataframe.apply(lambda row: compute_correct_answer(row, "relative_check_switch_total"), axis=1)
-    dataframe["relative_total_in_unswitch"] = dataframe.apply(lambda row: compute_correct_answer(row, "relative_check_unswitch_total"), axis=1)
-    dataframe["relative_rt_in_switch"] = dataframe.apply(lambda row: compute_correct_answer(row, "relative_check_switch_rt"), axis=1)
-    dataframe["relative_rt_in_unswitch"] = dataframe.apply(lambda row: compute_correct_answer(row, "relative_check_unswitch_rt"), axis=1)
-    
-    dataframe["parity_correct_in_switch"] = dataframe.apply(lambda row: compute_correct_answer(row, "parity_check_switch_hit"), axis=1)
-    dataframe["parity_correct_in_unswitch"] = dataframe.apply(lambda row: compute_correct_answer(row, "parity_check_unswitch_hit"), axis=1)
-    dataframe["parity_total_in_switch"] = dataframe.apply(lambda row: compute_correct_answer(row, "parity_check_switch_total"), axis=1)
-    dataframe["parity_total_in_unswitch"] = dataframe.apply(lambda row: compute_correct_answer(row, "parity_check_unswitch_total"), axis=1)
-    dataframe["parity_rt_in_switch"] = dataframe.apply(lambda row: compute_correct_answer(row, "parity_check_switch_rt"), axis=1)
-    dataframe["parity_rt_in_unswitch"] = dataframe.apply(lambda row: compute_correct_answer(row, "parity_check_unswitch_rt"), axis=1)
-    #dataframe['result_nb_omission']
+    dataframe["relative_correct_in_switch"] = dataframe.apply(
+        lambda row: compute_correct_answer(row, "relative_check_switch_hit"), axis=1)
+    dataframe["relative_correct_in_unswitch"] = dataframe.apply(
+        lambda row: compute_correct_answer(row, "relative_check_unswitch_hit"), axis=1)
+    dataframe["relative_total_in_switch"] = dataframe.apply(
+        lambda row: compute_correct_answer(row, "relative_check_switch_total"), axis=1)
+    dataframe["relative_total_in_unswitch"] = dataframe.apply(
+        lambda row: compute_correct_answer(row, "relative_check_unswitch_total"), axis=1)
+    dataframe["relative_rt_in_switch"] = dataframe.apply(
+        lambda row: compute_correct_answer(row, "relative_check_switch_rt"), axis=1)
+    dataframe["relative_rt_in_unswitch"] = dataframe.apply(
+        lambda row: compute_correct_answer(row, "relative_check_unswitch_rt"), axis=1)
+    dataframe["parity_correct_in_switch"] = dataframe.apply(
+        lambda row: compute_correct_answer(row, "parity_check_switch_hit"), axis=1)
+    dataframe["parity_correct_in_unswitch"] = dataframe.apply(
+        lambda row: compute_correct_answer(row, "parity_check_unswitch_hit"), axis=1)
+    dataframe["parity_total_in_switch"] = dataframe.apply(
+        lambda row: compute_correct_answer(row, "parity_check_switch_total"), axis=1)
+    dataframe["parity_total_in_unswitch"] = dataframe.apply(
+        lambda row: compute_correct_answer(row, "parity_check_unswitch_total"), axis=1)
+    dataframe["parity_rt_in_switch"] = dataframe.apply(
+        lambda row: compute_correct_answer(row, "parity_check_switch_rt"), axis=1)
+    dataframe["parity_rt_in_unswitch"] = dataframe.apply(
+        lambda row: compute_correct_answer(row, "parity_check_unswitch_rt"), axis=1)
 
-    #extract observer index information
-    indices_id = extract_id(dataframe,num_count=2)
-    
-    #sumirize two days experiments
-    sum_observers = [] 
-    sum_observers_forsave = [] 
+    # sumirize two days experiments
+    sum_observers = []
+    sum_observers_forsave = []
+    condition_names_accuracy = ['accuracy_parity_correct_in_switch', 'accuracy_parity_correct_in_unswitch',
+                                'accuracy_relative_correct_in_switch',
+                                'accuracy_relative_correct_in_unswitch']
+    condition_names_rt = ['mean_parity_rt_in_switch', 'mean_parity_rt_in_unswitch', 'mean_relative_rt_in_switch',
+                          'mean_relative_rt_in_unswitch', ]
+    # extract observer index information
+    indices_id = extract_id(dataframe, num_count=2)
     for ob in indices_id:
         print(ob)
         tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
-        sum_observers_forsave.append([np.mean(tmp_df.parity_correct_in_switch/tmp_df.parity_total_in_switch),
-                                    np.mean(tmp_df.parity_correct_in_unswitch/tmp_df.parity_total_in_unswitch),
-                                    np.mean(tmp_df.relative_correct_in_switch/tmp_df.relative_total_in_switch),
-                                    np.mean(tmp_df.relative_correct_in_unswitch/tmp_df.relative_total_in_unswitch),
-                                    np.mean(tmp_df.parity_rt_in_switch),np.mean(tmp_df.parity_rt_in_unswitch),
-                                    np.mean(tmp_df.relative_rt_in_switch),np.mean(tmp_df.relative_rt_in_unswitch),
-                                    np.mean(tmp_df.parity_rt_in_switch)-np.mean(tmp_df.parity_rt_in_unswitch),
-                                    np.mean(tmp_df.relative_rt_in_switch)-np.mean(tmp_df.relative_rt_in_unswitch)
-                                    ])
+        participant_tmp = []
+        for condition_acc in condition_names_accuracy:
+            condition_tmp = condition_acc.replace("accuracy_", "")
+            tmp = np.mean(tmp_df[condition_tmp] / tmp_df[condition_tmp.replace("correct", "total")])
+            participant_tmp.append(tmp)
+        for condition_rt in condition_names_rt:
+            condition_tmp = condition_rt.replace("mean_", "")
+            participant_tmp.append(np.mean(tmp_df[condition_tmp]))
+        sum_observers_forsave.append(participant_tmp)
+
+        # sum_observers_forsave.append([np.mean(tmp_df.parity_correct_in_switch / tmp_df.parity_total_in_switch),
+        #                               np.mean(tmp_df.parity_correct_in_unswitch / tmp_df.parity_total_in_unswitch),
+        #                               np.mean(tmp_df.relative_correct_in_switch / tmp_df.relative_total_in_switch),
+        #                               np.mean(tmp_df.relative_correct_in_unswitch / tmp_df.relative_total_in_unswitch),
+        #                               np.mean(tmp_df.parity_rt_in_switch), np.mean(tmp_df.parity_rt_in_unswitch),
+        #                               np.mean(tmp_df.relative_rt_in_switch), np.mean(tmp_df.relative_rt_in_unswitch),
+        #                               np.mean(tmp_df.parity_rt_in_switch) - np.mean(tmp_df.parity_rt_in_unswitch),
+        #                               np.mean(tmp_df.relative_rt_in_switch) - np.mean(tmp_df.relative_rt_in_unswitch)
+        #                               ])
 
         sum_observers.append([np.sum(tmp_df.parity_correct_in_switch),
-                                    np.sum(tmp_df.parity_correct_in_unswitch),
-                                    np.sum(tmp_df.relative_correct_in_switch),
-                                    np.sum(tmp_df.relative_correct_in_unswitch),
-                                    np.sum(tmp_df.parity_total_in_switch),
-                                    np.sum(tmp_df.parity_total_in_unswitch),
-                                    np.sum(tmp_df.relative_total_in_switch),
-                                    np.sum(tmp_df.relative_total_in_unswitch),
-                                    np.mean(tmp_df.rt_in_switch),np.mean(tmp_df.rt_in_unswitch),
-                                    np.mean(tmp_df.parity_rt_in_switch),np.mean(tmp_df.parity_rt_in_unswitch),
-                                    np.mean(tmp_df.relative_rt_in_switch),np.mean(tmp_df.relative_rt_in_unswitch),
-                                    np.mean(tmp_df.parity_rt_in_switch)-np.mean(tmp_df.parity_rt_in_unswitch),
-                                    np.mean(tmp_df.relative_rt_in_switch)-np.mean(tmp_df.relative_rt_in_unswitch)
-                                    ])
-
+                              np.sum(tmp_df.parity_correct_in_unswitch),
+                              np.sum(tmp_df.relative_correct_in_switch),
+                              np.sum(tmp_df.relative_correct_in_unswitch),
+                              np.sum(tmp_df.parity_total_in_switch),
+                              np.sum(tmp_df.parity_total_in_unswitch),
+                              np.sum(tmp_df.relative_total_in_switch),
+                              np.sum(tmp_df.relative_total_in_unswitch),
+                              np.mean(tmp_df.rt_in_switch), np.mean(tmp_df.rt_in_unswitch),
+                              np.mean(tmp_df.parity_rt_in_switch), np.mean(tmp_df.parity_rt_in_unswitch),
+                              np.mean(tmp_df.relative_rt_in_switch), np.mean(tmp_df.relative_rt_in_unswitch),
+                              np.mean(tmp_df.parity_rt_in_switch) - np.mean(tmp_df.parity_rt_in_unswitch),
+                              np.mean(tmp_df.relative_rt_in_switch) - np.mean(tmp_df.relative_rt_in_unswitch)
+                              ])
     sum_observers = pd.DataFrame(sum_observers)
-    sum_observers_forsave = pd.DataFrame(sum_observers_forsave)
-    #for save summary data
+    sum_observers_forsave = pd.DataFrame(sum_observers_forsave, columns=condition_names_accuracy + condition_names_rt)
+    # for save summary data
     tmp = sum_observers_forsave
-    tmp.to_csv('../outputs/taskswitch/sumdata_taskswitch.csv',header=False, index=False)
-    
-    #calculate the mean distribution and the credible interval
-    class_stan_accuracy = [CalStan_accuracy(sum_observers,ind_corr_resp=n,ind_total_resp=4+n) for n in range(4)]
-    class_stan_rt = [CalStan_rt(sum_observers,ind_rt=14+n,max_rt=1000,num_chains=4) for n in range(2)]
+    tmp.to_csv('../outputs/taskswitch/sumdata_taskswitch.csv', header=False, index=False)
 
-    #draw figures
-    #for accuracy data
-    dist_ind = sum_observers_forsave.iloc[0:len(sum_observers_forsave),0:4].values
-    dist_summary = extract_mu_ci_from_summary_accuracy(class_stan_accuracy,[0,1,2,3])
-    draw_all_distributions(dist_ind,dist_summary,len(sum_observers),num_cond=4,std_val = 0.05,
-                        list_xlim=[0.75,4.25],list_ylim=[0,1],
-                        list_set_xticklabels=['sw/oe','no-sw/oe','sw/hl','no-sw/hl'],list_set_xticks=[1,2,3,4],
-                        list_set_yticklabels=['0.0','0.2','0.4','0.6','0.8','1.0'],list_set_yticks=[0,0.2,0.4,0.6,0.8,1.0],
-                        fname_save='../outputs/taskswitch/taskswitch_hrfar.png')
-    
-    dist_ind = sum_observers.iloc[0:len(sum_observers_forsave),14:16].values
-    dist_summary = extract_mu_ci_from_summary_rt(class_stan_rt,[0,1])
-    draw_all_distributions(dist_ind,dist_summary,len(sum_observers),num_cond=2,std_val = 0.05,
-                        list_xlim=[0.5,2.5],list_ylim=[-100,250],
-                        list_set_xticklabels=['odd-even','high-low'],list_set_xticks=[1,2],
-                        list_set_yticklabels=['-100','0','100','200'],list_set_yticks=[-100,0,100,200],
-                        val_ticks=10,
-                        fname_save='../outputs/taskswitch/taskswitch_rt.png')
+    # -------------------------------------------------------------------#
+    # BAYES ACCURACY :
+    nb_trials_names = ['parity_total_in_switch', 'parity_total_in_unswitch',
+                       'relative_total_in_switch', 'relative_total_in_unswitch']
+    # for condition_acc in condition_names_accuracy:
+    #     condition_tmp = condition_acc.replace("accuracy_", "")
+    #     dataframe[condition_acc] = dataframe[condition_tmp] / dataframe[condition_tmp.replace("correct", "total")]
+    condition_names = ['parity_correct_in_switch', 'parity_correct_in_unswitch', 'relative_correct_in_switch',
+                       'relative_correct_in_unswitch']
+    # Task number is not always the same:
+    pretest, posttest = get_pre_post_dataframe(dataframe, condition_names+nb_trials_names)
+    # Get mean data for
+    sum_observers = get_overall_dataframe_taskswitch(dataframe, condition_names+nb_trials_names)
+    # Compute stan_accuracy for all conditions:
+    stan_sessions = [[], [], []]
+    sessions = [sum_observers, pretest, posttest]
+    for condition in condition_names:
+        for idx, session in enumerate(sessions):
+            tmp_condition = condition.replace("correct", "total")
+            session['total_resp'] = session[tmp_condition]
+            stan_sessions[idx].append(CalStan_accuracy(session, ind_corr_resp=condition))
+    class_stan_accuracy_overall, class_stan_accuracy_pretest, class_stan_accuracy_posttest = stan_sessions
+    # Group all stan distributions into a dict:
+    stan_distributions = {'overall': class_stan_accuracy_overall,
+                          'pretest': class_stan_accuracy_pretest,
+                          'posttest': class_stan_accuracy_posttest}
+    # Draw figures for accuracy data
+    plot_args = {
+        'list_xlim': [0.75, 4.25], 'list_ylim': [0, 1],
+        'list_set_xticklabels': ['sw/oe', 'no-sw/oe', 'sw/hl', 'no-sw/hl'],
+        'list_set_xticks': [1, 2, 3, 4],
+        'list_set_yticklabels': ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
+        'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0],
+    }
+    plot_prepost_mean_accuracy_distribution(condition_names, stan_distributions,
+                                            f'../outputs/taskswitch/taskswitch_distrib_reliability.png')
 
-    
+    # calculate the mean distribution and the credible interval
+    # class_stan_accuracy = [CalStan_accuracy(sum_observers, ind_corr_resp=n, ind_total_resp=4 + n) for n in range(4)]
+    # class_stan_rt = [CalStan_rt(sum_observers, ind_rt=14 + n, max_rt=1000, num_chains=4) for n in range(2)]
+
+    # draw figures
+    # for accuracy data
+    # dist_ind = sum_observers_forsave.iloc[0:len(sum_observers_forsave), 0:4].values
+    # dist_summary = extract_mu_ci_from_summary_accuracy(class_stan_accuracy, [0, 1, 2, 3])
+    # draw_all_distributions(dist_ind, dist_summary, len(sum_observers), num_cond=4, std_val=0.05,
+    #                        list_xlim=[0.75, 4.25], list_ylim=[0, 1],
+    #                        list_set_xticklabels=['sw/oe', 'no-sw/oe', 'sw/hl', 'no-sw/hl'],
+    #                        list_set_xticks=[1, 2, 3, 4],
+    #                        list_set_yticklabels=['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
+    #                        list_set_yticks=[0, 0.2, 0.4, 0.6, 0.8, 1.0],
+    #                        fname_save='../outputs/taskswitch/taskswitch_hrfar.png')
+    #
+    # dist_ind = sum_observers.iloc[0:len(sum_observers_forsave), 14:16].values
+    # dist_summary = extract_mu_ci_from_summary_rt(class_stan_rt, [0, 1])
+    # draw_all_distributions(dist_ind, dist_summary, len(sum_observers), num_cond=2, std_val=0.05,
+    #                        list_xlim=[0.5, 2.5], list_ylim=[-100, 250],
+    #                        list_set_xticklabels=['odd-even', 'high-low'], list_set_xticks=[1, 2],
+    #                        list_set_yticklabels=['-100', '0', '100', '200'], list_set_yticks=[-100, 0, 100, 200],
+    #                        val_ticks=10,
+    #                        fname_save='../outputs/taskswitch/taskswitch_rt.png')
+
     print('finished')
-
