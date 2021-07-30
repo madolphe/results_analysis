@@ -393,9 +393,9 @@ if __name__ == '__main__':
     condition_names = ['parity_correct_in_switch', 'parity_correct_in_unswitch', 'relative_correct_in_switch',
                        'relative_correct_in_unswitch']
     # Task number is not always the same:
-    pretest, posttest = get_pre_post_dataframe(dataframe, condition_names+nb_trials_names)
+    pretest, posttest = get_pre_post_dataframe(dataframe, condition_names + nb_trials_names)
     # Get mean data for
-    sum_observers = get_overall_dataframe_taskswitch(dataframe, condition_names+nb_trials_names)
+    sum_observers = get_overall_dataframe_taskswitch(dataframe, condition_names + nb_trials_names)
     # Compute stan_accuracy for all conditions:
     stan_sessions = [[], [], []]
     sessions = [sum_observers, pretest, posttest]
