@@ -1,8 +1,3 @@
-import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
-from utils import *
-from cal_stan_accuracy_rt import CalStan_accuracy, CalStan_rt
 from utils import *
 
 
@@ -41,21 +36,6 @@ def compute_numbercond(row, ind_cond):
     results_targetvalue = [int(t) for t in row["results_targetvalue"].split(',')]
     out = [results_responses[ind] for ind, t in enumerate(results_targetvalue) if t == ind_cond]
     return np.array(out)
-
-
-def extract_id(dataframe, num_count):
-    mask = pd.DataFrame(dataframe.participant_id.value_counts() == num_count)
-    indices_id = mask[mask['participant_id'] == True].index.tolist()
-    return indices_id
-
-
-def extract_mu_ci_from_summary_accuracy(dataframe, ind_cond):
-    out = np.zeros((len(ind_cond), 3))  # 3 means the mu, ci_min, and ci_max
-    for t, ind in enumerate(ind_cond):
-        out[t, 0] = dataframe[ind].mu_theta
-        out[t, 1] = dataframe[ind].ci_min
-        out[t, 2] = dataframe[ind].ci_max
-    return out
 
 
 if __name__ == '__main__':
@@ -112,8 +92,6 @@ if __name__ == '__main__':
         tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
         sum_observers.append([tmp_df[col].mean(axis=0) for col in tmp_df.columns if "accuracy" in col])
     sum_observers = pd.DataFrame(sum_observers, columns=condition_names)
-    # for save summary data
-    # tmp = sum_observers / nb_trials
     sum_observers.to_csv('../outputs/enumeration/sumdata_enumeration.csv', header=True, index=False)
     # -------------------------------------------------------------------#
 
@@ -130,16 +108,3 @@ if __name__ == '__main__':
                  'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]}
     plot_all_accuracy_figures(stan_distributions, condition_names, 'enumeration', dataframe, nb_trials, plot_args)
     print('finished')
-    # -------------------------------------------------------------------#
-    # Masataka :
-    # sum_observers['total_resp'] = sum_observers.apply(lambda row: 40, axis=1)  # two days task
-    # # calculate the mean distribution and the credible interval
-    # class_stan_accuracy = [CalStan_accuracy(sum_observers, ind_corr_resp=n) for n in range(5)]
-    #
-    # # draw figures
-    # # for accuracy data
-    # dist_ind = sum_observers.iloc[0:len(sum_observers), 0:5].values / 40.
-    # dist_summary = extract_mu_ci_from_summary_accuracy(class_stan_accuracy, [0, 1, 2, 3, 4])
-    # draw_all_distributions(dist_ind, dist_summary, len(sum_observers), num_cond=5, std_val=0.05,
-    #                        fname_save='../outputs/enumeration/enumeration_accuracy.png')
-    # print('finished')

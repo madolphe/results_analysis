@@ -1,10 +1,5 @@
-import scipy.io as sio
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 from extract_sorted_memory import Results_memory
 from utils import *
-from cal_stan_accuracy_rt import CalStan_accuracy, CalStan_rt
 
 
 # Treat data:
@@ -87,8 +82,8 @@ if __name__ == '__main__':
         # initialisation as it's the long range condition
         for task_status_index, (row_index, row) in enumerate(dataframe[dataframe['participant_id'] == ob].iterrows()):
             tmp_row = Results_memory(tmp_df[tmp_df['task_status'] == test_status[task_status_index % 2]])
-            for conditions in conditions_names:
-                for condition_index, condition in enumerate(conditions):
+            for conditions_name in conditions_names:
+                for condition_index, condition in enumerate(conditions_name):
                     if 'hit' in condition:
                         tmp_cond = 'out_mat_hit_miss_sum'
                     elif 'fa' in condition:
@@ -96,22 +91,22 @@ if __name__ == '__main__':
                     else:
                         tmp_cond = 'out_mat_rt_cond'
                     dataframe.loc[row_index, condition] = tmp_row.__dict__[tmp_cond][condition_index]
-
-    sum_observers = pd.DataFrame(sum_observers)
+    columns, keywords = [], ['out_mat_hit_miss_sum', 'out_mat_fa_cr_sum', 'out_mat_rt_cond', 'out_mat_rt_cond_std']
+    for condition in conditions:
+        for keyword in keywords:
+            columns.append(f"{keyword}-{condition}")
+    sum_observers = pd.DataFrame(sum_observers, columns=columns)
     # for save summary data
-    # tmp = sum_observers/32.
-    # tmp.loc[:,10:20] = tmp.loc[:,10:20]*32
-    # tmp.to_csv('sumdata_memorability.csv',header=False, index=False)
+    sum_observers.to_csv('../outputs/memorability/sumdata_memorability.csv', header=True, index=False)
     sum_observers['total_resp'] = sum_observers.apply(lambda row: 32, axis=1)
-    dataframe['total_resp'] = sum_observers.apply(lambda row: 32, axis=1)
-    # import pdb;pdb.set_trace()
+    dataframe['total_resp'] = dataframe.apply(lambda row: 32, axis=1)
 
     # for hr data
     # -------------------------------------------------------------------#
     # BAYES ACCURACY ANALYSIS
     # For accuracy analysis, let's focus on the outcomes:
     # Just drop second part of df that is useless:
-    dataframe = dataframe[dataframe['session'] == 0]
+    dataframe = dataframe[dataframe['session'] == 1]
     nb_trials = 32
     dataframe[conditions_names_hit_miss] = dataframe[conditions_names_hit_miss] / nb_trials
     stan_distributions = get_stan_accuracy_distributions(dataframe, conditions_names_hit_miss, nb_trials)
@@ -122,30 +117,15 @@ if __name__ == '__main__':
                 'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]}
     plot_all_accuracy_figures(stan_distributions, conditions_names_hit_miss, 'memorability', dataframe, nb_trials,
                               plt_args)
-
     # -------------------------------------------------------------------#
-    # class_stan_accuracy = [CalStan_accuracy(sum_observers, ind_corr_resp=n) for n in range(10)]
-    # dist_ind = sum_observers.iloc[0:len(sum_observers), 0:5].values / 32.
-    # dist_summary = extract_mu_ci_from_summary_accuracy(class_stan_accuracy, [0, 1, 2, 3, 4])
-
-    # class_stan_rt = [CalStan_rt(sum_observers, ind_rt=10 + n, max_rt=1400) for n in range(5)]
-    # for far data
-    # dist_ind = sum_observers.iloc[0:len(sum_observers), 5:10].values / 32.
-    # dist_summary = extract_mu_ci_from_summary_accuracy(class_stan_accuracy, [5, 6, 7, 8, 9])
-    # draw_all_distributions(dist_ind, dist_summary, len(sum_observers), num_cond=5, std_val=0.05,
-    #                        list_xlim=[0.75, 5.25], list_ylim=[0, 1],
-    #                        list_set_xticklabels=['2', '3', '4', '5', '>100'], list_set_xticks=[1, 2, 3, 4, 5],
-    #                        list_set_yticklabels=['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
-    #                        list_set_yticks=[0, 0.2, 0.4, 0.6, 0.8, 1.0],
-    #                        fname_save='../outputs/memorability/memorability_far.png')
-
-    # dist_ind = sum_observers.iloc[0:len(sum_observers), 10:15].values
-    # dist_summary = extract_mu_ci_from_summary_rt(class_stan_rt, [0, 1, 2, 3, 4])
-    # draw_all_distributions(dist_ind, dist_summary, len(sum_observers), num_cond=5, std_val=0.05,
-    #                        list_xlim=[0.75, 5.25], list_ylim=[0, 1200],
-    #                        list_set_xticklabels=['2', '3', '4', '5', '>100'], list_set_xticks=[1, 2, 3, 4, 5],
-    #                        list_set_yticklabels=['0', '400', '800', '1200'], list_set_yticks=[0, 400, 800, 1200],
-    #                        val_ticks=25,
-    #                        fname_save='../outputs/memorability/memorability_rt.png')
-
+    # BAYES RT ANALYSIS:
+    conditions_nb = [f"{condition}-nb" for condition in conditions]
+    dataframe[conditions_nb] = 32
+    stan_rt_distributions = get_stan_RT_distributions(dataframe, conditions)
+    plt_args = {"list_xlim": [0.75, 5.25], "list_ylim": [0, 1200],
+                "list_set_xticklabels": ['2', '3', '4', '5', '>100'], "list_set_xticks": [1, 2, 3, 4, 5],
+                "list_set_yticklabels": ['0', '400', '800', '1200'], "list_set_yticks": [0, 400, 800, 1200],
+                "val_ticks": 25}
+    plot_all_rt_figures(stan_rt_distributions, conditions_names_rt, dataframe=dataframe, task_name='memorability',
+                        plot_args=plt_args)
     print('finished')

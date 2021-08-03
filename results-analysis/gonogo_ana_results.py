@@ -1,12 +1,6 @@
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5422529/
 
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
-from utils import *
-from cal_stan_accuracy_rt import CalStan_accuracy, CalStan_rt
-import seaborn as sns
 from utils import *
 
 
@@ -211,9 +205,10 @@ if __name__ == '__main__':
 
     # Reaction times in or the number of correct go-trials (i.e., hits):
     dataframe['result_clean_rt'] = dataframe.apply(list_of_correct_hits, axis=1)
-    dataframe['mean_result_clean_rt'] = dataframe.apply(compute_means, axis=1)
-    post_test = dataframe[dataframe['task_status'] == 'POST_TEST']['mean_result_clean_rt']
-    pre_test = dataframe[dataframe['task_status'] == 'PRE_TEST']['mean_result_clean_rt']
+    dataframe['HR-nb'] = dataframe.apply(lambda row: len(row['result_clean_rt']), axis=1)
+    dataframe['HR-rt'] = dataframe.apply(compute_means, axis=1)
+    post_test = dataframe[dataframe['task_status'] == 'POST_TEST']['HR-rt']
+    pre_test = dataframe[dataframe['task_status'] == 'PRE_TEST']['HR-rt']
     reg = LinearRegression().fit(np.expand_dims(pre_test.values, axis=1), post_test.values)
     score = reg.score(np.expand_dims(pre_test.values, axis=1), post_test.values)
     plt.scatter(x=pre_test, y=post_test, c='red')
@@ -238,19 +233,16 @@ if __name__ == '__main__':
     # LATENT FACTOR ANALYSIS
     # Condition extraction
     dataframe['results_correct'] = dataframe.apply(compute_result_sum_hr, axis=1)
-
     # sumirize two days experiments
-    condition_names = ["HR-accuracy", "FAR-accuracy", 'mean_rt']
+    condition_names = ["HR-accuracy", "FAR-accuracy", "HR-rt"]
     sum_observers = []
     # extract observer index information
     indices_id = extract_id(dataframe, num_count=2)
     for ob in indices_id:
-        print(ob)
         tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
         sum_observers.append(
             [np.sum(tmp_df.results_correct) / 36., np.sum(tmp_df.result_nb_omission) / 36.,
-             np.mean(tmp_df.mean_result_clean_rt)])
-
+             np.mean(tmp_df["HR-rt"])])
     sum_observers = pd.DataFrame(sum_observers, columns=condition_names)
     # for save summary data
     sum_observers.to_csv('../outputs/gonogo/sumdata_egonogo.csv', header=True, index=False)
@@ -260,41 +252,25 @@ if __name__ == '__main__':
     # Bayes accuracy analysis:
     outcomes_names = ["HR-accuracy", "FAR-accuracy"]
     nb_trials = len(dataframe['results_responses'][0])
-    print(nb_trials)
     dataframe['HR-accuracy'] = dataframe.apply(lambda row: row['results_correct'] / nb_trials, axis=1)
     dataframe["FAR-accuracy"] = dataframe.apply(lambda row: row['result_nb_omission'] / nb_trials, axis=1)
     stan_distributions = get_stan_accuracy_distributions(dataframe, outcomes_names, nb_trials)
     # Draw figures for accuracy data
+
     plot_args = {'list_xlim': [0.5, 2.5], 'list_ylim': [0, 1],
                  'list_set_xticklabels': ['HR', 'FAR'], 'list_set_xticks': [1, 2],
                  'list_set_yticklabels': ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
                  'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]}
     plot_all_accuracy_figures(stan_distributions, outcomes_names, 'gonogo', dataframe, nb_trials, plot_args)
     # -------------------------------------------------------------------#
-    # Masataka
-    # calculate the mean distribution and the credible interval
-    # class_stan_accuracy = [CalStan_accuracy(sum_observers, ind_corr_resp=n) for n in range(2)]
-    # class_stan_rt = CalStan_rt(sum_observers, ind_rt=2, max_rt=1000)
-    #
-    # # draw figures
-    # # for accuracy data
-    # dist_ind = sum_observers.iloc[0:len(sum_observers), 0:2].values / 36.
-    # dist_summary = extract_mu_ci_from_summary_accuracy(class_stan_accuracy, [0, 1])
-    # draw_all_distributions(dist_ind, dist_summary, len(sum_observers), num_cond=2, std_val=0.05,
-    #                        fname_save='../outputs/gonogo/gonogo_hrfar.png')
-    #
-    # dist_ind = sum_observers.iloc[0:len(sum_observers), 2].values
-    # dist_summary = extract_mu_ci_from_summary_rt(class_stan_rt)
-    # draw_all_distributions_rt(dist_ind, dist_summary, len(sum_observers), num_cond=1, std_val=0.05,
-    #                           fname_save='../outputs/gonogo/gonogo_rt.png')
-
-    # dist_ind = sum_observers.iloc[0:len(sum_observers), 2].values
-    # dist_summary = extract_mu_ci_from_summary_rt(class_stan_rt)
-    # draw_all_distributions(dist_ind, dist_summary, len(sum_observers), num_cond=1, std_val=0.05,
-    #                         list_xlim=[0.5,1.5],list_ylim=[0,1],
-    #                         list_set_xticklabels=['HR'],list_set_xticks=[1],
-    #                         list_set_yticklabels=['0', '250', '500', '750'],list_set_yticks=[0, 250, 500, 750],
-    #                         val_ticks=25,
-    #                         fname_save='../outputs/gonogo/gonogo_rt.png')
-
+    # BAYES RT ANALYSIS:
+    conditions_full_names = ["HR-rt"]
+    values_conditions = ["HR"]
+    stan_rt_distributions = get_stan_RT_distributions(dataframe, values_conditions)
+    plt_args = {'list_xlim': [0.5, 1.5], 'list_ylim': [0, 1],
+                'list_set_xticklabels': ['HR-rt'], 'list_set_xticks': [1],
+                'list_set_yticklabels': ['0', '250', '500', '750'], 'list_set_yticks': [0, 250, 500, 750],
+                'val_ticks': 25}
+    plot_all_rt_figures(stan_rt_distributions, conditions_full_names, dataframe=dataframe, task_name='gonogo',
+                        plot_args=plt_args)
     print('finished')

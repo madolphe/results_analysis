@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from cal_stan_accuracy_rt import CalStan_accuracy
+from cal_stan_accuracy_rt import CalStan_accuracy, CalStan_rt
 from matplotlib.ticker import MultipleLocator
 
 
@@ -22,8 +22,59 @@ def extract_id(dataframe, num_count):
     return indices_id
 
 
+def extract_mu_ci_from_summary_rt(dataframe, ind_cond):
+    outs = np.zeros((len(ind_cond), 3))  # 3 means the mu, ci_min, and ci_max
+    for index, _ in enumerate(ind_cond):
+        outs[index, 0] = dataframe[index].mu_rt
+        outs[index, 1] = dataframe[index].ci_min
+        outs[index, 2] = dataframe[index].ci_max
+    return outs
+
+
+def get_stan_RT_distributions(dataframe, conditons_number):
+    """
+
+    """
+    # Get pre-test post-test
+    conditions_rt = [f"{condition}-rt" for condition in conditons_number]
+    conditions_nb = [f"{condition}-nb" for condition in conditons_number]
+    pretest, posttest = get_pre_post_dataframe(dataframe, conditions_rt + conditions_nb)
+
+    # Get accross sessions dataframe:
+    sum_observers = get_overall_dataframe(dataframe, conditions_rt + conditions_nb)
+    sum_observers['total_resp'], pretest['total_resp'], posttest['total_resp'] = (None for i in range(3))
+    observations = [sum_observers, pretest, posttest]
+
+    # Prepare variables to handle results:
+    # class_stan_rt_overall, class_stan_rt_pretest, class_stan_rt_posttest = [], [], []
+    distributions_results = {'overall': [], 'pretest': [], 'posttest': []}
+
+    for distrib_key, observation in zip(distributions_results.keys(), observations):
+        for condition_rt, condition_nb in zip(conditions_rt, conditions_nb):
+            observation['total_resp'] = observation[condition_nb]
+            distributions_results[distrib_key].append(CalStan_rt(observation, ind_rt=condition_rt, max_rt=1000))
+    return distributions_results
+
+
+def plot_all_rt_figures(stan_distributions, condition_names, dataframe, task_name, plot_args):
+    # 1) plot comparison
+    plot_prepost_stan_distribution(condition_names, stan_distributions,
+                                   f'../outputs/{task_name}/{task_name}_distrib_reliability.png', variable='mu')
+    # 2) plot rt measure for all task
+    sum_observers = get_overall_dataframe(dataframe, condition_names)
+    dist_ind = sum_observers[condition_names].values
+    # stan_distributions[0] corresponds to mean between pre and post session
+    dist_summary = extract_mu_ci_from_summary_rt(stan_distributions['overall'], condition_names)
+    draw_all_distributions(dist_ind, dist_summary, len(sum_observers), num_cond=len(condition_names), std_val=0.05,
+                           **plot_args,
+                           fname_save=f'../outputs/{task_name}/{task_name}_rt.png')
+
+
 def plot_all_accuracy_figures(stan_distributions, outcomes_names, task_name, overall_initial_data, nb_trials,
                               plot_args):
+    """
+    This function plot histogram + kde for pre-post and mean between pre/post for the estimated parameter
+    """
     plot_prepost_mean_accuracy_distribution(outcomes_names, stan_distributions,
                                             f'../outputs/{task_name}/{task_name}_distrib_reliability.png')
     dist_ind = overall_initial_data.loc[:, outcomes_names].values
@@ -34,25 +85,33 @@ def plot_all_accuracy_figures(stan_distributions, outcomes_names, task_name, ove
                            fname_save=f'../outputs/{task_name}/{task_name}_hrfar.png', **plot_args)
 
 
-def get_stan_accuracy_distributions(dataframe, outcomes_names, nb_trials):
+def get_stan_accuracy_distributions(dataframe, conditons_names, nb_trials):
+    """
+    For this version: dataframe should have the columns specified in outcome_names - those columns should represent the
+    accuracy (and not the number of success!).
+    1) 2 functions are used to extract pretest, postest and cross-sessions dataframes
+    2) We had the total number of trials - this should be the same for all conditions and for pre/post/across
+    3) We transform accuracy into nb of success - NOTE that for across task this is gonna be the mean between the pre and post
+    so that we can use the same number of responses for pre/post/across (compared to masataka's work where the number of
+    response is 2*nb_trial_per_session and where the number of success was summed)
+    """
     # Our goal is to have summary of 2 days experiment (i.e accuracy mean between pre and post);
     # acc in pre and acc in post
     # Divide in pretest / posttest
-    pretest, posttest = get_pre_post_dataframe(dataframe, outcomes_names)
+    pretest, posttest = get_pre_post_dataframe(dataframe, conditons_names)
     # Get mean data for
-    sum_observers = get_overall_dataframe(dataframe, outcomes_names)
+    sum_observers = get_overall_dataframe(dataframe, conditons_names)
 
-    # If data are passed in forms of accuracy measures, we need to consider
     # Add column of number of trials :
     sum_observers['total_resp'], pretest['total_resp'], posttest['total_resp'] = (nb_trials for i in range(3))
 
     # Transform accuracy into nb of success:
-    transform_accuracy_to_nb_success([sum_observers, pretest, posttest], outcomes_names)
+    transform_accuracy_to_nb_success([sum_observers, pretest, posttest], conditons_names)
 
     # Compute stan_accuracy for all conditions:
-    class_stan_accuracy_overall = [CalStan_accuracy(sum_observers, ind_corr_resp=n) for n in outcomes_names]
-    class_stan_accuracy_pretest = [CalStan_accuracy(pretest, ind_corr_resp=n) for n in outcomes_names]
-    class_stan_accuracy_posttest = [CalStan_accuracy(posttest, ind_corr_resp=n) for n in outcomes_names]
+    class_stan_accuracy_overall = [CalStan_accuracy(sum_observers, ind_corr_resp=n) for n in conditons_names]
+    class_stan_accuracy_pretest = [CalStan_accuracy(pretest, ind_corr_resp=n) for n in conditons_names]
+    class_stan_accuracy_posttest = [CalStan_accuracy(posttest, ind_corr_resp=n) for n in conditons_names]
 
     # Group all stan distributions into a dict:
     stan_distributions = {'overall': class_stan_accuracy_overall,
@@ -171,6 +230,47 @@ def plot_prepost_mean_accuracy_distribution(conditions, stan_distributions, fign
 
         # Now plot correctly what we need:
         sns.histplot(df, x='theta_across_obs', hue='condition', stat='density', kde=True, ax=axs[index, 0])
+        axs[index, 0].legend([], [], frameon=False)
+        # Put a legend to the right side
+        sns.histplot(pd.DataFrame(tmp_diff), stat='density', kde=True, ax=axs[index, 1])
+        axs[index, 1].axvline(x=tmp_diff.mean(), c='red')
+        axs[index, 1].axvline(x=np.percentile(tmp_diff.to_list(), 2.5), c='red', linestyle='--')
+        axs[index, 1].axvline(x=np.percentile(tmp_diff.to_list(), 97.5), c='red', linestyle='--')
+        axs[index, 1].legend([], [], frameon=False)
+
+    fig.tight_layout()
+    fig.savefig(figname)
+
+
+def plot_prepost_stan_distribution(conditions, stan_distributions, figname, variable):
+    """
+    conditions = ["1", "4", "8"]
+    stan_distributions is a dict with keys 'overall', 'pretest', 'posttest' with values corresponding to list
+    of pystan object where each pystan object is the distribution of p across observers for each condition
+    ex : stan_distributions['overall'][index_condition].df_results['theta_accross_obs'] = list of sampled p
+    """
+
+    fig, axs = plt.subplots(len(conditions), 2)
+    if len(conditions) == 1:
+        axs = np.expand_dims(axs, axis=0)
+
+    for index, condition in enumerate(conditions):
+        # Get all data:
+
+        tmp_overall = pd.DataFrame(stan_distributions['overall'][index].df_results[variable])
+        tmp_overall['condition'] = 'overall'
+
+        tmp_pretest = pd.DataFrame(stan_distributions['pretest'][index].df_results[variable])
+        tmp_pretest['condition'] = 'pretest'
+
+        tmp_posttest = pd.DataFrame(stan_distributions['posttest'][index].df_results[variable])
+        tmp_posttest['condition'] = 'posttest'
+
+        tmp_diff = tmp_posttest[variable] - tmp_pretest[variable]
+        df = pd.concat([tmp_overall, tmp_posttest, tmp_pretest], axis=0)
+
+        # Now plot correctly what we need:
+        sns.histplot(df, x=variable, hue='condition', stat='density', kde=True, ax=axs[index, 0])
         axs[index, 0].legend([], [], frameon=False)
         # Put a legend to the right side
         sns.histplot(pd.DataFrame(tmp_diff), stat='density', kde=True, ax=axs[index, 1])
