@@ -61,13 +61,13 @@ if __name__ == '__main__':
     # extract observer index information
     indices_id = extract_id(dataframe, num_count=2)
     for ob in indices_id:
-        print(ob)
         tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
-        sum_observers.append([np.mean(tmp_df.accuracy_near), np.sum(tmp_df.accuracy_far)])
-    sum_observers = pd.DataFrame(sum_observers, conditions_names)
+        sum_observers.append([ob]+[np.mean(tmp_df.accuracy_near), np.sum(tmp_df.accuracy_far)])
+    sum_observers = pd.DataFrame(sum_observers, columns=['participant_id']+conditions_names)
     # for save summary data
     sum_observers['total_resp'] = sum_observers.apply(lambda row: 40, axis=1)  # two days task
     sum_observers.to_csv('../outputs/loadblindness/sumdata_loadblindness.csv', header=True, index=False)
+    breakpoint()
     # -------------------------------------------------------------------#
 
     # -------------------------------------------------------------------#

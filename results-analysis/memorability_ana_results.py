@@ -74,7 +74,7 @@ if __name__ == '__main__':
     for ob in indices_id:
         tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
         tmp_results = Results_memory(tmp_df)
-        sum_observers.append(np.concatenate((tmp_results.out_mat_hit_miss_sum, tmp_results.out_mat_fa_cr_sum,
+        sum_observers.append(np.concatenate(([ob], tmp_results.out_mat_hit_miss_sum, tmp_results.out_mat_fa_cr_sum,
                                              tmp_results.out_mat_rt_cond, tmp_results.out_mat_rt_cond_std)))
         # Task status index varies from 0 to 3 => pre/post for memo 1 and 2
         # We use Results_memory for one participant_id for pre and post (and we do it for both memo 1 and 2)
@@ -95,12 +95,11 @@ if __name__ == '__main__':
     for condition in conditions:
         for keyword in keywords:
             columns.append(f"{keyword}-{condition}")
-    sum_observers = pd.DataFrame(sum_observers, columns=columns)
+    sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + columns)
     # for save summary data
     sum_observers.to_csv('../outputs/memorability/sumdata_memorability.csv', header=True, index=False)
     sum_observers['total_resp'] = sum_observers.apply(lambda row: 32, axis=1)
     dataframe['total_resp'] = dataframe.apply(lambda row: 32, axis=1)
-
     # for hr data
     # -------------------------------------------------------------------#
     # BAYES ACCURACY ANALYSIS

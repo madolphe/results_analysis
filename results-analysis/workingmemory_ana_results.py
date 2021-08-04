@@ -78,10 +78,10 @@ if __name__ == '__main__':
         print(ob)
         tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
         # Summation over the two sessions:
-        sum_observers.append([np.sum(tmp_df[f"sum-{col}"]) / (2 * nb_trials) for col in number_condition])
+        sum_observers.append([ob] + [np.sum(tmp_df[f"sum-{col}"]) / (2 * nb_trials) for col in number_condition])
         # sum_observers.append(
         #     [np.sum(tmp_df.sum4), np.sum(tmp_df.sum5), np.sum(tmp_df.sum6), np.sum(tmp_df.sum7), np.sum(tmp_df.sum8)])
-    sum_observers = pd.DataFrame(sum_observers, columns=condition_names)
+    sum_observers = pd.DataFrame(sum_observers, columns=['participant_id']+condition_names)
     sum_observers['total_resp'] = sum_observers.apply(lambda row: 2 * nb_trials, axis=1)  # two days task
     sum_observers.to_csv('../outputs/workingmemory/sumdata_workingmemory.csv', header=True, index=False)
 

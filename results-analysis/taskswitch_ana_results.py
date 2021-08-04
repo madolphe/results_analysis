@@ -342,20 +342,20 @@ if __name__ == '__main__':
     for ob in indices_id:
         tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
         participant_tmp = []
+        participant_tmp.append(ob)
         for condition in condition_names:
             participant_tmp.append(np.sum(tmp_df[f"{condition}-correct"]))
             participant_tmp.append(np.sum(tmp_df[f"{condition}-nb"]))
             participant_tmp.append(np.mean(tmp_df[f"{condition}-correct"] / tmp_df[f"{condition}-nb"]))
             participant_tmp.append(np.mean(tmp_df[f"{condition}-rt"]))
         sum_observers.append(participant_tmp)
-    columns, keywords = [], ['correct', 'nb', 'accuracy', 'rt']
+    columns, keywords = ['participant_id'], ['correct', 'nb', 'accuracy', 'rt']
     for condition in condition_names:
         for keyword in keywords:
             columns.append(f"{condition}-{keyword}")
     sum_observers = pd.DataFrame(sum_observers, columns=columns)
     # for save summary data
     sum_observers.to_csv('../outputs/taskswitch/sumdata_taskswitch.csv', header=True, index=False)
-
     # -------------------------------------------------------------------#
     # BAYES ACCURACY :
     nb_trials_names = [f"{condition}-nb" for condition in condition_names]

@@ -90,8 +90,8 @@ if __name__ == '__main__':
     indices_id = extract_id(dataframe, num_count=2)
     for ob in indices_id:
         tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
-        sum_observers.append([tmp_df[col].mean(axis=0) for col in tmp_df.columns if "accuracy" in col])
-    sum_observers = pd.DataFrame(sum_observers, columns=condition_names)
+        sum_observers.append([ob]+[tmp_df[col].mean(axis=0) for col in tmp_df.columns if "accuracy" in col])
+    sum_observers = pd.DataFrame(sum_observers, columns=['participant_id']+condition_names)
     sum_observers.to_csv('../outputs/enumeration/sumdata_enumeration.csv', header=True, index=False)
     # -------------------------------------------------------------------#
 

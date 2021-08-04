@@ -241,13 +241,12 @@ if __name__ == '__main__':
     for ob in indices_id:
         tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
         sum_observers.append(
-            [np.sum(tmp_df.results_correct) / 36., np.sum(tmp_df.result_nb_omission) / 36.,
+            [ob, np.sum(tmp_df.results_correct) / 36., np.sum(tmp_df.result_nb_omission) / 36.,
              np.mean(tmp_df["HR-rt"])])
-    sum_observers = pd.DataFrame(sum_observers, columns=condition_names)
+    sum_observers = pd.DataFrame(sum_observers, columns=['participant_id']+condition_names)
     # for save summary data
     sum_observers.to_csv('../outputs/gonogo/sumdata_egonogo.csv', header=True, index=False)
     sum_observers['total_resp'] = sum_observers.apply(lambda row: 36, axis=1)  # two days task
-
     # -------------------------------------------------------------------#
     # Bayes accuracy analysis:
     outcomes_names = ["HR-accuracy", "FAR-accuracy"]

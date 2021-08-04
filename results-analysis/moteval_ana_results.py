@@ -50,8 +50,8 @@ if __name__ == '__main__':
     outcomes_names = ["1-rt", "1-accuracy", "4-rt", "4-accuracy", "8-rt", "8-accuracy"]
     for ob in indices_id:
         tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
-        sum_observers.append([np.mean(tmp_df[index]) for index in outcomes_names])
-    sum_observers = pd.DataFrame(sum_observers, columns=outcomes_names)
+        sum_observers.append([ob]+[np.mean(tmp_df[index]) for index in outcomes_names])
+    sum_observers = pd.DataFrame(sum_observers, columns=['participant_id']+outcomes_names)
     sum_observers['total_resp'] = dataframe.apply(count_number_of_trials, axis=1)  # two days task
     # for save summary data
     sum_observers.to_csv('../outputs/moteval/sumdata_moteval.csv')
