@@ -54,7 +54,7 @@ if __name__ == '__main__':
     sum_observers = pd.DataFrame(sum_observers, columns=['participant_id']+outcomes_names)
     sum_observers['total_resp'] = dataframe.apply(count_number_of_trials, axis=1)  # two days task
     # for save summary data
-    sum_observers.to_csv('../outputs/moteval/sumdata_moteval.csv')
+    sum_observers.to_csv('../outputs/moteval/sumdata_moteval.csv', index=False)
     # -------------------------------------------------------------------#
 
     # -------------------------------------------------------------------#

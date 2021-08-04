@@ -92,8 +92,8 @@ if __name__ == '__main__':
                         tmp_cond = 'out_mat_rt_cond'
                     dataframe.loc[row_index, condition] = tmp_row.__dict__[tmp_cond][condition_index]
     columns, keywords = [], ['out_mat_hit_miss_sum', 'out_mat_fa_cr_sum', 'out_mat_rt_cond', 'out_mat_rt_cond_std']
-    for condition in conditions:
-        for keyword in keywords:
+    for keyword in keywords:
+        for condition in conditions:
             columns.append(f"{keyword}-{condition}")
     sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + columns)
     # for save summary data
