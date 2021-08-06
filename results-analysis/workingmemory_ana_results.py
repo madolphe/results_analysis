@@ -51,7 +51,7 @@ if __name__ == '__main__':
     # FIRST TREAT THE CSV AND PARSE IT TO DF
     # data loading
     csv_path = "../outputs/workingmemory/workingmemory.csv"
-    dataframe = pd.read_csv(csv_path)
+    dataframe = pd.read_csv(csv_path, sep=";")
     dataframe = delete_uncomplete_participants(dataframe)
     dataframe["results_correct"] = dataframe.apply(lambda row: transform_string_to_row(row, "results_correct"),
                                                    axis=1)
@@ -66,7 +66,11 @@ if __name__ == '__main__':
     for t in number_condition:
         dataframe[str(t)] = dataframe.apply(lambda row: compute_numbercond(row, t), axis=1)
         dataframe['sum-' + str(t)] = dataframe.apply(lambda row: compute_sum_to_row(row, str(t)), axis=1)
-
+        dataframe[f'{t}-nb'] = dataframe.apply(lambda row: len(row[str(t)]), axis=1)
+        dataframe[f'{t}-accuracy'] = dataframe['sum-' + str(t)] / dataframe[f'{t}-nb']
+    condition_accuracy_names = [f"{elt}-accuracy" for elt in number_condition]
+    dataframe[['participant_id', 'task_status'] + condition_accuracy_names].to_csv(
+        '../outputs/workingmemory/workingmemory_lfa.csv', index=False)
     # extract observer index information
     indices_id = extract_id(dataframe, num_count=2)
     # sumirize two days experiments
@@ -81,7 +85,7 @@ if __name__ == '__main__':
         sum_observers.append([ob] + [np.sum(tmp_df[f"sum-{col}"]) / (2 * nb_trials) for col in number_condition])
         # sum_observers.append(
         #     [np.sum(tmp_df.sum4), np.sum(tmp_df.sum5), np.sum(tmp_df.sum6), np.sum(tmp_df.sum7), np.sum(tmp_df.sum8)])
-    sum_observers = pd.DataFrame(sum_observers, columns=['participant_id']+condition_names)
+    sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + condition_names)
     sum_observers['total_resp'] = sum_observers.apply(lambda row: 2 * nb_trials, axis=1)  # two days task
     sum_observers.to_csv('../outputs/workingmemory/sumdata_workingmemory.csv', header=True, index=False)
 

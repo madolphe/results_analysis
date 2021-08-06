@@ -247,7 +247,7 @@ if __name__ == '__main__':
     # -------------------------------------------------------------------#
     # DATAFRAME CREATION
     csv_path = "../outputs/taskswitch/taskswitch.csv"
-    dataframe = pd.read_csv(csv_path)
+    dataframe = pd.read_csv(csv_path, sep=";")
     dataframe = delete_uncomplete_participants(dataframe)
     dataframe["results_responses"] = dataframe.apply(lambda row: transform_string_to_row(row, "results_responses"),
                                                      axis=1)
@@ -336,7 +336,11 @@ if __name__ == '__main__':
     condition_names = ['parity-switch', 'parity-unswitch', 'relative-switch', 'relative-unswitch']
     condition_names_accuracy = [f"{condition}-accuracy" for condition in condition_names]
     condition_names_rt = [f"{condition}-rt" for condition in condition_names]
-
+    for condition in condition_names:
+        for condition_acc in condition_names_accuracy:
+            dataframe[condition_acc] = dataframe[f"{condition}-correct"] / dataframe[f"{condition}-nb"]
+    dataframe[['participant_id', 'task_status'] + condition_names_accuracy + condition_names_rt].to_csv(
+        "../outputs/taskswitch/taskswitch_lfa.csv", index=False)
     # extract observer index information
     indices_id = extract_id(dataframe, num_count=2)
     for ob in indices_id:

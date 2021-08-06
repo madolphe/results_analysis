@@ -36,7 +36,7 @@ def compute_sum_to_row(row, column):
 
 if __name__ == '__main__':
     csv_path = "../outputs/loadblindness/loadblindness.csv"
-    dataframe = pd.read_csv(csv_path)
+    dataframe = pd.read_csv(csv_path, sep=";")
     dataframe = delete_uncomplete_participants(dataframe)
     dataframe["results_responses_pos"] = dataframe.apply(
         lambda row: transform_string_to_row(row, "results_responses_pos"),
@@ -62,17 +62,18 @@ if __name__ == '__main__':
     indices_id = extract_id(dataframe, num_count=2)
     for ob in indices_id:
         tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
-        sum_observers.append([ob]+[np.mean(tmp_df.accuracy_near), np.sum(tmp_df.accuracy_far)])
-    sum_observers = pd.DataFrame(sum_observers, columns=['participant_id']+conditions_names)
+        sum_observers.append([ob] + [np.mean(tmp_df.accuracy_near), np.sum(tmp_df.accuracy_far)])
+    sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + conditions_names)
     # for save summary data
     sum_observers['total_resp'] = sum_observers.apply(lambda row: 40, axis=1)  # two days task
     sum_observers.to_csv('../outputs/loadblindness/sumdata_loadblindness.csv', header=True, index=False)
-    breakpoint()
     # -------------------------------------------------------------------#
 
     # -------------------------------------------------------------------#
     # BAYES ANALYSIS
     nb_trials = len(dataframe['near_response'][0])
+    dataframe[['participant_id', 'task_status'] + conditions_names].to_csv(
+        '../outputs/loadblindness/loadblindness_lfa.csv', index=False)
     stan_distributions = get_stan_accuracy_distributions(dataframe, conditions_names, nb_trials)
     # Draw figures for accuracy data
     plot_args = {'list_xlim': [0.5, 2.5], 'list_ylim': [0, 1],

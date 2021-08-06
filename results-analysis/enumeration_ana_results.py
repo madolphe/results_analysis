@@ -42,7 +42,7 @@ if __name__ == '__main__':
     # -------------------------------------------------------------------#
     # FIRST TREAT THE CSV AND PARSE IT TO DF
     csv_path = "../outputs/enumeration/enumeration.csv"
-    dataframe = pd.read_csv(csv_path)
+    dataframe = pd.read_csv(csv_path, sep=";")
     dataframe['result_response_exact'] = dataframe.apply(compute_result_exact_answers, axis=1)
 
     dataframe['mean_rt_session'] = dataframe.apply(compute_mean_per_row, axis=1)
@@ -83,7 +83,7 @@ if __name__ == '__main__':
     for index, condition in zip(condition_possibilities, condition_names):
         print(index, condition, dataframe[str(index)].apply(lambda row: len(row))[0])
         dataframe[f"{condition}"] = dataframe[f"{index}-sum"] / dataframe[str(index)].apply(lambda row: len(row))
-
+    dataframe[['participant_id', 'task_status']+condition_names].to_csv('../outputs/enumeration/enumeration_lfa.csv', index=False)
     # summarize two days experiments
     sum_observers = []
     # extract observer index information

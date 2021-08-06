@@ -48,12 +48,12 @@ def extract_mu_ci_from_summary_rt(dataframe, ind_cond):
 if __name__ == '__main__':
 
     csv_path_1 = "../outputs/memorability/memorability_1.csv"
-    dataframe_1 = pd.read_csv(csv_path_1)
+    dataframe_1 = pd.read_csv(csv_path_1, sep=";")
     dataframe_1 = delete_uncomplete_participants(dataframe_1)
     dataframe_1['session'] = 1
 
     csv_path_2 = "../outputs/memorability/memorability_2.csv"
-    dataframe_2 = pd.read_csv(csv_path_2)
+    dataframe_2 = pd.read_csv(csv_path_2, sep=";")
     dataframe_2 = delete_uncomplete_participants(dataframe_2)
     dataframe_2['session'] = 2
 
@@ -108,6 +108,11 @@ if __name__ == '__main__':
     dataframe = dataframe[dataframe['session'] == 1]
     nb_trials = 32
     dataframe[conditions_names_hit_miss] = dataframe[conditions_names_hit_miss] / nb_trials
+    dataframe[conditions_names_fa_cr] = dataframe[conditions_names_fa_cr] / nb_trials
+    dataframe[['participant_id',
+               'task_status'] + conditions_names_hit_miss + conditions_names_rt + conditions_names_fa_cr].to_csv(
+        '../outputs/memorability/memorability_lfa.csv', index=False)
+
     stan_distributions = get_stan_accuracy_distributions(dataframe, conditions_names_hit_miss, nb_trials)
     # Draw figures for accuracy data
     plt_args = {'list_xlim': [0.75, 5.25], 'list_ylim': [0, 1],
