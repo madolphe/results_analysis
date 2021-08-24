@@ -68,7 +68,7 @@ class CalStan_accuracy():
 
 
 class CalStan_rt():
-    def __init__(self, dataframe, ind_rt='rt', max_rt=1400, num_chains=4, num_samples=10):
+    def __init__(self, dataframe, ind_rt='rt', max_rt=1400, num_chains=4, num_samples=10000):
         self.binomial_code = """
         data {
           int nums;  //total number of participants

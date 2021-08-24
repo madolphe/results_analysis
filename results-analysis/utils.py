@@ -226,7 +226,7 @@ def plot_prepost_mean_accuracy_distribution(conditions, stan_distributions, fign
         tmp_posttest['condition'] = 'posttest'
 
         tmp_diff = tmp_posttest['theta_across_obs'] - tmp_pretest['theta_across_obs']
-        df = pd.concat([tmp_overall, tmp_posttest, tmp_pretest], axis=0)
+        df = pd.concat([tmp_overall, tmp_posttest, tmp_pretest], axis=0,ignore_index=True)
 
         # Now plot correctly what we need:
         sns.histplot(df, x='theta_across_obs', hue='condition', stat='density', kde=True, ax=axs[index, 0])
@@ -237,6 +237,7 @@ def plot_prepost_mean_accuracy_distribution(conditions, stan_distributions, fign
         axs[index, 1].axvline(x=np.percentile(tmp_diff.to_list(), 2.5), c='red', linestyle='--')
         axs[index, 1].axvline(x=np.percentile(tmp_diff.to_list(), 97.5), c='red', linestyle='--')
         axs[index, 1].legend([], [], frameon=False)
+        axs[index, 1].set_xlim(-0.2,0.2)
 
     fig.tight_layout()
     fig.savefig(figname)
@@ -267,7 +268,7 @@ def plot_prepost_stan_distribution(conditions, stan_distributions, figname, vari
         tmp_posttest['condition'] = 'posttest'
 
         tmp_diff = tmp_posttest[variable] - tmp_pretest[variable]
-        df = pd.concat([tmp_overall, tmp_posttest, tmp_pretest], axis=0)
+        df = pd.concat([tmp_overall, tmp_posttest, tmp_pretest], axis=0,ignore_index=True)
 
         # Now plot correctly what we need:
         sns.histplot(df, x=variable, hue='condition', stat='density', kde=True, ax=axs[index, 0])
