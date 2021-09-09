@@ -48,12 +48,12 @@ def extract_mu_ci_from_summary_rt(dataframe, ind_cond):
 if __name__ == '__main__':
 
     csv_path_1 = "../outputs/memorability/memorability_1.csv"
-    dataframe_1 = pd.read_csv(csv_path_1, sep=";")
+    dataframe_1 = pd.read_csv(csv_path_1)
     dataframe_1 = delete_uncomplete_participants(dataframe_1)
     dataframe_1['session'] = 1
 
     csv_path_2 = "../outputs/memorability/memorability_2.csv"
-    dataframe_2 = pd.read_csv(csv_path_2, sep=";")
+    dataframe_2 = pd.read_csv(csv_path_2)
     dataframe_2 = delete_uncomplete_participants(dataframe_2)
     dataframe_2['session'] = 2
 
@@ -98,38 +98,52 @@ if __name__ == '__main__':
     sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + columns)
     # for save summary data
     sum_observers.to_csv('../outputs/memorability/sumdata_memorability.csv', header=True, index=False)
-    sum_observers['total_resp'] = sum_observers.apply(lambda row: 32, axis=1)
-    dataframe['total_resp'] = dataframe.apply(lambda row: 32, axis=1)
+    sum_observers['total_resp'] = sum_observers.apply(lambda row: 16, axis=1)
+    dataframe['total_resp'] = dataframe.apply(lambda row: 16, axis=1)
     # for hr data
     # -------------------------------------------------------------------#
     # BAYES ACCURACY ANALYSIS
     # For accuracy analysis, let's focus on the outcomes:
     # Just drop second part of df that is useless:
     dataframe = dataframe[dataframe['session'] == 1]
-    nb_trials = 32
+    nb_trials = 16
     dataframe[conditions_names_hit_miss] = dataframe[conditions_names_hit_miss] / nb_trials
     dataframe[conditions_names_fa_cr] = dataframe[conditions_names_fa_cr] / nb_trials
     dataframe[['participant_id',
                'task_status'] + conditions_names_hit_miss + conditions_names_rt + conditions_names_fa_cr].to_csv(
         '../outputs/memorability/memorability_lfa.csv', index=False)
 
-    stan_distributions = get_stan_accuracy_distributions(dataframe, conditions_names_hit_miss, nb_trials)
+    #for hr distribution
+    stan_distributions = get_stan_accuracy_distributions(dataframe, conditions_names_hit_miss,nb_trials)
     # Draw figures for accuracy data
-    plt_args = {'list_xlim': [0.75, 5.25], 'list_ylim': [0, 1],
-                'list_set_xticklabels': ['2', '3', '4', '5', '>100'], 'list_set_xticks': [1, 2, 3, 4, 5],
+    plt_args = {'list_xlim': [-0.25, 4.25], 'list_ylim': [0, 1],
+                'list_set_xticklabels': ['2', '3', '4', '5', '>100'], 'list_set_xticks': [0, 1, 2, 3, 4],
                 'list_set_yticklabels': ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
-                'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]}
+                'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0],
+                'scale_jitter': 0.5}
     plot_all_accuracy_figures(stan_distributions, conditions_names_hit_miss, 'memorability', dataframe, nb_trials,
-                              plt_args)
+                              plt_args,name_option='hr')
+    #for far distribution
+    stan_distributions = get_stan_accuracy_distributions(dataframe, conditions_names_fa_cr,nb_trials)
+    # Draw figures for accuracy data
+    plt_args = {'list_xlim': [-0.25, 4.25], 'list_ylim': [0, 1],
+                'list_set_xticklabels': ['2', '3', '4', '5', '>100'], 'list_set_xticks': [0, 1, 2, 3, 4],
+                'list_set_yticklabels': ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
+                'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0],
+                'scale_jitter': 0.5}
+    plot_all_accuracy_figures(stan_distributions, conditions_names_fa_cr, 'memorability', dataframe, nb_trials,
+                              plt_args,name_option='far')
+
     # -------------------------------------------------------------------#
     # BAYES RT ANALYSIS:
     conditions_nb = [f"{condition}-nb" for condition in conditions]
     dataframe[conditions_nb] = 32
     stan_rt_distributions = get_stan_RT_distributions(dataframe, conditions)
-    plt_args = {"list_xlim": [0.75, 5.25], "list_ylim": [0, 1200],
-                "list_set_xticklabels": ['2', '3', '4', '5', '>100'], "list_set_xticks": [1, 2, 3, 4, 5],
+    plt_args = {"list_xlim": [-0.25, 4.25], "list_ylim": [0, 1200],
+                "list_set_xticklabels": ['2', '3', '4', '5', '>100'], "list_set_xticks": [0, 1, 2, 3, 4],
                 "list_set_yticklabels": ['0', '400', '800', '1200'], "list_set_yticks": [0, 400, 800, 1200],
-                "val_ticks": 25}
+                "val_ticks": 25,
+                'scale_jitter': 0.5}
     plot_all_rt_figures(stan_rt_distributions, conditions_names_rt, dataframe=dataframe, task_name='memorability',
                         plot_args=plt_args)
     print('finished')

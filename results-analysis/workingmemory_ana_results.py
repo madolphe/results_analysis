@@ -51,7 +51,7 @@ if __name__ == '__main__':
     # FIRST TREAT THE CSV AND PARSE IT TO DF
     # data loading
     csv_path = "../outputs/workingmemory/workingmemory.csv"
-    dataframe = pd.read_csv(csv_path, sep=";")
+    dataframe = pd.read_csv(csv_path, sep=",")
     dataframe = delete_uncomplete_participants(dataframe)
     dataframe["results_correct"] = dataframe.apply(lambda row: transform_string_to_row(row, "results_correct"),
                                                    axis=1)
@@ -96,10 +96,11 @@ if __name__ == '__main__':
         dataframe[condition_name] = dataframe.apply(lambda row: np.mean(row[str(condition)]), axis=1)
     stan_distributions = get_stan_accuracy_distributions(dataframe, condition_names, nb_trials)
     # Draw figures for accuracy data
-    plt_args = {'list_xlim': [0.75, 5.25], 'list_ylim': [0, 1],
-                'list_set_xticklabels': ['4', '5', '6', '7', '8'], 'list_set_xticks': [1, 2, 3, 4, 5],
+    plt_args = {'list_xlim': [-0.25, 4.25], 'list_ylim': [0, 1],
+                'list_set_xticklabels': ['4', '5', '6', '7', '8'], 'list_set_xticks': [0, 1, 2, 3, 4],
                 'list_set_yticklabels': ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
-                'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]}
+                'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0],
+                'scale_jitter': 0.5}
     plot_all_accuracy_figures(stan_distributions, condition_names, 'workingmemory', dataframe, nb_trials, plt_args)
     # -------------------------------------------------------------------#
     print('finished')

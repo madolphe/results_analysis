@@ -34,7 +34,7 @@ if __name__ == '__main__':
     # -------------------------------------------------------------------#
     # FIRST TREAT THE CSV AND PARSE IT TO DF
     csv_path = "../outputs/moteval/moteval.csv"
-    dataframe = pd.read_csv(csv_path, sep=";")
+    dataframe = pd.read_csv(csv_path, sep=",")
     dataframe = dataframe.apply(lambda row: transform_str_to_list(row, [
         'results_responses', 'results_rt', 'results_speed_stim', 'results_correct']), axis=1)
     dataframe = delete_uncomplete_participants(dataframe)
@@ -68,15 +68,17 @@ if __name__ == '__main__':
     nb_trials = len(dataframe['results_correct'][0])
     stan_distributions = get_stan_accuracy_distributions(dataframe, outcomes_names_acc, nb_trials)
     # Draw figures for accuracy data
-    plt_args = {'list_xlim': [0.75, 3.25], 'list_ylim': [0, 1],
-                'list_set_xticklabels': ['1', '4', '8'], 'list_set_xticks': [1, 2, 3],
-                'list_set_yticklabels': ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
-                'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]}
+    plt_args = {'list_xlim': [-0.25, 2.25], 'list_ylim': [0.4, 1],
+                'list_set_xticklabels': ['1', '4', '8'], 'list_set_xticks': [0, 1, 2],
+                'list_set_yticklabels': ['2', '3', '4', '5'],
+                'list_set_yticks': [0.4, 0.6, 0.8, 1.0],
+                'scale_jitter': 0.3}
     plot_all_accuracy_figures(stan_distributions, outcomes_names_acc, 'moteval', dataframe, nb_trials, plt_args)
     # -------------------------------------------------------------------#
 
     # -------------------------------------------------------------------#
     # BAYES RT ANALYSIS:
+    '''
     stan_rt_distributions = get_stan_RT_distributions(dataframe, ["1", "4", "8"])
     plt_args = {'list_xlim': [0.75, 3.25], 'list_ylim': [0, 1],
                 'list_set_xticklabels': ['1', '4', '8'], 'list_set_xticks': [1, 2, 3],
@@ -84,3 +86,4 @@ if __name__ == '__main__':
                 'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]}
     plot_all_rt_figures(stan_rt_distributions, outcomes_names_rt, dataframe=dataframe, task_name='moteval',
                         plot_args=plt_args)
+    '''

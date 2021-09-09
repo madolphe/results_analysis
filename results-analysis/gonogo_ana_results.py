@@ -175,7 +175,7 @@ def extract_mu_ci_from_summary_rt(dataframe):
 
 if __name__ == '__main__':
     csv_path = "../outputs/gonogo/gonogo.csv"
-    dataframe = pd.read_csv(csv_path, sep=";")
+    dataframe = pd.read_csv(csv_path, sep=",")
 
     dataframe = dataframe.apply(lambda row: transform_str_to_list(row, [
         'results_responses', 'results_rt', 'results_ind_previous', 'results_targetvalue']), axis=1)
@@ -250,17 +250,18 @@ if __name__ == '__main__':
     # -------------------------------------------------------------------#
     # Bayes accuracy analysis:
     outcomes_names = ["HR-accuracy", "FAR-accuracy"]
-    nb_trials = len(dataframe['results_responses'][0])
+    nb_trials = int(len(dataframe['results_responses'][0])/2)
     dataframe['HR-accuracy'] = dataframe.apply(lambda row: row['results_correct'] / nb_trials, axis=1)
     dataframe["FAR-accuracy"] = dataframe.apply(lambda row: row['result_nb_omission'] / nb_trials, axis=1)
-    # stan_distributions = get_stan_accuracy_distributions(dataframe, outcomes_names, nb_trials)
+    stan_distributions = get_stan_accuracy_distributions(dataframe, outcomes_names, nb_trials)
     # Draw figures for accuracy data
 
-    plot_args = {'list_xlim': [0.5, 2.5], 'list_ylim': [0, 1],
-                 'list_set_xticklabels': ['HR', 'FAR'], 'list_set_xticks': [1, 2],
+    plot_args = {'list_xlim': [-0.5, 1.5], 'list_ylim': [0, 1],
+                 'list_set_xticklabels': ['HR', 'FAR'], 'list_set_xticks': [0, 1],
                  'list_set_yticklabels': ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
-                 'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]}
-    # plot_all_accuracy_figures(stan_distributions, outcomes_names, 'gonogo', dataframe, nb_trials, plot_args)
+                 'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0],
+                 'scale_jitter': 0.2}
+    plot_all_accuracy_figures(stan_distributions, outcomes_names, 'gonogo', dataframe, nb_trials, plot_args)
     # -------------------------------------------------------------------#
     # BAYES RT ANALYSIS:
     conditions_full_names = ["HR-rt"]
@@ -268,10 +269,12 @@ if __name__ == '__main__':
         "../outputs/gonogo/gonogo_lfa.csv", index=False)
     values_conditions = ["HR"]
     stan_rt_distributions = get_stan_RT_distributions(dataframe, values_conditions)
-    plt_args = {'list_xlim': [0.5, 1.5], 'list_ylim': [0, 1],
-                'list_set_xticklabels': ['HR-rt'], 'list_set_xticks': [1],
+    plt_args = {'list_xlim': [-0.5, 0.5], 'list_ylim': [0, 1],
+                'list_set_xticklabels': ['HR-rt'], 'list_set_xticks': [0],
                 'list_set_yticklabels': ['0', '250', '500', '750'], 'list_set_yticks': [0, 250, 500, 750],
-                'val_ticks': 25}
+                'val_ticks': 25,
+                'scale_jitter': 0.1,
+                'scale_panel': 2}
     plot_all_rt_figures(stan_rt_distributions, conditions_full_names, dataframe=dataframe, task_name='gonogo',
                         plot_args=plt_args)
     print('finished')

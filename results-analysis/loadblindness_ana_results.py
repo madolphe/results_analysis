@@ -36,7 +36,7 @@ def compute_sum_to_row(row, column):
 
 if __name__ == '__main__':
     csv_path = "../outputs/loadblindness/loadblindness.csv"
-    dataframe = pd.read_csv(csv_path, sep=";")
+    dataframe = pd.read_csv(csv_path, sep=",")
     dataframe = delete_uncomplete_participants(dataframe)
     dataframe["results_responses_pos"] = dataframe.apply(
         lambda row: transform_string_to_row(row, "results_responses_pos"),
@@ -76,10 +76,11 @@ if __name__ == '__main__':
         '../outputs/loadblindness/loadblindness_lfa.csv', index=False)
     stan_distributions = get_stan_accuracy_distributions(dataframe, conditions_names, nb_trials)
     # Draw figures for accuracy data
-    plot_args = {'list_xlim': [0.5, 2.5], 'list_ylim': [0, 1],
-                 'list_set_xticklabels': ['Near', 'Far'], 'list_set_xticks': [1, 2],
+    plot_args = {'list_xlim': [-0.5, 1.5], 'list_ylim': [0, 1],
+                 'list_set_xticklabels': ['Near', 'Far'], 'list_set_xticks': [0, 1],
                  'list_set_yticklabels': ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
-                 'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0], }
+                 'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0],
+                 'scale_jitter': 0.2}
     plot_all_accuracy_figures(stan_distributions, conditions_names, 'loadblindness', dataframe, nb_trials, plot_args)
 
     # calculate the mean distribution and the credible interval

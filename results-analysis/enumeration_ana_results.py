@@ -42,7 +42,7 @@ if __name__ == '__main__':
     # -------------------------------------------------------------------#
     # FIRST TREAT THE CSV AND PARSE IT TO DF
     csv_path = "../outputs/enumeration/enumeration.csv"
-    dataframe = pd.read_csv(csv_path, sep=";")
+    dataframe = pd.read_csv(csv_path, sep=",")
     dataframe['result_response_exact'] = dataframe.apply(compute_result_exact_answers, axis=1)
 
     dataframe['mean_rt_session'] = dataframe.apply(compute_mean_per_row, axis=1)
@@ -101,10 +101,11 @@ if __name__ == '__main__':
     nb_trials = len(dataframe['5'][0])
     stan_distributions = get_stan_accuracy_distributions(dataframe, condition_names, nb_trials)
     # Draw figures for accuracy data
-    plot_args = {'list_xlim': [0.75, 5.25], 'list_ylim': [0, 1],
+    plot_args = {'list_xlim': [-0.25, 4.25], 'list_ylim': [0, 1],
                  'list_set_xticklabels': [str(i) for i in range(5, 10)],
-                 'list_set_xticks': [i for i in range(1, 6)],
+                 'list_set_xticks': [i for i in range(0, 5)],
                  'list_set_yticklabels': ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
-                 'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]}
+                 'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0],
+                 'scale_jitter': 0.5}
     plot_all_accuracy_figures(stan_distributions, condition_names, 'enumeration', dataframe, nb_trials, plot_args)
     print('finished')
