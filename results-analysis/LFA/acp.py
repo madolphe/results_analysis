@@ -221,6 +221,5 @@ if __name__ == '__main__':
     axes.invert_yaxis()
     plt.savefig('heatmap_loadings_pcasummary.png')
     plt.close()
-    import pdb;pdb.set_trace()
     print('finished')
 

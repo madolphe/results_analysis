@@ -245,7 +245,7 @@ if __name__ == '__main__':
              np.mean(tmp_df["HR-rt"])])
     sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + condition_names)
     # for save summary data
-    sum_observers.to_csv('../outputs/gonogo/sumdata_gonogo.csv', header=True, index=False)
+    #sum_observers.to_csv('../outputs/gonogo/sumdata_gonogo.csv', header=True, index=False)
     sum_observers['total_resp'] = sum_observers.apply(lambda row: 36, axis=1)  # two days task
     # -------------------------------------------------------------------#
     # Bayes accuracy analysis:
@@ -253,7 +253,7 @@ if __name__ == '__main__':
     nb_trials = int(len(dataframe['results_responses'][0])/2)
     dataframe['HR-accuracy'] = dataframe.apply(lambda row: row['results_correct'] / nb_trials, axis=1)
     dataframe["FAR-accuracy"] = dataframe.apply(lambda row: row['result_nb_omission'] / nb_trials, axis=1)
-    stan_distributions = get_stan_accuracy_distributions(dataframe, outcomes_names, nb_trials)
+    stan_distributions = get_stan_accuracy_distributions(dataframe, outcomes_names, nb_trials,'gonogo')
     # Draw figures for accuracy data
 
     plot_args = {'list_xlim': [-0.5, 1.5], 'list_ylim': [0, 1],
@@ -268,7 +268,7 @@ if __name__ == '__main__':
     dataframe[['participant_id', 'task_status'] + outcomes_names + conditions_full_names].to_csv(
         "../outputs/gonogo/gonogo_lfa.csv", index=False)
     values_conditions = ["HR"]
-    stan_rt_distributions = get_stan_RT_distributions(dataframe, values_conditions)
+    stan_rt_distributions = get_stan_RT_distributions(dataframe, values_conditions,'gonogo')
     plt_args = {'list_xlim': [-0.5, 0.5], 'list_ylim': [0, 1],
                 'list_set_xticklabels': ['HR-rt'], 'list_set_xticks': [0],
                 'list_set_yticklabels': ['0', '250', '500', '750'], 'list_set_yticks': [0, 250, 500, 750],

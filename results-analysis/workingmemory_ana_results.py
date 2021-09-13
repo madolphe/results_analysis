@@ -87,14 +87,14 @@ if __name__ == '__main__':
         #     [np.sum(tmp_df.sum4), np.sum(tmp_df.sum5), np.sum(tmp_df.sum6), np.sum(tmp_df.sum7), np.sum(tmp_df.sum8)])
     sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + condition_names)
     sum_observers['total_resp'] = sum_observers.apply(lambda row: 2 * nb_trials, axis=1)  # two days task
-    sum_observers.to_csv('../outputs/workingmemory/sumdata_workingmemory.csv', header=True, index=False)
+    #sum_observers.to_csv('../outputs/workingmemory/sumdata_workingmemory.csv', header=True, index=False)
 
     # -------------------------------------------------------------------#
     # BAYES ACCURACY ANALYSIS
     # For accuracy analysis, let's focus on the outcomes:
     for condition_name, condition in zip(condition_names, number_condition):
         dataframe[condition_name] = dataframe.apply(lambda row: np.mean(row[str(condition)]), axis=1)
-    stan_distributions = get_stan_accuracy_distributions(dataframe, condition_names, nb_trials)
+    stan_distributions = get_stan_accuracy_distributions(dataframe, condition_names, nb_trials,'workingmemory')
     # Draw figures for accuracy data
     plt_args = {'list_xlim': [-0.25, 4.25], 'list_ylim': [0, 1],
                 'list_set_xticklabels': ['4', '5', '6', '7', '8'], 'list_set_xticks': [0, 1, 2, 3, 4],

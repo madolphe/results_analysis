@@ -368,7 +368,7 @@ if __name__ == '__main__':
             columns.append(f"{condition}-{keyword}")
     sum_observers = pd.DataFrame(sum_observers, columns=columns)
     # for save summary data
-    sum_observers.to_csv('../outputs/taskswitch/sumdata_taskswitch.csv', header=True, index=False)
+    #sum_observers.to_csv('../outputs/taskswitch/sumdata_taskswitch.csv', header=True, index=False)
     # -------------------------------------------------------------------#
     # BAYES ACCURACY :
     nb_trials_names = [f"{condition}-nb" for condition in condition_names]
@@ -378,6 +378,8 @@ if __name__ == '__main__':
     pretest, posttest = get_pre_post_dataframe(dataframe, condition_names_correct + nb_trials_names)
     # # Get mean data for
     sum_observers = get_overall_dataframe_taskswitch(dataframe, condition_names_correct + nb_trials_names)
+    sum_observers = sum_observers.astype('int')
+    sum_observers.to_csv('../outputs/taskswitch/sumdata_taskswitch.csv', header=True, index=False)
     # # Compute stan_accuracy for all conditions:
     stan_sessions = [[], [], []]
     sessions = [sum_observers, pretest, posttest]

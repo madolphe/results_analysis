@@ -32,7 +32,7 @@ def extract_mu_ci_from_summary_rt(dataframe, ind_cond):
     return outs
 
 
-def get_stan_RT_distributions(dataframe, conditons_number):
+def get_stan_RT_distributions(dataframe, conditons_number, name_task):
     """
 
     """
@@ -45,6 +45,9 @@ def get_stan_RT_distributions(dataframe, conditons_number):
     sum_observers = get_overall_dataframe_rt(dataframe, conditions_rt + conditions_nb)
     sum_observers['total_resp'], pretest['total_resp'], posttest['total_resp'] = (None for i in range(3))
     observations = [sum_observers, pretest, posttest]
+
+    sum_observers = sum_observers.astype('int')
+    sum_observers.to_csv('../outputs/'+name_task+'/sumdata_'+name_task+'_rt.csv', header=True, index=False)
 
     # Prepare variables to handle results:
     # class_stan_rt_overall, class_stan_rt_pretest, class_stan_rt_posttest = [], [], []
@@ -86,7 +89,7 @@ def plot_all_accuracy_figures(stan_distributions, outcomes_names, task_name, ove
                            fname_save=f'../outputs/{task_name}/{task_name}{name_option}_hrfar.png', **plot_args)
 
 
-def get_stan_accuracy_distributions(dataframe, conditons_names, nb_trials):
+def get_stan_accuracy_distributions(dataframe, conditons_names, nb_trials, name_task, name_add=''):
     """
     For this version: dataframe should have the columns specified in outcome_names - those columns should represent the
     accuracy (and not the number of success!).
@@ -112,7 +115,8 @@ def get_stan_accuracy_distributions(dataframe, conditons_names, nb_trials):
 
     #Change the total number of across condition
     sum_observers['total_resp'] = int(nb_trials*2)
-
+    sum_observers = sum_observers.astype('int')
+    sum_observers.to_csv('../outputs/'+name_task+'/sumdata_'+name_task+name_add+'.csv', header=True, index=False)
     # Compute stan_accuracy for all conditions:
     class_stan_accuracy_overall = [CalStan_accuracy(sum_observers, ind_corr_resp=n) for n in conditons_names]
     class_stan_accuracy_pretest = [CalStan_accuracy(pretest, ind_corr_resp=n) for n in conditons_names]

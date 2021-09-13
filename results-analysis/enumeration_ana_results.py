@@ -18,6 +18,7 @@ def compute_std_per_row(row):
     return np.std(return_value)
 
 
+
 def compute_result_exact_answers_list(row):
     """
     Returns a binary sucess for each trial
@@ -92,14 +93,14 @@ if __name__ == '__main__':
         tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
         sum_observers.append([ob]+[tmp_df[col].mean(axis=0) for col in tmp_df.columns if "accuracy" in col])
     sum_observers = pd.DataFrame(sum_observers, columns=['participant_id']+condition_names)
-    sum_observers.to_csv('../outputs/enumeration/sumdata_enumeration.csv', header=True, index=False)
+    #sum_observers.to_csv('../outputs/enumeration/sumdata_enumeration.csv', header=True, index=False)
     # -------------------------------------------------------------------#
 
     # -------------------------------------------------------------------#
     # BAYES ACCURACY ANALYSIS
     # nb_trials = 20 per condition:
     nb_trials = len(dataframe['5'][0])
-    stan_distributions = get_stan_accuracy_distributions(dataframe, condition_names, nb_trials)
+    stan_distributions = get_stan_accuracy_distributions(dataframe, condition_names, nb_trials,'enumeration')
     # Draw figures for accuracy data
     plot_args = {'list_xlim': [-0.25, 4.25], 'list_ylim': [0, 1],
                  'list_set_xticklabels': [str(i) for i in range(5, 10)],

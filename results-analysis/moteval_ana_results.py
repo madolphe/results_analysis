@@ -66,7 +66,7 @@ if __name__ == '__main__':
     # BAYES ACCURACY ANALYSIS
     # For accuracy analysis, let's focus on the outcomes:
     nb_trials = len(dataframe['results_correct'][0])
-    stan_distributions = get_stan_accuracy_distributions(dataframe, outcomes_names_acc, nb_trials)
+    stan_distributions = get_stan_accuracy_distributions(dataframe, outcomes_names_acc, nb_trials,'moteval')
     # Draw figures for accuracy data
     plt_args = {'list_xlim': [-0.25, 2.25], 'list_ylim': [0.4, 1],
                 'list_set_xticklabels': ['1', '4', '8'], 'list_set_xticks': [0, 1, 2],

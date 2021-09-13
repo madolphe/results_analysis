@@ -114,7 +114,7 @@ if __name__ == '__main__':
         '../outputs/memorability/memorability_lfa.csv', index=False)
 
     #for hr distribution
-    stan_distributions = get_stan_accuracy_distributions(dataframe, conditions_names_hit_miss,nb_trials)
+    stan_distributions = get_stan_accuracy_distributions(dataframe, conditions_names_hit_miss,nb_trials,'memorability')
     # Draw figures for accuracy data
     plt_args = {'list_xlim': [-0.25, 4.25], 'list_ylim': [0, 1],
                 'list_set_xticklabels': ['2', '3', '4', '5', '>100'], 'list_set_xticks': [0, 1, 2, 3, 4],
@@ -124,7 +124,7 @@ if __name__ == '__main__':
     plot_all_accuracy_figures(stan_distributions, conditions_names_hit_miss, 'memorability', dataframe, nb_trials,
                               plt_args,name_option='hr')
     #for far distribution
-    stan_distributions = get_stan_accuracy_distributions(dataframe, conditions_names_fa_cr,nb_trials)
+    stan_distributions = get_stan_accuracy_distributions(dataframe, conditions_names_fa_cr,nb_trials,'memorability')
     # Draw figures for accuracy data
     plt_args = {'list_xlim': [-0.25, 4.25], 'list_ylim': [0, 1],
                 'list_set_xticklabels': ['2', '3', '4', '5', '>100'], 'list_set_xticks': [0, 1, 2, 3, 4],
