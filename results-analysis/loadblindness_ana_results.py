@@ -36,7 +36,7 @@ def compute_sum_to_row(row, column):
 
 if __name__ == '__main__':
     csv_path = "../outputs/loadblindness/loadblindness.csv"
-    dataframe = pd.read_csv(csv_path, sep=";")
+    dataframe = pd.read_csv(csv_path, sep=",")
     dataframe = delete_uncomplete_participants(dataframe)
     dataframe["results_responses_pos"] = dataframe.apply(
         lambda row: transform_string_to_row(row, "results_responses_pos"),
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + conditions_names)
     # for save summary data
     sum_observers['total_resp'] = sum_observers.apply(lambda row: 40, axis=1)  # two days task
-    sum_observers.to_csv('../outputs/loadblindness/sumdata_loadblindness.csv', header=True, index=False)
+    #sum_observers.to_csv('../outputs/loadblindness/sumdata_loadblindness.csv', header=True, index=False)
     # -------------------------------------------------------------------#
 
     # -------------------------------------------------------------------#
@@ -74,12 +74,13 @@ if __name__ == '__main__':
     nb_trials = len(dataframe['near_response'][0])
     dataframe[['participant_id', 'task_status'] + conditions_names].to_csv(
         '../outputs/loadblindness/loadblindness_lfa.csv', index=False)
-    stan_distributions = get_stan_accuracy_distributions(dataframe, conditions_names, nb_trials)
+    stan_distributions = get_stan_accuracy_distributions(dataframe, conditions_names, nb_trials,'loadblindness')
     # Draw figures for accuracy data
-    plot_args = {'list_xlim': [0.5, 2.5], 'list_ylim': [0, 1],
-                 'list_set_xticklabels': ['Near', 'Far'], 'list_set_xticks': [1, 2],
+    plot_args = {'list_xlim': [-0.5, 1.5], 'list_ylim': [0, 1],
+                 'list_set_xticklabels': ['Near', 'Far'], 'list_set_xticks': [0, 1],
                  'list_set_yticklabels': ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
-                 'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0], }
+                 'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0],
+                 'scale_jitter': 0.2}
     plot_all_accuracy_figures(stan_distributions, conditions_names, 'loadblindness', dataframe, nb_trials, plot_args)
 
     # calculate the mean distribution and the credible interval

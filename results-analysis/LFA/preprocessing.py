@@ -20,6 +20,24 @@ for col in df_dict['taskswitch'].columns:
             df_dict['taskswitch'] = df_dict['taskswitch'].drop(columns=[col])
 # Still 8 columns - taking the mean between relative and parity ==> 4 columns
 
+# we only use the switching costs.
+        if 'switching' not in col and 'task_status' not in col:
+            df_dict['taskswitch'] = df_dict['taskswitch'].drop(columns=[col])
+
+for col in df_dict['gonogo'].columns:
+    if col != 'participant_id':
+        if 'rt' not in col and 'task_status' not in col:
+            df_dict['gonogo'] = df_dict['gonogo'].drop(columns=[col])
+
+for col in df_dict['memorability'].columns:
+    if col != 'participant_id':
+        if 'rt' in col and 'task_status' not in col:
+            df_dict['memorability'] = df_dict['memorability'].drop(columns=[col])
+
+for col in df_dict['moteval'].columns:
+    if col != 'participant_id':
+        if 'rt' in col and 'task_status' not in col:
+            df_dict['moteval'] = df_dict['moteval'].drop(columns=[col])
 # Memorability 20 columns
 # First, drop the rt_std column
 for col in df_dict['memorability'].columns:
@@ -46,7 +64,7 @@ def group_by_conditions(df, conditions_to_group):
 #             df_dict['memorability'].drop(columns=[col], inplace=True)
 
 for task_name, df in df_dict.items():
-    df.drop(columns=[col for col in df.columns if '-rt' in col], inplace=True)
+    #df.drop(columns=[col for col in df.columns if '-rt' in col], inplace=True)
     df.drop(columns=[col for col in df.columns if '-fa' in col], inplace=True)
 
 dataframe = pd.DataFrame()
@@ -62,6 +80,6 @@ for i, (task_name, df) in enumerate(df_dict.items()):
     else:
         dataframe = pd.merge(dataframe, df, on=['participant_id', 'task_status'], how='outer')
 
-dataframe.to_csv('tmp_merge_acp_all.csv')
+dataframe.to_csv('tmp_merge_acp_all_including_rt.csv')
 
 

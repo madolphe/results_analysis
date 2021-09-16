@@ -24,9 +24,9 @@ def delete_beggining_of_block(row):
     results = row["results_ind_switch"].split(",")
     results = [int(elt) for elt in results]
     new_row = copy.deepcopy(results)
-    for idx, elt in enumerate(results):
-        if idx % 33 == 0:
-            new_row[idx] = 0
+    #for idx, elt in enumerate(results):
+        #if idx % 33 == 0:
+            #new_row[idx] = 0
     return new_row
 
 
@@ -49,14 +49,14 @@ def correct_sequence_of_answers(row):
         if ind != 0 and ind != 33 and ind != 66:  # to exclude the first trials
             # First check what activity is requested - if None => do not consider the trial
             if task == 1:
-                seq_relative_switch.append(switch)
+                seq_relative_switch.append(row.results_ind_switch_clean[ind-1])
                 seq_relative_rt.append(rt)
                 if (response == 1 and target < 5) or (response == 2 and target > 5):
                     seq_answer_relative.append(1)
                 else:
                     seq_answer_relative.append(0)
             elif task == 0:
-                seq_parity_switch.append(switch)
+                seq_parity_switch.append(row.results_ind_switch_clean[ind-1])
                 seq_parity_rt.append(rt)
                 if (response == 1 and (target % 2) == 1) or (response == 2 and (target % 2) == 0):
                     seq_answer_parity.append(1)
@@ -161,7 +161,7 @@ def compute_correct_answer(row, answer_type):
         return parity_hit_unswitch
     elif answer_type == "relative_check_unswitch_hit":
         relative_hit_unswitch = sum(
-            [1 for elt, sw in zip(seq_answer_relative, seq_relative_switch) if (sw == 0 and elt == 1)])
+            [1 for elt, sw in zip(seq_answer_relative, seq_relative_switch) if (sw == 0 and elt == 1 and elt == 1)])
         return relative_hit_unswitch
     elif answer_type == "parity_check_switch_rt":
         parity_rt_switch = sum(
@@ -173,7 +173,7 @@ def compute_correct_answer(row, answer_type):
         return (relative_rt_switch) / len(seq_relative_rt)
     elif answer_type == "parity_check_unswitch_rt":
         parity_rt_unswitch = sum(
-            [rt for elt, rt, sw in zip(seq_answer_parity, seq_parity_rt, seq_parity_switch) if (sw == 0 and elt == 1)])
+            [rt for elt, rt, sw in zip(seq_answer_parity, seq_parity_rt, seq_parity_switch) if (sw == 0)])
         return (parity_rt_unswitch) / len(seq_parity_rt)
     elif answer_type == "relative_check_unswitch_rt":
         relative_rt_unswitch = sum(
@@ -247,7 +247,7 @@ if __name__ == '__main__':
     # -------------------------------------------------------------------#
     # DATAFRAME CREATION
     csv_path = "../outputs/taskswitch/taskswitch.csv"
-    dataframe = pd.read_csv(csv_path, sep=";")
+    dataframe = pd.read_csv(csv_path, sep=",")
     dataframe = delete_uncomplete_participants(dataframe)
     dataframe["results_responses"] = dataframe.apply(lambda row: transform_string_to_row(row, "results_responses"),
                                                      axis=1)
@@ -329,13 +329,22 @@ if __name__ == '__main__':
         lambda row: compute_correct_answer(row, "parity_check_switch_rt"), axis=1)
     dataframe["parity-unswitch-rt"] = dataframe.apply(
         lambda row: compute_correct_answer(row, "parity_check_unswitch_rt"), axis=1)
+    
+    dataframe["parity-switching-cost-rt"] = dataframe["parity-switch-rt"]-dataframe["parity-unswitch-rt"]    
+    dataframe["relative-switching-cost-rt"] = dataframe["relative-switch-rt"]-dataframe["relative-unswitch-rt"]   
+    #I added these 337-340 to avoid error, as non-used params -nbs are searched for the stan simulation in the util.py. 
+    #I hesitated to edit the util.py due to the dependency to other files.
+    dataframe["parity-switching-cost-nb"] = dataframe.apply(
+                lambda row: compute_correct_answer(row, "parity_check_unswitch_total"), axis=1) 
+    dataframe["relative-switching-cost-nb"] = dataframe.apply(
+                lambda row: compute_correct_answer(row, "parity_check_unswitch_total"), axis=1)
 
     # sumirize two days experiments
     sum_observers = []
     sum_observers_forsave = []
     condition_names = ['parity-switch', 'parity-unswitch', 'relative-switch', 'relative-unswitch']
     condition_names_accuracy = [f"{condition}-accuracy" for condition in condition_names]
-    condition_names_rt = [f"{condition}-rt" for condition in condition_names]
+    condition_names_rt = ['parity-switching-cost-rt','relative-switching-cost-rt']
     for condition in condition_names:
         for condition_acc in condition_names_accuracy:
             dataframe[condition_acc] = dataframe[f"{condition}-correct"] / dataframe[f"{condition}-nb"]
@@ -359,7 +368,7 @@ if __name__ == '__main__':
             columns.append(f"{condition}-{keyword}")
     sum_observers = pd.DataFrame(sum_observers, columns=columns)
     # for save summary data
-    sum_observers.to_csv('../outputs/taskswitch/sumdata_taskswitch.csv', header=True, index=False)
+    #sum_observers.to_csv('../outputs/taskswitch/sumdata_taskswitch.csv', header=True, index=False)
     # -------------------------------------------------------------------#
     # BAYES ACCURACY :
     nb_trials_names = [f"{condition}-nb" for condition in condition_names]
@@ -369,6 +378,8 @@ if __name__ == '__main__':
     pretest, posttest = get_pre_post_dataframe(dataframe, condition_names_correct + nb_trials_names)
     # # Get mean data for
     sum_observers = get_overall_dataframe_taskswitch(dataframe, condition_names_correct + nb_trials_names)
+    sum_observers = sum_observers.astype('int')
+    sum_observers.to_csv('../outputs/taskswitch/sumdata_taskswitch.csv', header=True, index=False)
     # # Compute stan_accuracy for all conditions:
     stan_sessions = [[], [], []]
     sessions = [sum_observers, pretest, posttest]
@@ -383,22 +394,28 @@ if __name__ == '__main__':
                           'posttest': class_stan_accuracy_posttest}
     # Draw figures for accuracy data
     plot_args = {
-        'list_xlim': [0.75, 4.25], 'list_ylim': [0, 1],
+        'list_xlim': [-0.25, 3.25], 'list_ylim': [0, 1],
         'list_set_xticklabels': ['sw/oe', 'no-sw/oe', 'sw/hl', 'no-sw/hl'],
-        'list_set_xticks': [1, 2, 3, 4],
+        'list_set_xticks': [0, 1, 2, 3],
         'list_set_yticklabels': ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
         'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0],
-    }
+        'scale_jitter': 0.4}
     plot_prepost_mean_accuracy_distribution(condition_names_correct, stan_distributions,
                                             f'../outputs/taskswitch/taskswitch_distrib_reliability.png')
+    dist_ind = dataframe.loc[:, condition_names_correct].values/dataframe.loc[:, nb_trials_names].values
+    dist_summary = extract_mu_ci_from_summary_accuracy(stan_distributions['overall'],
+                                                       ind_cond=[elt for elt in range(4)])
+    draw_all_distributions(dist_ind, dist_summary, len(dataframe), num_cond=4,
+                           fname_save=f'../outputs/taskswitch/taskswitch_hrfar.png', **plot_args)
 
     # -------------------------------------------------------------------#
     # BAYES RT ANALYSIS:
-    stan_rt_distributions = get_stan_RT_distributions(dataframe, condition_names)
-    plt_args = {"list_xlim": [0.5, 2.5], "list_ylim": [-100, 250],
-                "list_set_xticklabels": ['odd-even', 'high-low'], "list_set_xticks": [1, 2],
-                "list_set_yticklabels": ['-100', '0', '100', '200'], "list_set_yticks": [-100, 0, 100, 200],
-                "val_ticks": 10}
+    stan_rt_distributions = get_stan_RT_distributions(dataframe, ['parity-switching-cost','relative-switching-cost'])
+    plt_args = {"list_xlim": [-0.5, 1.5], "list_ylim": [-100, 400],
+                "list_set_xticklabels": ['odd-even', 'high-low'], "list_set_xticks": [0, 1],
+                "list_set_yticklabels": ['-100', '0', '100', '200','300','400'], "list_set_yticks": [-100, 0, 100, 200, 300, 400],
+                "val_ticks": 10,
+                'scale_jitter': 0.2}
     plot_all_rt_figures(stan_rt_distributions, condition_names_rt, dataframe=dataframe, task_name='taskswitch',
                         plot_args=plt_args)
     print('finished')
