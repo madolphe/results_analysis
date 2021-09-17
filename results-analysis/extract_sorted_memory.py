@@ -70,22 +70,22 @@ class Results_memory():
         out_mat_fa_cr = np.zeros((self.num_stimcond,self.num_repetition)) #5 condition and 8 reptation for each memorability task
 
         #ind_targets = self.df.loc[ind_rep,'results_targetvalue']
-        ind_targets = self.df.iloc[ind_rep,7] 
+        ind_targets = self.df.iloc[ind_rep,6]
         ind_targets = ind_targets.split(',')
         ind_targets = np.array(pd.to_numeric(ind_targets))
         
 
         #ind_stimconds = self.df.loc[ind_rep,'results_stimind']
-        ind_stimconds = self.df.iloc[ind_rep,9]
+        ind_stimconds = self.df.iloc[ind_rep,8]
         ind_stimconds = ind_stimconds.split(',')
         ind_stimconds = np.array(pd.to_numeric(ind_stimconds))
 
         #res_correct_obs = self.df.loc[ind_rep,'results_flagcorrect']
-        res_correct_obs = self.df.iloc[ind_rep,8]
+        res_correct_obs = self.df.iloc[ind_rep,7]
         res_correct_obs = np.array(res_correct_obs.split(','))
 
         #for rt
-        ind_rt = self.df.iloc[ind_rep,6]
+        ind_rt = self.df.iloc[ind_rep,5]
         ind_rt = ind_rt.split(',')
         tmp = [float(ind_rt[i] or "0") for i in range(len(ind_rt))]
         ind_rt = np.array(tmp)

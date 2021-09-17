@@ -132,7 +132,6 @@ if __name__ == '__main__':
     axes.set_yticklabels(['0.0','0.1','0.2','0.3'], fontsize=12)
     fig.savefig('explained_variance.png')
     plt.close()    
-    import pdb;pdb.set_trace()
     print('finished')
 
 '''

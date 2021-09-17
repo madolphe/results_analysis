@@ -46,8 +46,9 @@ def get_stan_RT_distributions(dataframe, conditons_number, name_task):
     sum_observers['total_resp'], pretest['total_resp'], posttest['total_resp'] = (None for i in range(3))
     observations = [sum_observers, pretest, posttest]
 
-    sum_observers = sum_observers.astype('int')
-    sum_observers.to_csv('../outputs/'+name_task+'/sumdata_'+name_task+'_rt.csv', header=True, index=False)
+    #not tuned to rt data.
+    #sum_observers = sum_observers.astype('int')
+    #sum_observers.to_csv('../outputs/'+name_task+'/sumdata_'+name_task+'_rt.csv', header=True, index=False)
 
     # Prepare variables to handle results:
     # class_stan_rt_overall, class_stan_rt_pretest, class_stan_rt_posttest = [], [], []
@@ -262,12 +263,13 @@ def plot_prepost_mean_accuracy_distribution(conditions, stan_distributions, fign
         sns.histplot(df, x='theta_across_obs', hue='condition', stat='density', kde=True, ax=axs[index, 0])
         axs[index, 0].legend([], [], frameon=False)
         # Put a legend to the right side
-        sns.histplot(pd.DataFrame(tmp_diff), stat='density', kde=True, ax=axs[index, 1])
+        sns.histplot(pd.DataFrame(tmp_diff), stat='probability', kde=True, ax=axs[index, 1])
         axs[index, 1].axvline(x=tmp_diff.mean(), c='red')
         axs[index, 1].axvline(x=np.percentile(tmp_diff.to_list(), 2.5), c='red', linestyle='--')
         axs[index, 1].axvline(x=np.percentile(tmp_diff.to_list(), 97.5), c='red', linestyle='--')
         axs[index, 1].legend([], [], frameon=False)
-        axs[index, 1].set_xlim(-0.2,0.2)
+        axs[index, 1].set_xlim(-0.2, 0.2)
+        axs[index, 1].set_ylim(0, 0.035)
 
     fig.tight_layout()
     fig.savefig(figname)
@@ -305,12 +307,13 @@ def plot_prepost_stan_distribution(conditions, stan_distributions, figname, vari
         sns.histplot(df, x=variable, hue='condition', stat='density', kde=True, ax=axs[index, 0])
         axs[index, 0].legend([], [], frameon=False)
         # Put a legend to the right side
-        sns.histplot(pd.DataFrame(tmp_diff), stat='density', kde=True, ax=axs[index, 1])
+        sns.histplot(pd.DataFrame(tmp_diff), stat='probability', kde=True, ax=axs[index, 1])
         axs[index, 1].axvline(x=tmp_diff.mean(), c='red')
         axs[index, 1].axvline(x=np.percentile(tmp_diff.to_list(), 2.5), c='red', linestyle='--')
         axs[index, 1].axvline(x=np.percentile(tmp_diff.to_list(), 97.5), c='red', linestyle='--')
         axs[index, 1].legend([], [], frameon=False)
-        axs[index, 1].set_xlim(-200,200)
+        axs[index, 1].set_xlim(-200, 200)
+        axs[index, 1].set_ylim(0, 0.035)
 
     fig.tight_layout()
     fig.savefig(figname)

@@ -138,7 +138,7 @@ if __name__ == '__main__':
     # BAYES RT ANALYSIS:
     conditions_nb = [f"{condition}-nb" for condition in conditions]
     dataframe[conditions_nb] = 32
-    stan_rt_distributions = get_stan_RT_distributions(dataframe, conditions)
+    stan_rt_distributions = get_stan_RT_distributions(dataframe, conditions,'memorability')
     plt_args = {"list_xlim": [-0.25, 4.25], "list_ylim": [0, 1200],
                 "list_set_xticklabels": ['2', '3', '4', '5', '>100'], "list_set_xticks": [0, 1, 2, 3, 4],
                 "list_set_yticklabels": ['0', '400', '800', '1200'], "list_set_yticks": [0, 400, 800, 1200],
