@@ -57,3 +57,5 @@ participant_id,task_status,accuracy_near,accuracy_far
 176,POST_TEST,0.7,0.75
 190,PRE_TEST,0.5,0.25
 190,POST_TEST,0.65,0.4
+196,PRE_TEST,0.75,0.7
+196,POST_TEST,0.8,0.9
