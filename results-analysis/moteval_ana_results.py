@@ -29,44 +29,43 @@ def compute_result_sum_hr(row):
     return 18 - row['result_nb_omission']
 
 
-if __name__ == '__main__':
-    ### With new participants (id=2 and 4) this script doesnt work!!! ###
-    # -------------------------------------------------------------------#
+def format_data():
     # FIRST TREAT THE CSV AND PARSE IT TO DF
-    csv_path = "../outputs/moteval/moteval.csv"
+    csv_path = "../outputs/v1_ubx/results_v1_ubx/moteval.csv"
     dataframe = pd.read_csv(csv_path, sep=",")
     dataframe = dataframe.apply(lambda row: transform_str_to_list(row, [
         'results_responses', 'results_rt', 'results_speed_stim', 'results_correct']), axis=1)
     dataframe = delete_uncomplete_participants(dataframe)
     dataframe = dataframe.apply(compute_mean_per_condition, axis=1)
-    dataframe.to_csv('../outputs/moteval/moteval_treat.csv')
-    # -------------------------------------------------------------------#
+    dataframe.to_csv('../outputs/v1_ubx/moteval_treat.csv')
+    nb_trials = len(dataframe['results_correct'][0])
+    print(nb_trials)
+    outcomes_names_acc = ["1-accuracy", "4-accuracy", "8-accuracy"]
+    return dataframe, outcomes_names_acc, nb_trials
 
-    # -------------------------------------------------------------------#
+
+def get_lfa_csv(dataframe, outcomes_names):
     # THEN EXTRACT COLUMNS FOR FUTURE LATENT FACTOR ANALYSIS
     # extract observer index information
     indices_id = extract_id(dataframe, num_count=2)
     # summarize two days experiments for Latent Factor Analysis
     sum_observers = []
-    outcomes_names = ["1-rt", "1-accuracy", "4-rt", "4-accuracy", "8-rt", "8-accuracy"]
     for ob in indices_id:
         tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
         sum_observers.append([ob] + [np.mean(tmp_df[index]) for index in outcomes_names])
     sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + outcomes_names)
     sum_observers['total_resp'] = dataframe.apply(count_number_of_trials, axis=1)  # two days task
     # for save summary data
-    sum_observers.to_csv('../outputs/moteval/sumdata_moteval.csv', index=False)
-    outcomes_names_acc = ["1-accuracy", "4-accuracy", "8-accuracy"]
+    # sum_observers.to_csv('../outputs/moteval/sumdata_moteval.csv', index=False)
     outcomes_names_rt = ["1-rt", "4-rt", "8-rt"]
-    dataframe[['participant_id', 'task_status'] + outcomes_names_acc + outcomes_names_rt].to_csv(
-        '../outputs/moteval/moteval_lfa.csv', index=False)
-    # -------------------------------------------------------------------#
+    dataframe[['participant_id', 'task_status', 'condition'] + outcomes_names_acc + outcomes_names_rt].to_csv(
+        '../outputs/v1_ubx/moteval_lfa.csv', index=False)
 
-    # -------------------------------------------------------------------#
+
+def get_stan_accuracy(dataframe, outcomes_names_acc, nb_trials):
     # BAYES ACCURACY ANALYSIS
     # For accuracy analysis, let's focus on the outcomes:
-    nb_trials = len(dataframe['results_correct'][0])
-    stan_distributions = get_stan_accuracy_distributions(dataframe, outcomes_names_acc, nb_trials,'moteval')
+    stan_distributions = get_stan_accuracy_distributions(dataframe, outcomes_names_acc, nb_trials, 'moteval')
     # Draw figures for accuracy data
     plt_args = {'list_xlim': [-0.25, 2.25], 'list_ylim': [0.4, 1],
                 'list_set_xticklabels': ['1', '4', '8'], 'list_set_xticks': [0, 1, 2],
@@ -74,8 +73,16 @@ if __name__ == '__main__':
                 'list_set_yticks': [0.4, 0.6, 0.8, 1.0],
                 'scale_jitter': 0.3}
     plot_all_accuracy_figures(stan_distributions, outcomes_names_acc, 'moteval', dataframe, nb_trials, plt_args)
-    # -------------------------------------------------------------------#
 
+
+if __name__ == '__main__':
+    ### With new participants (id=2 and 4) this script doesnt work!!! ###
+    # -------------------------------------------------------------------#
+    dataframe, outcomes_names_acc, nb_trials = format_data()
+    # -------------------------------------------------------------------#
+    get_lfa_csv(dataframe, outcomes_names_acc)
+    # -------------------------------------------------------------------#
+    # get_stan_accuracy(dataframe, outcomes_names_acc, nb_trials)
     # -------------------------------------------------------------------#
     # BAYES RT ANALYSIS:
     '''

@@ -45,32 +45,19 @@ def extract_mu_ci_from_summary_rt(dataframe, ind_cond):
     return outs
 
 
-if __name__ == '__main__':
-
-    csv_path_1 = "../outputs/memorability/memorability_1.csv"
+def format_data():
+    csv_path_1 = "../outputs/v1_ubx/results_v1_ubx/memorability_1.csv"
     dataframe_1 = pd.read_csv(csv_path_1)
     dataframe_1 = delete_uncomplete_participants(dataframe_1)
     dataframe_1['session'] = 1
 
-    csv_path_2 = "../outputs/memorability/memorability_2.csv"
+    csv_path_2 = "../outputs/v1_ubx/results_v1_ubx/memorability_2.csv"
     dataframe_2 = pd.read_csv(csv_path_2)
     dataframe_2 = delete_uncomplete_participants(dataframe_2)
     dataframe_2['session'] = 2
-
     dataframe = pd.concat([dataframe_1, dataframe_2], axis=0)
-
-    # Let's create the condition names:
-    test_status = ["PRE_TEST", "POST_TEST"]
-    conditions = [*[f"{elt}" for elt in range(2, 6)], "100"]
-    conditions_names_hit_miss = [f"{elt}-hit-miss" for elt in conditions]
-    conditions_names_fa_cr = [f"{elt}-fa-cr" for elt in conditions]
-    conditions_names_rt = [f"{elt}-rt" for elt in conditions]
-    conditions_names = [conditions_names_hit_miss, conditions_names_fa_cr, conditions_names_rt]
-    dataframe[conditions_names_hit_miss + conditions_names_fa_cr + conditions_names_rt] = None
-    sum_observers = []
-    tmp_overall_results = []
     indices_id = extract_id(dataframe, num_count=4)
-
+    sum_observers = []
     for ob in indices_id:
         tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
         tmp_results = Results_memory(tmp_df)
@@ -91,30 +78,32 @@ if __name__ == '__main__':
                     else:
                         tmp_cond = 'out_mat_rt_cond'
                     dataframe.loc[row_index, condition] = tmp_row.__dict__[tmp_cond][condition_index]
+    dataframe = pd.merge(dataframe, dataframe_2, how='outer', indicator=True)
+    dataframe = dataframe[dataframe['_merge'] == 'left_only']
+    return dataframe, sum_observers
+
+
+def get_lfa_csv(sum_observers):
+    tmp_overall_results = []
+    indices_id = extract_id(dataframe, num_count=4)
     columns, keywords = [], ['out_mat_hit_miss_sum', 'out_mat_fa_cr_sum', 'out_mat_rt_cond', 'out_mat_rt_cond_std']
     for keyword in keywords:
         for condition in conditions:
             columns.append(f"{keyword}-{condition}")
     sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + columns)
     # for save summary data
-    sum_observers.to_csv('../outputs/memorability/sumdata_memorability.csv', header=True, index=False)
+    sum_observers.to_csv('../outputs/v1_ubx/sumdata_memorability.csv', header=True, index=False)
     sum_observers['total_resp'] = sum_observers.apply(lambda row: 16, axis=1)
     dataframe['total_resp'] = dataframe.apply(lambda row: 16, axis=1)
-    # for hr data
-    # -------------------------------------------------------------------#
-    # BAYES ACCURACY ANALYSIS
-    # For accuracy analysis, let's focus on the outcomes:
-    # Just drop second part of df that is useless:
-    dataframe = dataframe[dataframe['session'] == 1]
-    nb_trials = 16
-    dataframe[conditions_names_hit_miss] = dataframe[conditions_names_hit_miss] / nb_trials
-    dataframe[conditions_names_fa_cr] = dataframe[conditions_names_fa_cr] / nb_trials
-    dataframe[['participant_id',
-               'task_status'] + conditions_names_hit_miss + conditions_names_rt + conditions_names_fa_cr].to_csv(
-        '../outputs/memorability/memorability_lfa.csv', index=False)
+    # dataframe[conditions_names_hit_miss] = dataframe[conditions_names_hit_miss] / nb_trials
+    # dataframe[conditions_names_fa_cr] = dataframe[conditions_names_fa_cr] / nb_trials
+    dataframe[['participant_id', 'task_status', 'condition'] + conditions_names_hit_miss + conditions_names_rt +
+              conditions_names_fa_cr].to_csv('../outputs/v1_ubx/memorability_lfa.csv', index=False)
 
-    #for hr distribution
-    stan_distributions = get_stan_accuracy_distributions(dataframe, conditions_names_hit_miss,nb_trials,'memorability')
+
+def get_stan_accuracy():
+    stan_distributions = get_stan_accuracy_distributions(dataframe, conditions_names_hit_miss, nb_trials,
+                                                         'memorability')
     # Draw figures for accuracy data
     plt_args = {'list_xlim': [-0.25, 4.25], 'list_ylim': [0, 1],
                 'list_set_xticklabels': ['2', '3', '4', '5', '>100'], 'list_set_xticks': [0, 1, 2, 3, 4],
@@ -122,9 +111,9 @@ if __name__ == '__main__':
                 'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0],
                 'scale_jitter': 0.5}
     plot_all_accuracy_figures(stan_distributions, conditions_names_hit_miss, 'memorability', dataframe, nb_trials,
-                              plt_args,name_option='hr')
-    #for far distribution
-    stan_distributions = get_stan_accuracy_distributions(dataframe, conditions_names_fa_cr,nb_trials,'memorability')
+                              plt_args, name_option='hr')
+    # for far distribution
+    stan_distributions = get_stan_accuracy_distributions(dataframe, conditions_names_fa_cr, nb_trials, 'memorability')
     # Draw figures for accuracy data
     plt_args = {'list_xlim': [-0.25, 4.25], 'list_ylim': [0, 1],
                 'list_set_xticklabels': ['2', '3', '4', '5', '>100'], 'list_set_xticks': [0, 1, 2, 3, 4],
@@ -132,13 +121,13 @@ if __name__ == '__main__':
                 'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0],
                 'scale_jitter': 0.5}
     plot_all_accuracy_figures(stan_distributions, conditions_names_fa_cr, 'memorability', dataframe, nb_trials,
-                              plt_args,name_option='far')
+                              plt_args, name_option='far')
 
-    # -------------------------------------------------------------------#
-    # BAYES RT ANALYSIS:
+
+def get_RT_stan():
     conditions_nb = [f"{condition}-nb" for condition in conditions]
     dataframe[conditions_nb] = 32
-    stan_rt_distributions = get_stan_RT_distributions(dataframe, conditions,'memorability')
+    stan_rt_distributions = get_stan_RT_distributions(dataframe, conditions, 'memorability')
     plt_args = {"list_xlim": [-0.25, 4.25], "list_ylim": [0, 1200],
                 "list_set_xticklabels": ['2', '3', '4', '5', '>100'], "list_set_xticks": [0, 1, 2, 3, 4],
                 "list_set_yticklabels": ['0', '400', '800', '1200'], "list_set_yticks": [0, 400, 800, 1200],
@@ -146,4 +135,27 @@ if __name__ == '__main__':
                 'scale_jitter': 0.5}
     plot_all_rt_figures(stan_rt_distributions, conditions_names_rt, dataframe=dataframe, task_name='memorability',
                         plot_args=plt_args)
+
+
+if __name__ == '__main__':
+    test_status = ["PRE_TEST", "POST_TEST"]
+    conditions = [*[f"{elt}" for elt in range(2, 6)], "100"]
+    conditions_names_hit_miss = [f"{elt}-hit-miss" for elt in conditions]
+    conditions_names_fa_cr = [f"{elt}-fa-cr" for elt in conditions]
+    conditions_names_rt = [f"{elt}-rt" for elt in conditions]
+    conditions_names = [conditions_names_hit_miss, conditions_names_fa_cr, conditions_names_rt]
+    nb_trials = 16
+    dataframe, sum_observer = format_data()
+    # Let's create the condition names:
+    get_lfa_csv(sum_observer)
+    # for hr data
+    # -------------------------------------------------------------------#
+    # BAYES ACCURACY ANALYSIS
+    # For accuracy analysis, let's focus on the outcomes:
+    # Just drop second part of df that is useless:
+    dataframe = dataframe[dataframe['session'] == 1]
+    # get_stan_accuracy()
+    # -------------------------------------------------------------------#
+    # BAYES RT ANALYSIS:
+    # get_RT_stan()
     print('finished')

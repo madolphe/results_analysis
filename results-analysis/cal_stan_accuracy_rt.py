@@ -1,5 +1,5 @@
 # %% cell 2
-import numpy  as np
+import numpy as np
 import stan
 import asyncio
 

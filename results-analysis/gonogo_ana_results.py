@@ -173,42 +173,16 @@ def extract_mu_ci_from_summary_rt(dataframe):
     return out
 
 
-if __name__ == '__main__':
-    csv_path = "../outputs/gonogo/gonogo.csv"
-    dataframe = pd.read_csv(csv_path, sep=",")
-
-    dataframe = dataframe.apply(lambda row: transform_str_to_list(row, [
-        'results_responses', 'results_rt', 'results_ind_previous', 'results_targetvalue']), axis=1)
-
-    dataframe = delete_uncomplete_participants(dataframe)
-
-    # false alarm relative to sequence length
-    dataframe['nb_blocks'] = dataframe.apply(compute_number_of_keyboard_input, axis=1)
-
-    participant_id, nb_blocks, nb_go = find_participant_with_fewer_blocks(dataframe)
-    blocks_list = [nb_go, nb_blocks - nb_go]
-    NB_BLOCKS_TO_KEEP = min(blocks_list)
-    is_go_blocks = blocks_list.index(NB_BLOCKS_TO_KEEP) == 0
-    print(f"ID {participant_id} has the smallest nb of blocks recorded ({nb_blocks}) with {nb_go} go blocks.")
-    print(f"Nb of blocks to keep: {NB_BLOCKS_TO_KEEP}")
-    print(f"Blocks to keep are go blocks: {is_go_blocks}")
-    dataframe = dataframe.apply(lambda row: delete_non_recorded_blocks(row, NB_BLOCKS_TO_KEEP), axis=1)
-    dataframe['nb_blocks'] = dataframe.apply(compute_number_of_keyboard_input, axis=1)
-
+def plt_commision_errors():
     # commission errors (i.e., falsely pressing the button in no-go trials; also called false alarms)
-    dataframe['result_commission_errors'] = dataframe.apply(compute_nb_commission_errors, axis=1)
     dataframe.groupby(["task_status", "result_commission_errors"]).count()["participant_id"].unstack(
         "task_status")[['PRE_TEST', 'POST_TEST']].plot.bar()
     plt.title("Participants in number of commission errors c")
     plt.savefig("../outputs/gonogo/gonogo_commissions.png")
     plt.close()
 
-    # Reaction times in or the number of correct go-trials (i.e., hits):
-    dataframe['result_clean_rt'] = dataframe.apply(list_of_correct_hits, axis=1)
-    dataframe['HR-nb'] = dataframe.apply(lambda row: len(row['result_clean_rt']), axis=1)
-    dataframe['HR-rt'] = dataframe.apply(compute_means, axis=1)
-    post_test = dataframe[dataframe['task_status'] == 'POST_TEST']['HR-rt']
-    pre_test = dataframe[dataframe['task_status'] == 'PRE_TEST']['HR-rt']
+
+def plt_reliability():
     reg = LinearRegression().fit(np.expand_dims(pre_test.values, axis=1), post_test.values)
     score = reg.score(np.expand_dims(pre_test.values, axis=1), post_test.values)
     plt.scatter(x=pre_test, y=post_test, c='red')
@@ -219,21 +193,50 @@ if __name__ == '__main__':
     plt.savefig("../outputs/gonogo/rt_pre_post_gonogo.png")
     plt.close()
 
+
+def plt_omission_errors():
     # omission errors (i.e., falsely not pressing the button in go trials; also called misses):
-    dataframe['result_nb_omission'] = dataframe.apply(compute_number_of_omissions, axis=1)
     dataframe.groupby(["task_status", "result_nb_omission"]).count()["participant_id"].unstack("task_status")[
         ['PRE_TEST', 'POST_TEST']].plot.bar()
     plt.title("Number of omission errors per participant")
     plt.savefig("../outputs/gonogo/gonogo_ommissions.png")
     plt.close()
-    # Save data
-    dataframe.to_csv("../outputs/gonogo/gonogo_treatment.csv")
 
-    # -------------------------------------------------------------------#
-    # LATENT FACTOR ANALYSIS
-    # Condition extraction
+
+def format_data():
+    csv_path = "../outputs/v1_ubx/results_v1_ubx/gonogo.csv"
+    dataframe = pd.read_csv(csv_path, sep=",")
+    dataframe = dataframe.apply(lambda row: transform_str_to_list(row, [
+        'results_responses', 'results_rt', 'results_ind_previous', 'results_targetvalue']), axis=1)
+    dataframe['result_nb_omission'] = dataframe.apply(compute_number_of_omissions, axis=1)
+    dataframe['result_commission_errors'] = dataframe.apply(compute_nb_commission_errors, axis=1)
+    dataframe = delete_uncomplete_participants(dataframe)
+    # false alarm relative to sequence length
+    dataframe['nb_blocks'] = dataframe.apply(compute_number_of_keyboard_input, axis=1)
+    participant_id, nb_blocks, nb_go = find_participant_with_fewer_blocks(dataframe)
+    blocks_list = [nb_go, nb_blocks - nb_go]
+    NB_BLOCKS_TO_KEEP = min(blocks_list)
+    is_go_blocks = blocks_list.index(NB_BLOCKS_TO_KEEP) == 0
+    print(f"ID {participant_id} has the smallest nb of blocks recorded ({nb_blocks}) with {nb_go} go blocks.")
+    print(f"Nb of blocks to keep: {NB_BLOCKS_TO_KEEP}")
+    print(f"Blocks to keep are go blocks: {is_go_blocks}")
+    dataframe = dataframe.apply(lambda row: delete_non_recorded_blocks(row, NB_BLOCKS_TO_KEEP), axis=1)
+    dataframe['nb_blocks'] = dataframe.apply(compute_number_of_keyboard_input, axis=1)
+    # Reaction times in or the number of correct go-trials (i.e., hits):
+    dataframe['result_clean_rt'] = dataframe.apply(list_of_correct_hits, axis=1)
+    dataframe['HR-nb'] = dataframe.apply(lambda row: len(row['result_clean_rt']), axis=1)
+    dataframe['HR-rt'] = dataframe.apply(compute_means, axis=1)
+    post_test = dataframe[dataframe['task_status'] == 'POST_TEST']['HR-rt']
+    pre_test = dataframe[dataframe['task_status'] == 'PRE_TEST']['HR-rt']
+    # Save data
+    dataframe.to_csv("../outputs/v1_ubx/gonogo_treatment.csv")
     dataframe['results_correct'] = dataframe.apply(compute_result_sum_hr, axis=1)
-    # sumirize two days experiments
+    return pre_test, post_test, dataframe
+
+
+def get_lfa_csv(dataframe):
+    # LATENT FACTOR ANALYSIS
+    # summarize two days experiments
     condition_names = ["HR-accuracy", "FAR-accuracy", "HR-rt"]
     sum_observers = []
     # extract observer index information
@@ -245,15 +248,20 @@ if __name__ == '__main__':
              np.mean(tmp_df["HR-rt"])])
     sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + condition_names)
     # for save summary data
-    #sum_observers.to_csv('../outputs/gonogo/sumdata_gonogo.csv', header=True, index=False)
+    # sum_observers.to_csv('../outputs/gonogo/sumdata_gonogo.csv', header=True, index=False)
     sum_observers['total_resp'] = sum_observers.apply(lambda row: 36, axis=1)  # two days task
-    # -------------------------------------------------------------------#
-    # Bayes accuracy analysis:
     outcomes_names = ["HR-accuracy", "FAR-accuracy"]
-    nb_trials = int(len(dataframe['results_responses'][0])/2)
-    dataframe['HR-accuracy'] = dataframe.apply(lambda row: row['results_correct'] / nb_trials, axis=1)
-    dataframe["FAR-accuracy"] = dataframe.apply(lambda row: row['result_nb_omission'] / nb_trials, axis=1)
-    stan_distributions = get_stan_accuracy_distributions(dataframe, outcomes_names, nb_trials,'gonogo')
+    nb_trials = int(len(dataframe['results_responses'][0]) / 2)
+    dataframe['HR-accuracy'] = dataframe.apply(lambda row: row['results_correct'] / 18, axis=1)
+    dataframe["FAR-accuracy"] = dataframe.apply(lambda row: row['result_nb_omission'] / 18, axis=1)
+    conditions_full_names = ["HR-rt"]
+    dataframe[['participant_id', 'task_status', 'condition'] + outcomes_names + conditions_full_names].to_csv(
+        "../outputs/v1_ubx/gonogo_lfa.csv", index=False)
+    return outcomes_names, dataframe, nb_trials, conditions_full_names
+
+
+def get_stan_accuracy(dataframe, outcomes_names, nb_trials):
+    stan_distributions = get_stan_accuracy_distributions(dataframe, outcomes_names, nb_trials, 'gonogo')
     # Draw figures for accuracy data
 
     plot_args = {'list_xlim': [-0.5, 1.5], 'list_ylim': [0, 1],
@@ -262,13 +270,11 @@ if __name__ == '__main__':
                  'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0],
                  'scale_jitter': 0.2}
     plot_all_accuracy_figures(stan_distributions, outcomes_names, 'gonogo', dataframe, nb_trials, plot_args)
-    # -------------------------------------------------------------------#
-    # BAYES RT ANALYSIS:
-    conditions_full_names = ["HR-rt"]
-    dataframe[['participant_id', 'task_status'] + outcomes_names + conditions_full_names].to_csv(
-        "../outputs/gonogo/gonogo_lfa.csv", index=False)
+
+
+def get_stan_RT(dataframe, conditions_full_names):
     values_conditions = ["HR"]
-    stan_rt_distributions = get_stan_RT_distributions(dataframe, values_conditions,'gonogo')
+    stan_rt_distributions = get_stan_RT_distributions(dataframe, values_conditions, 'gonogo')
     plt_args = {'list_xlim': [-0.5, 0.5], 'list_ylim': [0, 1],
                 'list_set_xticklabels': ['HR-rt'], 'list_set_xticks': [0],
                 'list_set_yticklabels': ['0', '250', '500', '750'], 'list_set_yticks': [0, 250, 500, 750],
@@ -277,4 +283,16 @@ if __name__ == '__main__':
                 'scale_panel': 2}
     plot_all_rt_figures(stan_rt_distributions, conditions_full_names, dataframe=dataframe, task_name='gonogo',
                         plot_args=plt_args)
-    print('finished')
+
+
+if __name__ == '__main__':
+    pre_test, post_test, dataframe = format_data()
+    # -------------------------------------------------------------------#
+    outcomes_names, dataframe, nb_trials, conditions_full_names = get_lfa_csv(dataframe)
+    # -------------------------------------------------------------------#
+    # Bayes accuracy analysis:
+    # get_stan_accuracy(dataframe, outcomes_names, nb_trials)
+    # -------------------------------------------------------------------#
+    # BAYES RT ANALYSIS:
+    # get_stan_RT(dataframe, conditions_full_names)
+    # print('finished')

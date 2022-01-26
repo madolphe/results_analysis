@@ -117,7 +117,7 @@ def get_stan_accuracy_distributions(dataframe, conditons_names, nb_trials, name_
     #Change the total number of across condition
     sum_observers['total_resp'] = int(nb_trials*2)
     sum_observers = sum_observers.astype('int')
-    sum_observers.to_csv('../outputs/'+name_task+'/sumdata_'+name_task+name_add+'.csv', header=True, index=False)
+    sum_observers.to_csv('../outputs/v1_ubx/sumdata_'+name_task+name_add+'.csv', header=True, index=False)
     # Compute stan_accuracy for all conditions:
     class_stan_accuracy_overall = [CalStan_accuracy(sum_observers, ind_corr_resp=n) for n in conditons_names]
     class_stan_accuracy_pretest = [CalStan_accuracy(pretest, ind_corr_resp=n) for n in conditons_names]
