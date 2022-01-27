@@ -106,3 +106,8 @@ class UnpooledModel(PooledModel):
                                           observed=post_test[f'{self.condition}-correct'])
             diff_of_means = pm.Deterministic("difference_of_means", post_test_theta - pre_test_theta)
             self.traces = pm.sample(2000, return_inferencedata=True)
+
+class RTPooledModel(PooledModel):
+
+    def get_trace(self):
+        
