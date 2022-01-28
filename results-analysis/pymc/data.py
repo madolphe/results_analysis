@@ -117,8 +117,7 @@ def get_data(path='../../outputs/v1_ubx/'):
     #          'mot': (df_mot, mot_cdt),
     #          'memorability': (df_memora, memora_cdt),
     #          'taskswitch': (df_tsw, tsw_cdt)}
-    tasks = {'taskswitch': (df_tsw, tsw_cdt)}
-    # tasks = {'enumeration': df_enum, 'loadblindness': df_lb}
+    tasks = {'taskswitch': (df_tsw, ['total-task'])}
     return tasks
 
 

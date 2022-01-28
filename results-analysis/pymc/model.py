@@ -6,10 +6,11 @@ import os
 
 
 class PooledModel:
-    def __init__(self, data, name, stim_cond_list, traces_path=None):
+    def __init__(self, data, name, stim_cond_list, sample_size, traces_path=None):
         self.data = data
         self.traces = self.load_trace(traces_path)
         self.name = name
+        self.sample_size = sample_size
         if f"{self.name}_results" not in os.listdir():
             os.mkdir(f"{self.name}_results")
         self.stim_condition_list = stim_cond_list
@@ -31,17 +32,19 @@ class PooledModel:
         post_test = self.get_data_status('POST_TEST')
         with pm.Model() as pooled_model:
             # Independent parameters for each participant
-            total_resp = pm.Data("total_resp", pre_test[f'{self.condition}-nb'].values)
+            # total_resp = pm.Data("total_resp", pre_test[f'{self.condition}-nb'].values)
             # prior on theta:
-            pre_test_theta = pm.Uniform("pre_test_theta", lower=0, upper=1)
-            post_test_theta = pm.Uniform("post_test_theta", lower=0, upper=1)
+            pre_test_theta = pm.Uniform(name="pre_test_theta", lower=0, upper=1)
+            post_test_theta = pm.Uniform(name="post_test_theta", lower=0, upper=1)
             # likelihood
-            pre_test_binom = pm.Binomial("pre_test_binomial", p=pre_test_theta, n=total_resp,
+            pre_test_binom = pm.Binomial(name="pre_test_binomial", p=pre_test_theta,
+                                         n=pre_test[f'{self.condition}-nb'].values,
                                          observed=pre_test[f'{self.condition}-correct'])
-            post_test_binom = pm.Binomial("post_test_binomial", p=post_test_theta, n=total_resp,
+            post_test_binom = pm.Binomial(name="post_test_binomial", p=post_test_theta,
+                                          n=post_test[f'{self.condition}-nb'].values,
                                           observed=post_test[f'{self.condition}-correct'])
-            diff_of_means = pm.Deterministic("difference_of_means", post_test_theta - pre_test_theta)
-            self.traces = pm.sample(2000, return_inferencedata=True)
+            diff_of_means = pm.Deterministic("difference_of_means", post_test_theta-pre_test_theta)
+            self.traces = pm.sample(self.sample_size, return_inferencedata=True)
 
     def get_data_status(self, status: str):
         return self.data[self.data['task_status'] == status]
@@ -107,7 +110,8 @@ class UnpooledModel(PooledModel):
             diff_of_means = pm.Deterministic("difference_of_means", post_test_theta - pre_test_theta)
             self.traces = pm.sample(2000, return_inferencedata=True)
 
-class RTPooledModel(PooledModel):
 
+class RTPooledModel(PooledModel):
     def get_trace(self):
-        
+        pass
+
