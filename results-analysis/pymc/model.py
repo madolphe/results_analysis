@@ -11,46 +11,30 @@ import copy
 
 
 class PooledModel:
-    def __init__(self, data, name, group, stim_cond_list, sample_size, traces_path=None):
+    def __init__(self, data, name, group, stim_cond_list, sample_size, folder=".", traces_path=None):
         self.data = data
         self.traces = self.load_trace(traces_path)
         self.name = name
         self.group = group
         self.sample_size = sample_size
-        if f"{self.name}_results" not in os.listdir('fixed_posterior/'):
-            os.mkdir(f"fixed_posterior/{self.name}_results")
+        if f"{self.folder}/{self.name}/{self.name}_{self.group}_results" not in os.listdir():
+            os.mkdir(f"{self.folder}/{self.name}/{self.name}_{self.group}_results")
         self.stim_condition_list = stim_cond_list
         self.condition = None
+        self.folder = folder
 
     def run(self):
         for condition in self.stim_condition_list:
             self.condition = condition
             self.get_trace()
             self.get_figures()
-
-    def get_figures(self):
-        self.plot_estimated_posteriors()
-        self.plot_CV_figures()
-        self.save_trace()
-        self.get_infos()
+            az.summary(self.traces).to_csv(
+                f"{self.folder}/{self.name}/{self.name}_{self.group}_results/summary-{self.name}-{self.condition}.csv")
 
     def describe_data(self):
         print(self.data.describe())
 
-    def find_posterior_for_condition(self):
-        for condition in self.stim_condition_list:
-            self.condition = condition
-            self.get_posterior()
-            az.summary(self.traces).to_csv(
-                f"fixed_posterior/{self.name}_{self.group}_results/summary-{self.name}-{self.condition}.csv")
-            az.plot_posterior(self.traces, rope={'difference_of_means': [{'rope': (-0.01, 0.01)}]}, color="#87ceeb")
-            plt.savefig(f"fixed_posterior/{self.name}_{self.group}_results/posterior-{self.name}-{self.condition}")
-            plt.close()
-            with open(f"fixed_posterior/{self.name}_{self.group}_results/{self.name}-{self.condition}-trace",
-                      'wb') as buff:
-                pickle.dump({'traces': self.traces}, buff)
-
-    def get_posterior(self):
+    def get_trace(self):
         pre_test = self.get_data_status('PRE_TEST')
         post_test = self.get_data_status('POST_TEST')
         total_success_pre_test = pre_test[f'{self.condition}-correct'].sum()
@@ -67,6 +51,67 @@ class PooledModel:
             diff_of_means = pm.Deterministic("difference_of_means", beta_dist_post_test - beta_dist_pre_test)
             self.traces = pm.sample(self.sample_size)
 
+    def get_data_status(self, status: str):
+        return self.data[self.data['task_status'] == status]
+
+    def compare_traces(self, compared_traces, param_name):
+        diff = self.traces.posterior[param_name] - compared_traces.posterior[param_name]
+        az.plot_trace(diff)
+        az.plot_posterior(diff)
+        plt.savefig(f"{self.name}_{self.group}_results/{param_name}-compare-traces-{self.name}.png")
+
+    # # SAVE AND PLOTS FUNCTIONS # #
+    def get_figures(self):
+        self.plot_estimated_posteriors()
+        self.plot_CV_figures()
+        self.save_trace()
+        self.get_infos()
+
+    def plot_estimated_posteriors(self):
+        az.plot_posterior(
+            self.traces,
+            color="#87ceeb",
+            rope={'difference_of_means': [{'rope': (-0.01, 0.01)}]}
+        )
+        plt.savefig(
+            f"{self.folder}/{self.name}/{self.name}_{self.group}_results/posteriors-{self.name}_{self.group}-{self.condition}")
+        plt.close()
+
+    def plot_CV_figures(self):
+        az.plot_trace(self.traces)
+        plt.savefig(
+            f"{self.folder}/{self.name}/{self.name}_{self.group}_results/CV-trace-{self.name}_{self.group}-{self.condition}")
+        az.plot_forest(self.traces)
+        plt.savefig(
+            f"{self.folder}/{self.name}/{self.name}_{self.group}_results/CV-forest-{self.name}_{self.group}-{self.condition}")
+        az.plot_energy(self.traces)
+        plt.savefig(
+            f"{self.folder}/{self.name}/{self.name}_{self.group}_results/CV-energy-{self.name}_{self.group}-{self.condition}")
+        plt.close()
+
+    def save_trace(self):
+        with open(f"{self.folder}/{self.name}/{self.name}_results/{self.name}_{self.group}-{self.condition}-trace",
+                  'wb') as buff:
+            pickle.dump({'traces': self.traces}, buff)
+
+    @staticmethod
+    def load_trace(path):
+        if path:
+            with open(path, 'rb') as buff:
+                data = pickle.load(buff)
+                return data['traces']
+        else:
+            return None
+
+    def get_infos(self):
+        rope = [-0.1, 0.1]
+        hdi = az.hdi(self.traces, hdi_prob=0.95)['difference_of_means'].values  # the 95% HDI interval of the difference
+        summary = az.summary(self.traces)
+        summary['ROPE_in_HDI'] = (rope[1] >= hdi[0]) or (rope[0] <= hdi[1])
+        summary.to_csv(f"{self.name}_{self.group}_results/{self.condition}-infos.csv")
+
+
+class PooledModelSimulations(PooledModel):
     def get_trace(self):
         pre_test = self.get_data_status('PRE_TEST')
         post_test = self.get_data_status('POST_TEST')
@@ -86,56 +131,8 @@ class PooledModel:
             diff_of_means = pm.Deterministic("difference_of_means", post_test_theta - pre_test_theta)
             self.traces = pm.sample(self.sample_size, return_inferencedata=True)
 
-    def get_data_status(self, status: str):
-        return self.data[self.data['task_status'] == status]
 
-    def plot_estimated_posteriors(self):
-        az.plot_posterior(
-            self.traces,
-            color="#87ceeb",
-            rope={'difference_of_means': [{'rope': (-0.01, 0.01)}]}
-        )
-        plt.savefig(
-            f"pooled_model/{self.name}/{self.name}_{self.group}_results/posteriors-{self.name}_{self.group}-{self.condition}")
-        plt.close()
-
-    def plot_CV_figures(self):
-        az.plot_trace(self.traces)
-        plt.savefig(f"{self.name}_{self.group}_results/CV-trace-{self.name}_{self.group}-{self.condition}")
-        az.plot_forest(self.traces)
-        plt.savefig(f"{self.name}_{self.group}_results/CV-forest-{self.name}_{self.group}-{self.condition}")
-        az.plot_energy(self.traces)
-        plt.savefig(f"{self.name}_{self.group}_results/CV-energy-{self.name}_{self.group}-{self.condition}")
-        plt.close()
-
-    def save_trace(self):
-        with open(f"{self.name}_results/{self.name}_{self.group}-{self.condition}-trace", 'wb') as buff:
-            pickle.dump({'traces': self.traces}, buff)
-
-    @staticmethod
-    def load_trace(path):
-        if path:
-            with open(path, 'rb') as buff:
-                data = pickle.load(buff)
-                return data['traces']
-        else:
-            return None
-
-    def compare_traces(self, compared_traces, param_name):
-        diff = self.traces.posterior[param_name] - compared_traces.posterior[param_name]
-        az.plot_trace(diff)
-        az.plot_posterior(diff)
-        plt.savefig(f"{self.name}_{self.group}_results/{param_name}-compare-traces-{self.name}.png")
-
-    def get_infos(self):
-        rope = [-0.1, 0.1]
-        hdi = az.hdi(self.traces, hdi_prob=0.95)['difference_of_means'].values  # the 95% HDI interval of the difference
-        summary = az.summary(self.traces)
-        summary['ROPE_in_HDI'] = (rope[1] >= hdi[0]) or (rope[0] <= hdi[1])
-        summary.to_csv(f"{self.name}_{self.group}_results/{self.condition}-infos.csv")
-
-
-class UnpooledModel(PooledModel):
+class UnpooledModelSimulations(PooledModel):
 
     def get_trace(self):
         pre_test = self.get_data_status('PRE_TEST')
@@ -172,7 +169,7 @@ class UnpooledModel(PooledModel):
         BF_smc = np.exp(self.traces.report.log_marginal_likelihood)
 
 
-class PooledModelRT(PooledModel):
+class PooledModelRTSimulations(PooledModel):
     """
     https://discourse.pymc.io/t/lognormal-model-for-reaction-times-how-to-specify/6677/3
     """
