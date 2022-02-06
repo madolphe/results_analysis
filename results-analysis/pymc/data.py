@@ -110,14 +110,16 @@ def get_data(path='../../outputs/v1_ubx/'):
     df_memora = df_memora.groupby('participant_id').filter(lambda x: len(x) > 1)
     memora_cdt.append('total-task')
 
-    # tasks = {'enumeration': (df_enum, enum_cdt),
-    #          'working_memory': (df_wm, wm_cdt),
-    #          'gonogo': (df_go, go_cdt),
-    #          'loadblindness': (df_lb, lb_cdt),
-    #          'mot': (df_mot, mot_cdt),
-    #          'memorability': (df_memora, memora_cdt),
-    #          'taskswitch': (df_tsw, tsw_cdt)}
-    tasks = {'taskswitch': (df_tsw, ['total-task'])}
+    tasks = {'enumeration': (df_enum, enum_cdt),
+             'working_memory': (df_wm, wm_cdt),
+             'gonogo': (df_go, go_cdt),
+             'loadblindness': (df_lb, lb_cdt),
+             'mot': (df_mot, mot_cdt),
+             'memorability': (df_memora, memora_cdt),
+             'taskswitch': (df_tsw, tsw_cdt)}
+    # tasks = {'memorability': (df_memora, memora_cdt)}
+    # tasks = {'enumeration': (df_enum, ['total-task'])}
+    # tasks = {'taskswitch': (df_tsw, ['parity-switching-cost'])}
     return tasks
 
 

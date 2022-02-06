@@ -1,0 +1,4 @@
+,mean,sd,hdi_3%,hdi_97%,mcse_mean,mcse_sd,ess_bulk,ess_tail,r_hat
+pre_test_posterior,0.455,0.049,0.362,0.545,0.0,0.0,13909.0,11446.0,1.0
+post_test_posterior,0.618,0.046,0.531,0.704,0.0,0.0,13587.0,11198.0,1.0
+difference_of_means,0.163,0.067,0.036,0.286,0.001,0.0,13873.0,11424.0,1.0
