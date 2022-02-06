@@ -17,11 +17,15 @@ class PooledModel:
         self.name = name
         self.group = group
         self.sample_size = sample_size
-        if f"{self.folder}/{self.name}/{self.name}_{self.group}_results" not in os.listdir():
+        self.folder = folder
+        if self.folder not in os.listdir():
+            os.mkdir(self.folder)
+        if self.name not in os.listdir(self.folder):
+            os.mkdir(f"{self.folder}/{self.name}")
+        if f"{self.name}_{self.group}_results" not in os.listdir(f"{self.folder}/{self.name}"):
             os.mkdir(f"{self.folder}/{self.name}/{self.name}_{self.group}_results")
         self.stim_condition_list = stim_cond_list
         self.condition = None
-        self.folder = folder
 
     def run(self):
         for condition in self.stim_condition_list:
@@ -109,6 +113,15 @@ class PooledModel:
         summary = az.summary(self.traces)
         summary['ROPE_in_HDI'] = (rope[1] >= hdi[0]) or (rope[0] <= hdi[1])
         summary.to_csv(f"{self.name}_{self.group}_results/{self.condition}-infos.csv")
+
+    @staticmethod
+    def compute_effect_size(traces, param, nb_sample):
+        traces = traces.posterior[param].values
+        BF_values = []
+        for chain in range(4):
+            nb_in_rope = ((0.01 > traces[chain, :]) & (traces[chain, :] > -0.01)).sum()
+            BF_values.append(nb_in_rope/(nb_sample-nb_in_rope))
+        return BF_values
 
 
 class PooledModelSimulations(PooledModel):

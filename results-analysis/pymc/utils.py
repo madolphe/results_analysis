@@ -43,12 +43,24 @@ def add_rope_on_traces():
         for task, (data, condition_list) in tasks.items():
             for condition in condition_list:
                 path_traces = f"pooled_model/{task}/{task}_{group}_results/{task}_{group}-{condition}-trace"
-                model = PooledModel(data, name=task, group=group, stim_cond_list=condition_list,
+                model = PooledModel(data, name=task, group=group, folder='pooled_model', stim_cond_list=condition_list,
                                     sample_size=500, traces_path=path_traces)
                 model.condition = condition
                 model.plot_estimated_posteriors()
 
 
+def compute_BF_for_all_tasks():
+    for group in ['zpdes', 'baseline']:
+        for task, (data, condition_list) in tasks.items():
+            for condition in condition_list:
+                path_traces = f"pooled_model/{task}/{task}_{group}_results/{task}_{group}-{condition}-trace"
+                model = PooledModel(data, name=task, group=group, folder='pooled_model', stim_cond_list=condition_list,
+                                    sample_size=500, traces_path=path_traces)
+                model.condition = condition
+                BF_values = model.compute_effect_size(model.traces, 'difference_of_means', 2000)
+                print(task, condition, BF_values)
+
 if __name__ == '__main__':
     # create_csv_summary()
-    add_rope_on_traces()
+    # add_rope_on_traces()
+    compute_BF_for_all_tasks()
