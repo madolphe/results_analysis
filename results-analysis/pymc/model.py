@@ -60,9 +60,10 @@ class PooledModel:
 
     def compare_traces(self, compared_traces, param_name):
         diff = self.traces.posterior[param_name] - compared_traces.posterior[param_name]
-        az.plot_trace(diff)
-        az.plot_posterior(diff)
-        plt.savefig(f"{self.name}_{self.group}_results/{param_name}-compare-traces-{self.name}.png")
+        return az.summary(diff)
+        # az.plot_trace(diff)
+        # az.plot_posterior(diff)
+        # plt.savefig(f"{self.name}_{self.group}_results/{param_name}-compare-traces-{self.name}.png")
 
     # # SAVE AND PLOTS FUNCTIONS # #
     def get_figures(self):
@@ -112,7 +113,7 @@ class PooledModel:
         hdi = az.hdi(self.traces, hdi_prob=0.95)['difference_of_means'].values  # the 95% HDI interval of the difference
         summary = az.summary(self.traces)
         summary['ROPE_in_HDI'] = (rope[1] >= hdi[0]) or (rope[0] <= hdi[1])
-        summary.to_csv(f"{self.name}_{self.group}_results/{self.condition}-infos.csv")
+        summary.to_csv(f"{self.folder}/{self.name}/{self.name}_{self.group}_results/{self.condition}-infos.csv")
 
     @staticmethod
     def compute_effect_size(traces, param, prior_odds):

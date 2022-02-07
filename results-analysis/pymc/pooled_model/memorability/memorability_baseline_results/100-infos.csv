@@ -1,0 +1,4 @@
+,mean,sd,hdi_3%,hdi_97%,mcse_mean,mcse_sd,ess_bulk,ess_tail,r_hat,ROPE_in_HDI
+pre_test_theta,0.489,0.037,0.421,0.559,0.0,0.0,7329.0,5761.0,1.0,True
+post_test_theta,0.528,0.037,0.465,0.6,0.0,0.0,7493.0,5377.0,1.0,True
+difference_of_means,0.04,0.052,-0.057,0.138,0.001,0.0,7237.0,6104.0,1.0,True
