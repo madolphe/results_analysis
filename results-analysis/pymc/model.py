@@ -43,7 +43,7 @@ class PooledModel:
         post_test = self.get_data_status('POST_TEST')
         total_success_pre_test = pre_test[f'{self.condition}-correct'].sum()
         total_success_post_test = post_test[f'{self.condition}-correct'].sum()
-        with pm.Model():
+        with pm.Model() as model:
             beta_dist_pre_test = pm.distributions.continuous.Beta(name="pre_test_posterior",
                                                                   alpha=1 + total_success_pre_test,
                                                                   beta=pre_test[
@@ -115,12 +115,17 @@ class PooledModel:
         summary.to_csv(f"{self.name}_{self.group}_results/{self.condition}-infos.csv")
 
     @staticmethod
-    def compute_effect_size(traces, param, nb_sample):
+    def compute_effect_size(traces, param, prior_odds):
         traces = traces.posterior[param].values
         BF_values = []
         for chain in range(4):
-            nb_in_rope = ((0.01 > traces[chain, :]) & (traces[chain, :] > -0.01)).sum()
-            BF_values.append(nb_in_rope/(nb_sample-nb_in_rope))
+            nb_sample = len(traces[chain, :])
+            nb_in_rope = ((traces[chain, :] > -0.01) & (traces[chain, :] < 0.01)).sum()
+            nb_out_rope = (nb_sample-nb_in_rope)
+            if nb_in_rope == 0:
+                nb_in_rope = 1
+            posterior_odds = nb_out_rope/nb_in_rope
+            BF_values.append(posterior_odds/prior_odds)
         return BF_values
 
 

@@ -19,9 +19,15 @@ if __name__ == '__main__':
         # model_zpdes = PooledModel(data[data['condition'] == 'zpdes'], name=f'{condition}_zpdes',
         #                           stim_cond_list=condition_list, sample_size=4000)
         # model_zpdes.find_posterior_for_condition()
-        model_baseline = PooledModel(data[data['condition'] == 'baseline'], name=f'{condition}_baseline',
-                                     stim_cond_list=condition_list, sample_size=4000)
-        model_baseline.find_posterior_for_condition()
+        # model_baseline = PooledModel(data[data['condition'] == 'baseline'], name=f'{condition}_baseline',
+        #                              folder='pooled_model',
+        #                              group='baseline',
+        #                              stim_cond_list=condition_list, sample_size=4000)
+        model = PooledModel(data[data['condition'] == 'baseline'],
+                            name=condition, group='baseline', folder='pooled_model', stim_cond_list=condition_list,
+                            sample_size=500)
+        model.condition = "total-task"
+        model.get_trace()
         # model_baseline.run()
         # model_baseline = PooledModel(data[data['condition'] == 'baseline'], name=f'{condition}_baseline',
         #                              stim_cond_list=condition_list, sample_size=2000)
