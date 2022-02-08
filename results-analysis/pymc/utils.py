@@ -1,5 +1,5 @@
 from data import get_data
-from model import PooledModel
+from model import PooledModel, PooledModelRTSimulations
 import pandas as pd
 import numpy as np
 
@@ -40,6 +40,7 @@ def create_csv_summary(rope=[-0.01, 0.01]):
 
 
 def add_rope_on_traces():
+    """ Method used once just to add rope on estimated posteriors (from older simulations)"""
     for group in ['zpdes', 'baseline']:
         for task, (data, condition_list) in tasks.items():
             for condition in condition_list:
@@ -70,9 +71,9 @@ def get_mu_diff_group_csv(rope=[-0.01, 0.01]):
         columns=['task_name', 'condition',
                  'pre_zpdes', 'post_zpdes', 'diff_zpdes',
                  'pre_baseline', 'post_baseline', 'diff_baseline',
-                 'diff_pre_mean','diff_pre_HDI_3','diff_pre_HDI_97',
-                 'diff_post_mean','diff_post_HDI_3','diff_post_HDI_97',
-                 'diff_PG_mean','diff_PG_HDI_3','diff_PG_HDI_97','sig_diff'])
+                 'diff_pre_mean', 'diff_pre_HDI_3', 'diff_pre_HDI_97',
+                 'diff_post_mean', 'diff_post_HDI_3', 'diff_post_HDI_97',
+                 'diff_PG_mean', 'diff_PG_HDI_3', 'diff_PG_HDI_97', 'sig_diff'])
     for task, (data, condition_list) in tasks.items():
         for condition in condition_list:
             zpdes_model_path = f"pooled_model/{task}/{task}_zpdes_results/{task}_zpdes-{condition}-trace"
@@ -115,8 +116,20 @@ def get_mu_diff_group_csv(rope=[-0.01, 0.01]):
     csv.to_csv(f'summary_results_diff.csv')
 
 
+def get_RT_posteriors():
+    for task, (data, condition_list) in tasks.items():
+        model_baseline = PooledModelRTSimulations(data=data, folder='RT_models_pooled', name=task, group='baseline',
+                                                  stim_cond_list=condition_list, sample_size=8000)
+        model_zpdes = PooledModelRTSimulations(data=data, folder='RT_models_pooled', name=task, group='zpdes',
+                                               stim_cond_list=condition_list, sample_size=8000)
+        model_baseline.run()
+        model_zpdes.run()
+        model_zpdes.compare_traces(model_baseline.traces, 'difference_of_means')
+
+
 if __name__ == '__main__':
     # create_csv_summary()
     # add_rope_on_traces()
     # compute_BF_for_all_tasks()
-    get_mu_diff_group_csv()
+    # get_mu_diff_group_csv()
+    get_RT_posteriors()

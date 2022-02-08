@@ -95,8 +95,9 @@ class PooledModel:
         plt.close()
 
     def save_trace(self):
-        with open(f"{self.folder}/{self.name}/{self.name}_results/{self.name}_{self.group}-{self.condition}-trace",
-                  'wb') as buff:
+        with open(
+                f"{self.folder}/{self.name}/{self.name}_{self.group}_results/{self.name}_{self.group}-{self.condition}-trace",
+                'wb') as buff:
             pickle.dump({'traces': self.traces}, buff)
 
     @staticmethod
@@ -122,11 +123,11 @@ class PooledModel:
         for chain in range(4):
             nb_sample = len(traces[chain, :])
             nb_in_rope = ((traces[chain, :] > -0.01) & (traces[chain, :] < 0.01)).sum()
-            nb_out_rope = (nb_sample-nb_in_rope)
+            nb_out_rope = (nb_sample - nb_in_rope)
             if nb_in_rope == 0:
                 nb_in_rope = 1
-            posterior_odds = nb_out_rope/nb_in_rope
-            BF_values.append(posterior_odds/prior_odds)
+            posterior_odds = nb_out_rope / nb_in_rope
+            BF_values.append(posterior_odds / prior_odds)
         return BF_values
 
 
@@ -188,7 +189,7 @@ class UnpooledModelSimulations(PooledModel):
         BF_smc = np.exp(self.traces.report.log_marginal_likelihood)
 
 
-class PooledModelRTSimulations(PooledModel):
+class PooledModelRTGLMSimulations(PooledModel):
     """
     https://discourse.pymc.io/t/lognormal-model-for-reaction-times-how-to-specify/6677/3
     """
@@ -214,3 +215,20 @@ class PooledModelRTSimulations(PooledModel):
             prior_predictive = pm.sample_prior_predictive()
             diff_of_means = pm.Deterministic("difference_of_means", RT_pred_pre_test - RT_pred_post_test)
             self.traces = pm.sample(2000, return_inferencedata=True)
+
+
+class PooledModelRTSimulations(PooledModel):
+    def get_trace(self):
+        pre_test = self.get_data_status('PRE_TEST')
+        post_test = self.get_data_status('POST_TEST')
+        obs_pre_test = np.log2(pre_test[f"{self.condition}-rt"])
+        obs_post_test = np.log2(post_test[f"{self.condition}-rt"])
+        with pm.Model() as pooled_model:
+            # prior on mu and sigma:
+            mu_pre_test = pm.Normal('mu_pre_test', mu=0, sd=3)
+            mu_post_test = pm.Normal('mu_post_test', mu=0, sd=3)
+            sigma = pm.HalfNormal('sigma', 3)
+            RT_pred_pre_test = pm.Lognormal(name='RT_pred_pre_test', mu=mu_pre_test, sd=sigma, observed=obs_pre_test)
+            RT_pred_post_test = pm.Lognormal(name='RT_pred_post_test', mu=mu_post_test, sd=sigma, observed=obs_post_test)
+            diff_of_means = pm.Deterministic("difference_of_means", mu_post_test - mu_pre_test)
+            self.traces = pm.sample(self.sample_size, return_inferencedata=True)
