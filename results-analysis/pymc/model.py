@@ -8,6 +8,7 @@ import os
 import pandas as pd
 import numpy as np
 import copy
+import time
 
 
 class PooledModel:
@@ -26,12 +27,19 @@ class PooledModel:
             os.mkdir(f"{self.folder}/{self.name}/{self.name}_{self.group}_results")
         self.stim_condition_list = stim_cond_list
         self.condition = None
+        self.time = time.time()
 
     def run(self):
         for condition in self.stim_condition_list:
             self.condition = condition
+            print(f'Start sampling for condition {condition}')
+            self.time = time.time()
             self.get_trace()
+            print(f'Finish sampling, time taken: {time.time() - self.time}')
+            self.time = time.time()
+            print('Start plotting figures')
             self.get_figures()
+            print(f'Finish plotting figures, time elapsed: {time.time() - self.time}')
             az.summary(self.traces).to_csv(
                 f"{self.folder}/{self.name}/{self.name}_{self.group}_results/summary-{self.name}-{self.condition}.csv")
 
@@ -72,11 +80,11 @@ class PooledModel:
         self.save_trace()
         self.get_infos()
 
-    def plot_estimated_posteriors(self):
+    def plot_estimated_posteriors(self, rope=(-0.01, 0.01)):
         az.plot_posterior(
             self.traces,
             color="#87ceeb",
-            rope={'difference_of_means': [{'rope': (-0.01, 0.01)}]}
+            rope={'difference_of_means': [{'rope': rope}]}
         )
         plt.savefig(
             f"{self.folder}/{self.name}/{self.name}_{self.group}_results/posteriors-{self.name}_{self.group}-{self.condition}")
@@ -232,3 +240,35 @@ class PooledModelRTSimulations(PooledModel):
             RT_pred_post_test = pm.Lognormal(name='RT_pred_post_test', mu=mu_post_test, sd=sigma, observed=obs_post_test)
             diff_of_means = pm.Deterministic("difference_of_means", mu_post_test - mu_pre_test)
             self.traces = pm.sample(self.sample_size, return_inferencedata=True)
+
+
+class GLModel(PooledModel):
+    def get_trace(self):
+        X = pd.get_dummies(self.data['condition'], drop_first=True)
+        obs = self.data[self.condition]
+        with pm.Model() as LinearModel:
+            intercept = pm.Normal(name='baseline', mu=0, sigma=5)
+            slope = pm.Normal(name='slope', mu=0, sigma=5)
+            mu = intercept + pm.math.dot(X, slope)
+            sig_scores = pm.HalfNormal('sigma', 3)
+            scores = pm.Normal(name="scores", mu=mu, sigma=sig_scores, observed=obs)
+            print('START SAMPLING')
+            self.traces = pm.sample(self.sample_size, return_inferencedata=True)
+            print('SAMPLING IS DONE')
+
+    def plot_estimated_posteriors(self, rope=(-0.1, 0.1)):
+        az.plot_posterior(
+            self.traces,
+            color="#87ceeb",
+            rope={'slope': [{'rope': rope}]}
+        )
+        plt.savefig(
+            f"{self.folder}/{self.name}/{self.name}_{self.group}_results/posteriors-{self.name}_{self.group}-{self.condition}")
+        plt.close()
+
+    def get_infos(self):
+        rope = [-0.1, 0.1]
+        hdi = az.hdi(self.traces, hdi_prob=0.95)['slope'].values  # the 95% HDI interval of the difference
+        summary = az.summary(self.traces)
+        summary['ROPE_in_HDI'] = (rope[1] >= hdi[0]) or (rope[0] <= hdi[1])
+        summary.to_csv(f"{self.folder}/{self.name}/{self.name}_{self.group}_results/{self.condition}-infos.csv")

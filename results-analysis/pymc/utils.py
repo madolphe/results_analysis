@@ -1,5 +1,5 @@
 from data import get_data
-from model import PooledModel, PooledModelRTSimulations
+from model import PooledModel, PooledModelRTSimulations, GLModel
 import pandas as pd
 import numpy as np
 
@@ -127,9 +127,27 @@ def get_RT_posteriors():
         model_zpdes.compare_traces(model_baseline.traces, 'difference_of_means')
 
 
+def treat_questionnaire():
+    questionnaires = ['nasa_tlx', 'ues', 'sims', 'tens']
+    for questionnaire in questionnaires:
+        print(questionnaire)
+        baseline = pd.read_csv(f'questionnaires/{questionnaire}/{questionnaire}_baseline.csv')
+        zpdes = pd.read_csv(f'questionnaires/{questionnaire}/{questionnaire}_zpdes.csv')
+        baseline['condition'] = 'baseline'
+        zpdes['condition'] = 'zpdes'
+        df = pd.concat([baseline, zpdes])
+        df = df.drop(columns=['Unnamed: 0'])
+        condition_list = list(df.loc[:, df.columns != 'condition'].columns.values)
+        model = GLModel(data=df, folder='questionnaires', name=questionnaire, group='all', stim_cond_list=condition_list,
+                        sample_size=1000)
+        model.run()
+        print(f'DONE {questionnaire}')
+
+
 if __name__ == '__main__':
     # create_csv_summary()
     # add_rope_on_traces()
     # compute_BF_for_all_tasks()
     # get_mu_diff_group_csv()
-    get_RT_posteriors()
+    # get_RT_posteriors()
+    treat_questionnaire()
