@@ -130,3 +130,15 @@ dmypy.json
 
 #Pycharm
 .idea/
+
+# Project wide
+outputs/*
+results-analysis/psychometrics/nasa_tlx
+results-analysis/psychometrics/sims
+results-analysis/psychometrics/tens
+results-analysis/psychometrics/ues
+results-analysis/psychometrics/all_answers.csv
+results-analysis/pymc/csv_results
+results-analysis/pymc/questionnaires
+results-analysis/pymc/questionnaires_parwise
+*.csv

@@ -56,7 +56,8 @@ def plt_RT():
 def format_data():
     # FIRST TREAT THE CSV AND PARSE IT TO DF
     # csv_path = "../outputs/enumeration/enumeration.csv"
-    csv_path = "../outputs/v1_ubx/results_v1_ubx/enumeration.csv"
+    # csv_path = "../outputs/v1_ubx/results_v1_ubx/enumeration.csv"
+    csv_path = "../outputs/v0_prolific/results_v0_prolific/enumeration/enumeration.csv"
     dataframe = pd.read_csv(csv_path, sep=",")
     dataframe['result_response_exact'] = dataframe.apply(compute_result_exact_answers, axis=1)
     dataframe['mean_rt_session'] = dataframe.apply(compute_mean_per_row, axis=1)
@@ -85,8 +86,11 @@ def get_lfa_csv(dataframe, condition_possibilities, condition_names):
     for index, condition in zip(condition_possibilities, condition_names):
         print(index, condition, dataframe[str(index)].apply(lambda row: len(row))[0])
         dataframe[f"{condition}"] = dataframe[f"{index}-sum"] / dataframe[str(index)].apply(lambda row: len(row))
+    # dataframe[['participant_id', 'task_status', 'condition'] + condition_names].to_csv(
+    #     '../outputs/v1_ubx/enumeration_lfa_v1.csv',
+    #     index=False)
     dataframe[['participant_id', 'task_status', 'condition'] + condition_names].to_csv(
-        '../outputs/v1_ubx/enumeration_lfa_v1.csv',
+        '../outputs/v0_prolific/enumeration_lfa_v1.csv',
         index=False)
     # summarize two days experiments
     sum_observers = []
@@ -100,7 +104,7 @@ def get_lfa_csv(dataframe, condition_possibilities, condition_names):
     return
 
 
-def get_stan_accuracy(dataframe, condition_names):
+def get_stan_accuracy(dataframe, condition_names, study):
     # nb_trials = 20 per condition:
     nb_trials = len(dataframe['5'][0])
     stan_distributions = get_stan_accuracy_distributions(dataframe, condition_names, nb_trials, 'enumeration')
@@ -111,7 +115,9 @@ def get_stan_accuracy(dataframe, condition_names):
                  'list_set_yticklabels': ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
                  'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0],
                  'scale_jitter': 0.5}
-    plot_all_accuracy_figures(stan_distributions, condition_names, 'enumeration', dataframe, nb_trials, plot_args)
+    plot_all_accuracy_figures(stan_distributions=stan_distributions, outcomes_names=condition_names,
+                              task_name='enumeration', overall_initial_data=dataframe, nb_trials=nb_trials,
+                              plot_args=plot_args, study=study)
     print('finished')
 
 
@@ -124,4 +130,4 @@ if __name__ == '__main__':
     get_lfa_csv(dataframe, condition_possibilities, condition_names)
     # -------------------------------------------------------------------#
     # BAYES ACCURACY ANALYSIS
-    # get_stan_accuracy(dataframe, condition_names)
+    get_stan_accuracy(dataframe, condition_names, study='v0_prolific')

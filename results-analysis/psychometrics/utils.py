@@ -52,7 +52,6 @@ def plot_scatter_serie(df_baseline_mean, df_baseline_std, df_zpdes_mean, df_zpde
     plt.errorbar(df_baseline_mean[col].index, df_baseline_mean[col], yerr=df_baseline_std[col], label='baseline',
                  color='blue')
     plt.scatter(df_baseline_mean[col].index, df_baseline_mean[col], color='blue')
-
     plt.scatter(df_zpdes_mean[col].index, df_zpdes_mean[col], color='red')
     plt.errorbar(df_zpdes_mean[col].index, df_zpdes_mean[col], yerr=df_zpdes_std[col], label='zpdes', color='red')
     plt.legend()

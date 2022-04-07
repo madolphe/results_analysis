@@ -29,22 +29,22 @@ def compute_result_sum_hr(row):
     return 18 - row['result_nb_omission']
 
 
-def format_data():
+def format_data(path):
     # FIRST TREAT THE CSV AND PARSE IT TO DF
-    csv_path = "../outputs/v1_ubx/results_v1_ubx/moteval.csv"
+    csv_path = f"{path}/moteval.csv"
     dataframe = pd.read_csv(csv_path, sep=",")
     dataframe = dataframe.apply(lambda row: transform_str_to_list(row, [
         'results_responses', 'results_rt', 'results_speed_stim', 'results_correct']), axis=1)
     dataframe = delete_uncomplete_participants(dataframe)
     dataframe = dataframe.apply(compute_mean_per_condition, axis=1)
-    dataframe.to_csv('../outputs/v1_ubx/moteval_treat.csv')
+    dataframe.to_csv(f'{path}/moteval_treat.csv')
     nb_trials = len(dataframe['results_correct'][0])
     print(nb_trials)
     outcomes_names_acc = ["1-accuracy", "4-accuracy", "8-accuracy"]
     return dataframe, outcomes_names_acc, nb_trials
 
 
-def get_lfa_csv(dataframe, outcomes_names):
+def get_lfa_csv(dataframe, outcomes_names, path):
     # THEN EXTRACT COLUMNS FOR FUTURE LATENT FACTOR ANALYSIS
     # extract observer index information
     indices_id = extract_id(dataframe, num_count=2)
@@ -59,10 +59,10 @@ def get_lfa_csv(dataframe, outcomes_names):
     # sum_observers.to_csv('../outputs/moteval/sumdata_moteval.csv', index=False)
     outcomes_names_rt = ["1-rt", "4-rt", "8-rt"]
     dataframe[['participant_id', 'task_status', 'condition'] + outcomes_names_acc + outcomes_names_rt].to_csv(
-        '../outputs/v1_ubx/moteval_lfa.csv', index=False)
+        f'{path}/moteval_lfa.csv', index=False)
 
 
-def get_stan_accuracy(dataframe, outcomes_names_acc, nb_trials):
+def get_stan_accuracy(dataframe, outcomes_names_acc, nb_trials, study):
     # BAYES ACCURACY ANALYSIS
     # For accuracy analysis, let's focus on the outcomes:
     stan_distributions = get_stan_accuracy_distributions(dataframe, outcomes_names_acc, nb_trials, 'moteval')
@@ -72,17 +72,21 @@ def get_stan_accuracy(dataframe, outcomes_names_acc, nb_trials):
                 'list_set_yticklabels': ['2', '3', '4', '5'],
                 'list_set_yticks': [0.4, 0.6, 0.8, 1.0],
                 'scale_jitter': 0.3}
-    plot_all_accuracy_figures(stan_distributions, outcomes_names_acc, 'moteval', dataframe, nb_trials, plt_args)
+    plot_all_accuracy_figures(stan_distributions=stan_distributions, outcomes_names=outcomes_names_acc,
+                              task_name='moteval', overall_initial_data=dataframe, nb_trials=nb_trials,
+                              plot_args=plt_args, study=study)
 
 
 if __name__ == '__main__':
+    path = "../outputs/v0_prolific/results_v0_prolific/moteval"
+    study = "v0_prolific"
     ### With new participants (id=2 and 4) this script doesnt work!!! ###
     # -------------------------------------------------------------------#
-    dataframe, outcomes_names_acc, nb_trials = format_data()
+    dataframe, outcomes_names_acc, nb_trials = format_data(path)
     # -------------------------------------------------------------------#
-    get_lfa_csv(dataframe, outcomes_names_acc)
+    get_lfa_csv(dataframe, outcomes_names_acc,path)
     # -------------------------------------------------------------------#
-    # get_stan_accuracy(dataframe, outcomes_names_acc, nb_trials)
+    get_stan_accuracy(dataframe, outcomes_names_acc, nb_trials, study)
     # -------------------------------------------------------------------#
     # BAYES RT ANALYSIS:
     '''

@@ -29,7 +29,7 @@ class PooledModel:
         self.condition = None
         self.time = time.time()
 
-    def run(self):
+    def run(self, rope=(-0.01, 0.01)):
         for condition in self.stim_condition_list:
             self.condition = condition
             print(f'Start sampling for condition {condition}')
@@ -38,7 +38,7 @@ class PooledModel:
             print(f'Finish sampling, time taken: {time.time() - self.time}')
             self.time = time.time()
             print('Start plotting figures')
-            self.get_figures()
+            self.get_figures(rope=(-0.1, 0.1))
             print(f'Finish plotting figures, time elapsed: {time.time() - self.time}')
             az.summary(self.traces).to_csv(
                 f"{self.folder}/{self.name}/{self.name}_{self.group}_results/summary-{self.name}-{self.condition}.csv")
@@ -74,8 +74,8 @@ class PooledModel:
         # plt.savefig(f"{self.name}_{self.group}_results/{param_name}-compare-traces-{self.name}.png")
 
     # # SAVE AND PLOTS FUNCTIONS # #
-    def get_figures(self):
-        self.plot_estimated_posteriors()
+    def get_figures(self, rope=(-0.01, 0.01)):
+        self.plot_estimated_posteriors(rope=(-0.01, 0.01))
         self.plot_CV_figures()
         self.save_trace()
         self.get_infos()
@@ -184,7 +184,7 @@ class UnpooledModelSimulations(PooledModel):
             diff_of_means = pm.Deterministic("difference_of_means", post_test_theta - pre_test_theta)
             self.traces = pm.sample(2000, return_inferencedata=True)
 
-    def run(self):
+    def run(self, rope=(-0.01, 0.01)):
         for condition in self.stim_condition_list:
             self.condition = condition
             self.get_trace()
@@ -225,20 +225,43 @@ class PooledModelRTGLMSimulations(PooledModel):
             self.traces = pm.sample(2000, return_inferencedata=True)
 
 
+class PooledModelRTCostSimulations(PooledModel):
+    def get_trace(self):
+        pre_test = self.get_data_status('PRE_TEST')
+        post_test = self.get_data_status('POST_TEST')
+        obs_pre_test = pre_test[f"{self.condition}-rt"]
+        obs_post_test = post_test[f"{self.condition}-rt"]
+        with pm.Model() as pooled_model:
+            # prior on mu and sigma:
+            # mu_pre_test = pm.Normal('mu_pre_test', mu=0, sd=3)
+            # mu_post_test = pm.Normal('mu_post_test', mu=0, sd=3)
+            # sigma = pm.HalfNormal('sigma', 3)
+            mu_pre_test = pm.Uniform(name='mu_pre_test', lower=-1400, upper=1400)
+            mu_post_test = pm.Uniform(name='mu_post_test', lower=-1400, upper=1400)
+            sigma = pm.Uniform(name='sigma', lower=0, upper=100)
+            RT_pred_pre_test = pm.Normal(name='RT_pred_pre_test', mu=mu_pre_test, sd=sigma, observed=obs_pre_test)
+            RT_pred_post_test = pm.Normal(name='RT_pred_post_test', mu=mu_post_test, sd=sigma, observed=obs_post_test)
+            diff_of_means = pm.Deterministic("difference_of_means", mu_pre_test - mu_post_test)
+            self.traces = pm.sample(self.sample_size, return_inferencedata=True)
+
+
 class PooledModelRTSimulations(PooledModel):
     def get_trace(self):
         pre_test = self.get_data_status('PRE_TEST')
         post_test = self.get_data_status('POST_TEST')
-        obs_pre_test = np.log2(pre_test[f"{self.condition}-rt"])
-        obs_post_test = np.log2(post_test[f"{self.condition}-rt"])
+        obs_pre_test = pre_test[f"{self.condition}-rt"]
+        obs_post_test = post_test[f"{self.condition}-rt"]
         with pm.Model() as pooled_model:
             # prior on mu and sigma:
-            mu_pre_test = pm.Normal('mu_pre_test', mu=0, sd=3)
-            mu_post_test = pm.Normal('mu_post_test', mu=0, sd=3)
-            sigma = pm.HalfNormal('sigma', 3)
-            RT_pred_pre_test = pm.Lognormal(name='RT_pred_pre_test', mu=mu_pre_test, sd=sigma, observed=obs_pre_test)
-            RT_pred_post_test = pm.Lognormal(name='RT_pred_post_test', mu=mu_post_test, sd=sigma, observed=obs_post_test)
-            diff_of_means = pm.Deterministic("difference_of_means", mu_post_test - mu_pre_test)
+            # mu_pre_test = pm.Normal('mu_pre_test', mu=0, sd=3)
+            # mu_post_test = pm.Normal('mu_post_test', mu=0, sd=3)
+            # sigma = pm.HalfNormal('sigma', 3)
+            mu_pre_test = pm.Uniform(name='mu_pre_test', lower=0, upper=1400)
+            mu_post_test = pm.Uniform(name='mu_post_test', lower=0, upper=1400)
+            sigma = pm.Uniform(name='sigma', lower=0, upper=1400)
+            RT_pred_pre_test = pm.Normal(name='RT_pred_pre_test', mu=mu_pre_test, sd=sigma, observed=obs_pre_test)
+            RT_pred_post_test = pm.Normal(name='RT_pred_post_test', mu=mu_post_test, sd=sigma, observed=obs_post_test)
+            diff_of_means = pm.Deterministic("difference_of_means", mu_pre_test - mu_post_test)
             self.traces = pm.sample(self.sample_size, return_inferencedata=True)
 
 
@@ -249,7 +272,8 @@ class GLModel(PooledModel):
         with pm.Model() as LinearModel:
             intercept = pm.Normal(name='baseline', mu=0, sigma=5)
             slope = pm.Normal(name='slope', mu=0, sigma=5)
-            mu = intercept + pm.math.dot(X, slope)
+            mu = intercept + pm.math.dot(X, slope)  # + pm.math.dot(X_week, slop_week)
+            # mu = intercept + pm.math.dot(X, slope) + pm.math.dot(X_week, slop_week)
             sig_scores = pm.HalfNormal('sigma', 3)
             scores = pm.Normal(name="scores", mu=mu, sigma=sig_scores, observed=obs)
             print('START SAMPLING')
@@ -260,10 +284,11 @@ class GLModel(PooledModel):
         az.plot_posterior(
             self.traces,
             color="#87ceeb",
-            rope={'slope': [{'rope': rope}]}
+            rope={'baseline': [{'rope': (-0.5, 0.5)}],
+                  'slope': [{'rope': (-0.1, 0.1)}]}
         )
         plt.savefig(
-            f"{self.folder}/{self.name}/{self.name}_{self.group}_results/posteriors-{self.name}_{self.group}-{self.condition}")
+            f"{self.folder}/{self.name}/{self.name}_{self.group}_results/posteriors-{self.name}_{self.group}-{self.condition}.png")
         plt.close()
 
     def get_infos(self):
@@ -272,3 +297,65 @@ class GLModel(PooledModel):
         summary = az.summary(self.traces)
         summary['ROPE_in_HDI'] = (rope[1] >= hdi[0]) or (rope[0] <= hdi[1])
         summary.to_csv(f"{self.folder}/{self.name}/{self.name}_{self.group}_results/{self.condition}-infos.csv")
+
+
+class NormalNormalQuestionnaireModel(PooledModel):
+    def __init__(self, data, name, group, stim_cond_list, sample_size, session_id_list, folder=".", traces_path=None):
+        super(NormalNormalQuestionnaireModel, self).__init__(data, name, group, stim_cond_list, sample_size,
+                                                             folder=folder, traces_path=traces_path)
+        self.session_id_list = session_id_list
+        self.tmp_session_id = None
+        self.traces = {}
+
+    def run(self, rope=(-0.01, 0.01)):
+        """
+        Compute difference between sessions
+        """
+        for condition in self.stim_condition_list:
+            for session_id in self.session_id_list:
+                self.condition = condition
+                self.tmp_session_id = session_id
+                # self.tmp_session_id_1 = self.session_id_list[index_session_id + 1]
+                print(f'Start sampling for condition {condition}')
+                self.time = time.time()
+                self.get_trace()
+                print(f'Finish sampling, time taken: {time.time() - self.time}')
+                self.time = time.time()
+                print('Start plotting figures')
+            # All traces are stored, let's keep it in backup_traces
+            backup_traces = copy.deepcopy(self.traces)
+            backup_condition = self.condition
+            for index_session_id, session_id in enumerate(self.session_id_list):
+                self.condition = backup_condition + f"-{session_id}"
+                self.traces = backup_traces[self.condition]
+                self.get_figures(rope=(-0.1, 0.1))
+                print(f'Finish plotting figures, time elapsed: {time.time() - self.time}')
+                az.summary(self.traces).to_csv(
+                    f"{self.folder}/{self.name}/{self.name}_{self.group}_results/summary-{self.name}-{self.condition}.csv")
+                # I do this after :)
+                # Compare pairwise traces:
+                # if (index_session_id+1) < len(self.session_id_list):
+                #     pairwise_mu_diff = self.compare_traces(
+                #         backup_traces[f"{backup_condition}-{self.session_id_list[index_session_id + 1]}"],
+                #         param_name=f'mu')
+                #     pairwise_sigma_diff = self.compare_traces(
+                #         backup_traces[f"{backup_condition}-{self.session_id_list[index_session_id + 1]}"],
+                #         param_name=f'sigma')
+            # Restore the placeholder for traces
+            self.traces = {}
+
+    def get_trace(self):
+        obs = self.data.query(f'session_id == {self.tmp_session_id}')
+        obs = obs[self.condition]
+        with pm.Model():
+            mu = pm.Uniform(name=f'mu', lower=0, upper=100)
+            sigma = pm.Uniform(name=f'sigma', lower=0, upper=100)
+            answer_pop = pm.Normal(name='answer_population', mu=mu, sd=sigma, observed=obs)
+            self.traces[f"{self.condition}-{self.tmp_session_id}"] = pm.sample(self.sample_size,
+                                                                               return_inferencedata=True)
+
+    # # SAVE AND PLOTS FUNCTIONS # #
+    def get_figures(self, rope=(-0.01, 0.01)):
+        self.plot_estimated_posteriors(rope=(-0.01, 0.01))
+        self.plot_CV_figures()
+        self.save_trace()

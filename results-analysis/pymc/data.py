@@ -117,12 +117,18 @@ def get_data(path='../../outputs/v1_ubx/'):
              'mot': (df_mot, mot_cdt),
              'memorability': (df_memora, memora_cdt),
              'taskswitch': (df_tsw, tsw_cdt)}
+    # tasks_rt = {
+    #     'gonogo': (df_go, ['GO']),
+    #     'taskswitch': (df_tsw, ['parity-switching-cost', 'relative-switching-cost']),
+    #     'mot': (df_mot, ['1', '4', '8']),
+    #     'memorability': (df_memora, ['2', '3', '4', '5', '100'])
+    # }
     tasks_rt = {
-        'gonogo': (df_go, ['GO']),
         'taskswitch': (df_tsw, ['parity-switching-cost', 'relative-switching-cost']),
-        'mot': (df_mot, ['1', '4', '8']),
-        'memorability': (df_memora, ['2', '3', '4', '5', '100'])
     }
+    # tasks_rt = {
+    #     'gonogo': (df_go, ['GO'])
+    # }
     # tasks = {'memorability': (df_memora, memora_cdt)}
     # tasks = {'enumeration': (df_enum, ['total-task'])}
     # tasks = {'taskswitch': (df_tsw, ['parity-switching-cost'])}

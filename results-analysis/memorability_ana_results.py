@@ -45,13 +45,13 @@ def extract_mu_ci_from_summary_rt(dataframe, ind_cond):
     return outs
 
 
-def format_data():
-    csv_path_1 = "../outputs/v1_ubx/results_v1_ubx/memorability_1.csv"
+def format_data(path):
+    csv_path_1 = f"{path}/memorability_1.csv"
     dataframe_1 = pd.read_csv(csv_path_1)
     dataframe_1 = delete_uncomplete_participants(dataframe_1)
     dataframe_1['session'] = 1
 
-    csv_path_2 = "../outputs/v1_ubx/results_v1_ubx/memorability_2.csv"
+    csv_path_2 = f"{path}/memorability_2.csv"
     dataframe_2 = pd.read_csv(csv_path_2)
     dataframe_2 = delete_uncomplete_participants(dataframe_2)
     dataframe_2['session'] = 2
@@ -83,7 +83,7 @@ def format_data():
     return dataframe, sum_observers
 
 
-def get_lfa_csv(sum_observers):
+def get_lfa_csv(sum_observers, path):
     tmp_overall_results = []
     indices_id = extract_id(dataframe, num_count=4)
     columns, keywords = [], ['out_mat_hit_miss_sum', 'out_mat_fa_cr_sum', 'out_mat_rt_cond', 'out_mat_rt_cond_std']
@@ -92,26 +92,28 @@ def get_lfa_csv(sum_observers):
             columns.append(f"{keyword}-{condition}")
     sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + columns)
     # for save summary data
-    sum_observers.to_csv('../outputs/v1_ubx/sumdata_memorability.csv', header=True, index=False)
+    sum_observers.to_csv(f'{path}/sumdata_memorability.csv', header=True, index=False)
     sum_observers['total_resp'] = sum_observers.apply(lambda row: 16, axis=1)
     dataframe['total_resp'] = dataframe.apply(lambda row: 16, axis=1)
     # dataframe[conditions_names_hit_miss] = dataframe[conditions_names_hit_miss] / nb_trials
     # dataframe[conditions_names_fa_cr] = dataframe[conditions_names_fa_cr] / nb_trials
     dataframe[['participant_id', 'task_status', 'condition'] + conditions_names_hit_miss + conditions_names_rt +
-              conditions_names_fa_cr].to_csv('../outputs/v1_ubx/memorability_lfa.csv', index=False)
+              conditions_names_fa_cr].to_csv(f'{path}/memorability_lfa.csv', index=False)
 
 
-def get_stan_accuracy():
+def get_stan_accuracy(study):
     stan_distributions = get_stan_accuracy_distributions(dataframe, conditions_names_hit_miss, nb_trials,
-                                                         'memorability')
+                                                         'memorability', transform_to_accuracy=False)
     # Draw figures for accuracy data
     plt_args = {'list_xlim': [-0.25, 4.25], 'list_ylim': [0, 1],
                 'list_set_xticklabels': ['2', '3', '4', '5', '>100'], 'list_set_xticks': [0, 1, 2, 3, 4],
                 'list_set_yticklabels': ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
                 'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0],
                 'scale_jitter': 0.5}
-    plot_all_accuracy_figures(stan_distributions, conditions_names_hit_miss, 'memorability', dataframe, nb_trials,
-                              plt_args, name_option='hr')
+    plot_all_accuracy_figures(stan_distributions=stan_distributions, outcomes_names=conditions_names_hit_miss,
+                              task_name='memorability', overall_initial_data=dataframe, nb_trials=nb_trials,
+                              plot_args=plt_args, study=study, name_option='hr')
+
     # for far distribution
     stan_distributions = get_stan_accuracy_distributions(dataframe, conditions_names_fa_cr, nb_trials, 'memorability')
     # Draw figures for accuracy data
@@ -120,11 +122,12 @@ def get_stan_accuracy():
                 'list_set_yticklabels': ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
                 'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0],
                 'scale_jitter': 0.5}
-    plot_all_accuracy_figures(stan_distributions, conditions_names_fa_cr, 'memorability', dataframe, nb_trials,
-                              plt_args, name_option='far')
+    plot_all_accuracy_figures(stan_distributions=stan_distributions, outcomes_names=conditions_names_fa_cr,
+                              task_name='memorability', overall_initial_data=dataframe, nb_trials=nb_trials,
+                              plot_args=plt_args, study=study, name_option='far')
 
 
-def get_RT_stan():
+def get_RT_stan(study):
     conditions_nb = [f"{condition}-nb" for condition in conditions]
     dataframe[conditions_nb] = 32
     stan_rt_distributions = get_stan_RT_distributions(dataframe, conditions, 'memorability')
@@ -134,10 +137,12 @@ def get_RT_stan():
                 "val_ticks": 25,
                 'scale_jitter': 0.5}
     plot_all_rt_figures(stan_rt_distributions, conditions_names_rt, dataframe=dataframe, task_name='memorability',
-                        plot_args=plt_args)
+                        plot_args=plt_args, study=study)
 
 
 if __name__ == '__main__':
+    path = "../outputs/v0_prolific/results_v0_prolific/memorability"
+    study = "v0_prolific"
     test_status = ["PRE_TEST", "POST_TEST"]
     conditions = [*[f"{elt}" for elt in range(2, 6)], "100"]
     conditions_names_hit_miss = [f"{elt}-hit-miss" for elt in conditions]
@@ -145,17 +150,17 @@ if __name__ == '__main__':
     conditions_names_rt = [f"{elt}-rt" for elt in conditions]
     conditions_names = [conditions_names_hit_miss, conditions_names_fa_cr, conditions_names_rt]
     nb_trials = 16
-    dataframe, sum_observer = format_data()
+    dataframe, sum_observer = format_data(path)
     # Let's create the condition names:
-    get_lfa_csv(sum_observer)
+    get_lfa_csv(sum_observer, path)
     # for hr data
     # -------------------------------------------------------------------#
     # BAYES ACCURACY ANALYSIS
     # For accuracy analysis, let's focus on the outcomes:
     # Just drop second part of df that is useless:
     dataframe = dataframe[dataframe['session'] == 1]
-    # get_stan_accuracy()
+    get_stan_accuracy(study)
     # -------------------------------------------------------------------#
     # BAYES RT ANALYSIS:
-    # get_RT_stan()
+    get_RT_stan(study)
     print('finished')

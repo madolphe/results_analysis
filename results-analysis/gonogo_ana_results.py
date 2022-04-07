@@ -203,9 +203,8 @@ def plt_omission_errors():
     plt.close()
 
 
-def format_data():
-    csv_path = "../outputs/v1_ubx/results_v1_ubx/gonogo.csv"
-    dataframe = pd.read_csv(csv_path, sep=",")
+def format_data(path):
+    dataframe = pd.read_csv(f"{path}/gonogo.csv", sep=",")
     dataframe = dataframe.apply(lambda row: transform_str_to_list(row, [
         'results_responses', 'results_rt', 'results_ind_previous', 'results_targetvalue']), axis=1)
     dataframe['result_nb_omission'] = dataframe.apply(compute_number_of_omissions, axis=1)
@@ -229,12 +228,13 @@ def format_data():
     post_test = dataframe[dataframe['task_status'] == 'POST_TEST']['HR-rt']
     pre_test = dataframe[dataframe['task_status'] == 'PRE_TEST']['HR-rt']
     # Save data
-    dataframe.to_csv("../outputs/v1_ubx/gonogo_treatment.csv")
+    # dataframe.to_csv("../outputs/v1_ubx/gonogo_treatment.csv")
+    dataframe.to_csv(f"{path}/gonogo_treatment.csv")
     dataframe['results_correct'] = dataframe.apply(compute_result_sum_hr, axis=1)
     return pre_test, post_test, dataframe
 
 
-def get_lfa_csv(dataframe):
+def get_lfa_csv(dataframe, path):
     # LATENT FACTOR ANALYSIS
     # summarize two days experiments
     condition_names = ["HR-accuracy", "FAR-accuracy", "HR-rt"]
@@ -256,11 +256,11 @@ def get_lfa_csv(dataframe):
     dataframe["FAR-accuracy"] = dataframe.apply(lambda row: row['result_nb_omission'] / 18, axis=1)
     conditions_full_names = ["HR-rt"]
     dataframe[['participant_id', 'task_status', 'condition'] + outcomes_names + conditions_full_names].to_csv(
-        "../outputs/v1_ubx/gonogo_lfa.csv", index=False)
+        f"{path}/gonogo_lfa.csv", index=False)
     return outcomes_names, dataframe, nb_trials, conditions_full_names
 
 
-def get_stan_accuracy(dataframe, outcomes_names, nb_trials):
+def get_stan_accuracy(dataframe, outcomes_names, nb_trials, study):
     stan_distributions = get_stan_accuracy_distributions(dataframe, outcomes_names, nb_trials, 'gonogo')
     # Draw figures for accuracy data
 
@@ -269,10 +269,12 @@ def get_stan_accuracy(dataframe, outcomes_names, nb_trials):
                  'list_set_yticklabels': ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
                  'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0],
                  'scale_jitter': 0.2}
-    plot_all_accuracy_figures(stan_distributions, outcomes_names, 'gonogo', dataframe, nb_trials, plot_args)
+    plot_all_accuracy_figures(stan_distributions=stan_distributions, outcomes_names=outcomes_names,
+                              task_name='gonogo', overall_initial_data=dataframe, nb_trials=nb_trials,
+                              plot_args=plot_args, study=study)
 
 
-def get_stan_RT(dataframe, conditions_full_names):
+def get_stan_RT(dataframe, conditions_full_names, study):
     values_conditions = ["HR"]
     stan_rt_distributions = get_stan_RT_distributions(dataframe, values_conditions, 'gonogo')
     plt_args = {'list_xlim': [-0.5, 0.5], 'list_ylim': [0, 1],
@@ -282,17 +284,20 @@ def get_stan_RT(dataframe, conditions_full_names):
                 'scale_jitter': 0.1,
                 'scale_panel': 2}
     plot_all_rt_figures(stan_rt_distributions, conditions_full_names, dataframe=dataframe, task_name='gonogo',
-                        plot_args=plt_args)
+                        plot_args=plt_args, study=study)
 
 
 if __name__ == '__main__':
-    pre_test, post_test, dataframe = format_data()
+    # csv_path = "../outputs/v1_ubx/results_v1_ubx/gonogo.csv"
+    path = "../outputs/v0_prolific/results_v0_prolific/gonogo"
+    study = "v0_prolific"
+    pre_test, post_test, dataframe = format_data(path)
     # -------------------------------------------------------------------#
-    outcomes_names, dataframe, nb_trials, conditions_full_names = get_lfa_csv(dataframe)
+    outcomes_names, dataframe, nb_trials, conditions_full_names = get_lfa_csv(dataframe, path)
     # -------------------------------------------------------------------#
     # Bayes accuracy analysis:
-    # get_stan_accuracy(dataframe, outcomes_names, nb_trials)
+    get_stan_accuracy(dataframe, outcomes_names, nb_trials, study)
     # -------------------------------------------------------------------#
     # BAYES RT ANALYSIS:
-    # get_stan_RT(dataframe, conditions_full_names)
+    get_stan_RT(dataframe, conditions_full_names, study)
     # print('finished')

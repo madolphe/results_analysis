@@ -34,8 +34,8 @@ def compute_sum_to_row(row, column):
     return np.sum(row[column])
 
 
-def format_data():
-    csv_path = "../outputs/v1_ubx/results_v1_ubx/loadblindness.csv"
+def format_data(path):
+    csv_path = f"{path}/loadblindness.csv"
     conditions_names = ['accuracy_near', 'accuracy_far']
     dataframe = pd.read_csv(csv_path, sep=",")
     dataframe = delete_uncomplete_participants(dataframe)
@@ -55,11 +55,11 @@ def format_data():
     dataframe['accuracy_far'] = dataframe['sum_far'] / dataframe['far_response'].apply(lambda row: len(row))
     nb_trials = len(dataframe['near_response'][0])
     dataframe[['participant_id', 'task_status', 'condition'] + conditions_names].to_csv(
-        '../outputs/v1_ubx/loadblindness_lfa.csv', index=False)
+        f'{path}/loadblindness_lfa.csv', index=False)
     return dataframe, conditions_names, nb_trials
 
 
-def get_lfa_csv(dataframe, conditions_names):
+def get_lfa_csv(dataframe, conditions_names, path):
     # sumirize two days experiments
     sum_observers = []
     # extract observer index information
@@ -70,10 +70,10 @@ def get_lfa_csv(dataframe, conditions_names):
     sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + conditions_names)
     # for save summary data
     sum_observers['total_resp'] = sum_observers.apply(lambda row: 40, axis=1)  # two days task
-    # sum_observers.to_csv('../outputs/loadblindness/sumdata_loadblindness.csv', header=True, index=False)
+    sum_observers.to_csv(f'{path}/sumdata_loadblindness.csv', header=True, index=False)
 
 
-def get_stan_accuracy(dataframe, conditions_names, nb_trials):
+def get_stan_accuracy(dataframe, conditions_names, nb_trials, study):
     stan_distributions = get_stan_accuracy_distributions(dataframe, conditions_names, nb_trials, 'loadblindness')
     # Draw figures for accuracy data
     plot_args = {'list_xlim': [-0.5, 1.5], 'list_ylim': [0, 1],
@@ -81,16 +81,20 @@ def get_stan_accuracy(dataframe, conditions_names, nb_trials):
                  'list_set_yticklabels': ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
                  'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0],
                  'scale_jitter': 0.2}
-    plot_all_accuracy_figures(stan_distributions, conditions_names, 'loadblindness', dataframe, nb_trials, plot_args)
+    plot_all_accuracy_figures(stan_distributions=stan_distributions, outcomes_names=conditions_names,
+                              task_name='loadblindness', overall_initial_data=dataframe, nb_trials=nb_trials,
+                              plot_args=plot_args, study=study)
 
 
 if __name__ == '__main__':
-    dataframe, conditions_names, nb_trials = format_data()
+    path = "../outputs/v0_prolific/results_v0_prolific/loadblindness"
+    study = "v0_prolific"
+    dataframe, conditions_names, nb_trials = format_data(path)
     # -------------------------------------------------------------------#
     # Latent factor analysis
-    get_lfa_csv(dataframe, conditions_names)
+    get_lfa_csv(dataframe, conditions_names, path)
     # -------------------------------------------------------------------#
-    # get_stan_accuracy(dataframe, conditions_names, nb_trials)
+    get_stan_accuracy(dataframe, conditions_names, nb_trials, study)
     # -------------------------------------------------------------------#
     # BAYES ANALYSIS
     # calculate the mean distribution and the credible interval

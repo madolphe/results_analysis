@@ -243,9 +243,9 @@ def get_overall_dataframe_taskswitch(dataframe, outcomes_names):
     return sum_observers
 
 
-def format_data():
+def format_data(path):
     # DATAFRAME CREATION
-    csv_path = "../outputs/v1_ubx/results_v1_ubx/taskswitch.csv"
+    csv_path = f"{path}/taskswitch.csv"
     dataframe = pd.read_csv(csv_path, sep=",")
     dataframe = delete_uncomplete_participants(dataframe)
     dataframe["results_responses"] = dataframe.apply(lambda row: transform_string_to_row(row, "results_responses"),
@@ -322,8 +322,8 @@ def format_data():
     return dataframe
 
 
-def get_lfa_csv():
-    dataframe.to_csv("../outputs/v1_ubx/taskswitch_treatment.csv")
+def get_lfa_csv(path):
+    dataframe.to_csv(f"{path}/taskswitch_treatment.csv")
     # sumirize two days experiments
     sum_observers = []
     sum_observers_forsave = []
@@ -338,7 +338,7 @@ def get_lfa_csv():
     #         dataframe[condition_acc] = dataframe[f"{condition}-correct"] / dataframe[f"{condition}-nb"]
     dataframe[['participant_id', 'task_status',
                'condition'] + condition_names + condition_names_rt + column_nb_to_keep].to_csv(
-        "../outputs/v1_ubx/taskswitch_lfa.csv", index=False)
+        f"{path}/taskswitch_lfa.csv", index=False)
     # extract observer index information
     # indices_id = extract_id(dataframe, num_count=2)
     # for ob in indices_id:
@@ -361,7 +361,7 @@ def get_lfa_csv():
     return sum_observers
 
 
-def get_stan_accuracy():
+def get_stan_accuracy(path):
     stan_sessions = [[], [], []]
     sessions = [sum_observers, pretest, posttest]
     for condition, condition_nb in zip(condition_names_correct, nb_trials_names):
@@ -382,12 +382,12 @@ def get_stan_accuracy():
         'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0],
         'scale_jitter': 0.4}
     plot_prepost_mean_accuracy_distribution(condition_names_correct, stan_distributions,
-                                            f'../outputs/taskswitch/taskswitch_distrib_reliability.png')
+                                            f'{path}/taskswitch_distrib_reliability.png')
     dist_ind = dataframe.loc[:, condition_names_correct].values / dataframe.loc[:, nb_trials_names].values
     dist_summary = extract_mu_ci_from_summary_accuracy(stan_distributions['overall'],
                                                        ind_cond=[elt for elt in range(4)])
     draw_all_distributions(dist_ind, dist_summary, len(dataframe), num_cond=4,
-                           fname_save=f'../outputs/taskswitch/taskswitch_hrfar.png', **plot_args)
+                           fname_save=f'{path}/taskswitch_hrfar.png', **plot_args)
 
 
 def get_stan_RT():
@@ -400,12 +400,14 @@ def get_stan_RT():
                 "val_ticks": 10,
                 'scale_jitter': 0.2}
     plot_all_rt_figures(stan_rt_distributions, condition_names_rt, dataframe=dataframe, task_name='taskswitch',
-                        plot_args=plt_args)
+                        plot_args=plt_args, study=study)
 
 
 if __name__ == '__main__':
+    path = "../outputs/v0_prolific/results_v0_prolific/taskswitch"
+    study = "v0_prolific"
     # -------------------------------------------------------------------#
-    dataframe = format_data()
+    dataframe = format_data(path)
     # Plot accuracy
     # boxplot_pre_post("accuracy", "accuracy")
     # # Mean RT
@@ -415,7 +417,7 @@ if __name__ == '__main__':
     # -------------------------------------------------------------------#
     # LATENT FACTOR ANALYSIS DF CREATION
     # from here written by mswym
-    sum_observers = get_lfa_csv()
+    sum_observers = get_lfa_csv(path)
     # -------------------------------------------------------------------#
     # BAYES ACCURACY :
     condition_names = ['parity-switch', 'parity-unswitch', 'relative-switch', 'relative-unswitch']
@@ -427,11 +429,10 @@ if __name__ == '__main__':
     # # Get mean data for
     sum_observers = get_overall_dataframe_taskswitch(dataframe, condition_names_correct + nb_trials_names)
     sum_observers = sum_observers.astype('int')
-    sum_observers.to_csv('../outputs/v1_ubx/sumdata_taskswitch.csv', header=True, index=False)
+    sum_observers.to_csv(f'{path}/sumdata_taskswitch.csv', header=True, index=False)
     # # Compute stan_accuracy for all conditions:
-    # get_stan_accuracy()
+    get_stan_accuracy(path)
     # -------------------------------------------------------------------#
     # BAYES RT ANALYSIS:
-    # get_stan_RT()
-
+    get_stan_RT()
     print('finished')

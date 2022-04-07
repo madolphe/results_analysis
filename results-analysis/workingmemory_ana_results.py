@@ -45,10 +45,11 @@ def extract_mu_ci_from_summary_accuracy(dataframe, ind_cond):
         out[t, 2] = dataframe[ind].ci_max
     return out
 
-def format_data():
+
+def format_data(path):
     # FIRST TREAT THE CSV AND PARSE IT TO DF
     # data loading
-    csv_path = "../outputs/v1_ubx/results_v1_ubx/workingmemory.csv"
+    csv_path = f"{path}/workingmemory.csv"
     dataframe = pd.read_csv(csv_path, sep=",")
     dataframe = delete_uncomplete_participants(dataframe)
     dataframe["results_correct"] = dataframe.apply(lambda row: transform_string_to_row(row, "results_correct"),
@@ -64,11 +65,11 @@ def format_data():
     return dataframe
 
 
-def get_lfa_csv():
+def get_lfa_csv(path):
     number_condition = [4, 5, 6, 7, 8]
     condition_accuracy_names = [f"{elt}-accuracy" for elt in number_condition]
     dataframe[['participant_id', 'task_status', 'condition'] + condition_accuracy_names].to_csv(
-        '../outputs/v1_ubx/workingmemory_lfa.csv', index=False)
+        f'{path}/workingmemory_lfa.csv', index=False)
     # extract observer index information
     indices_id = extract_id(dataframe, num_count=2)
     # sumirize two days experiments
@@ -101,18 +102,22 @@ def get_stan_accuracy():
                 'list_set_yticklabels': ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
                 'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0],
                 'scale_jitter': 0.5}
-    plot_all_accuracy_figures(stan_distributions, condition_names, 'workingmemory', dataframe, nb_trials, plt_args)
+    plot_all_accuracy_figures(stan_distributions=stan_distributions, outcomes_names=condition_names,
+                              task_name='workingmemory', overall_initial_data=dataframe, nb_trials=nb_trials,
+                              plot_args=plt_args, study=study)
 
 
 if __name__ == '__main__':
+    path = "../outputs/v0_prolific/results_v0_prolific/workingmemory"
+    study = "v0_prolific"
     # -------------------------------------------------------------------#
-    dataframe = format_data()
+    dataframe = format_data(path)
     # -------------------------------------------------------------------#
     # THEN EXTRACT COLUMNS FOR FUTURE LATENT FACTOR ANALYSIS
     # condition extraction
-    get_lfa_csv()
+    get_lfa_csv(path)
     # -------------------------------------------------------------------#
     # BAYES ACCURACY ANALYSIS
-    # get_stan_accuracy()
+    get_stan_accuracy()
     # -------------------------------------------------------------------#
     print('finished')

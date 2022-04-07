@@ -1,7 +1,16 @@
+import copy
+
 from data import get_data
-from model import PooledModel, PooledModelRTSimulations, GLModel
+from model import PooledModel, PooledModelRTSimulations, GLModel, PooledModelRTCostSimulations, \
+    NormalNormalQuestionnaireModel
 import pandas as pd
 import numpy as np
+import statsmodels.api as sm
+from statsmodels.formula.api import ols
+import pingouin as pg
+import arviz as az
+import pickle
+import os
 
 tasks = get_data()
 
@@ -127,8 +136,126 @@ def get_RT_posteriors():
         model_zpdes.compare_traces(model_baseline.traces, 'difference_of_means')
 
 
+def get_RT_cost_posteriors():
+    for task, (data, condition_list) in tasks.items():
+        # For task switch - RT cost can be negative as it is cdt_switch - cdt_unswitch
+        model_baseline = PooledModelRTCostSimulations(data=data, folder='RT_models_pooled', name=task, group='baseline',
+                                                      stim_cond_list=condition_list, sample_size=8000)
+        model_zpdes = PooledModelRTCostSimulations(data=data, folder='RT_models_pooled', name=task, group='zpdes',
+                                                   stim_cond_list=condition_list, sample_size=8000)
+        model_baseline.run(rope=(100, 100))
+        model_zpdes.run(rope=(100, 100))
+        model_zpdes.compare_traces(model_baseline.traces, 'difference_of_means')
+
+
+def pairwise_comparison_questionnaire(questionnaire):
+    data = pd.read_csv(f'../psychometrics/{questionnaire}/{questionnaire}_all.csv')
+    # data = data.groupby('id_participant').filter(lambda x: len(x) == 6)
+    baseline, zpdes = data.query('condition == "baseline"'), data.query('condition == "zpdes"')
+    condition_list = list(zpdes.columns.drop(['Unnamed: 0', 'condition', 'session_id', 'id_participant']))
+    session_id_list = zpdes['session_id'].unique().tolist()
+    # session_id_list = [2, 4]
+    for group, data in {'zpdes': zpdes, 'baseline': baseline}.items():
+        model = NormalNormalQuestionnaireModel(data=data,
+                                               folder='questionnaires_parwise', name=questionnaire,
+                                               group=group,
+                                               stim_cond_list=condition_list, sample_size=2000,
+                                               session_id_list=session_id_list
+                                               )
+        model.run()
+
+
+def compute_diff_questionnaire_per_session(questionnaire, conditions_list, sessions_id_list):
+    if not os.path.isdir(f'questionnaires_parwise/{questionnaire}/group_diff_per_session'):
+        os.mkdir(f'questionnaires_parwise/{questionnaire}/group_diff_per_session')
+        os.mkdir(f'questionnaires_parwise/{questionnaire}/diff_btw_sessions')
+        os.mkdir(f'questionnaires_parwise/{questionnaire}/group_diff_btw_sessions')
+    common_path = f'questionnaires_parwise/{questionnaire}/'
+    az_summary_metrics = ['condition', 'mean_mu', 'hdi_3%_mu', 'hdi_97%_mu', 'mean_sigm', 'hdi_3%_sigm', 'hdi_97%_sigm']
+    df_btw_groups_per_sessions = pd.DataFrame(columns=['session_id'] + az_summary_metrics)
+    df_btw_groups_btw_sessions = pd.DataFrame(columns=['session_id_0', 'session_id_1'] + az_summary_metrics)
+    df_btw_sessions = pd.DataFrame(columns=['group', 'session_id_0', 'session_id_1'] + az_summary_metrics)
+    for condition in conditions_list:
+        for session_index, session_id in enumerate(sessions_id_list):
+            baseline_0, zpdes_0 = get_traces_from_path_infos(common_path, condition, session_id)
+            # Get the difference btw baseline & zpdes per session:
+            diff_mu = baseline_0['traces'].posterior['mu'] - zpdes_0['traces'].posterior['mu']
+            diff_sigm = baseline_0['traces'].posterior['sigma'] - zpdes_0['traces'].posterior['sigma']
+            mu, sigm = az.summary(diff_mu), az.summary(diff_sigm)
+            df_btw_groups_per_sessions = df_btw_groups_per_sessions.append({'condition': condition,
+                                                                            'session_id': session_id,
+                                                                            'mean_mu': mu['mean'].values[0],
+                                                                            'hdi_3%_mu': mu['hdi_3%'].values[0],
+                                                                            'hdi_97%_mu': mu['hdi_97%'].values[0],
+                                                                            'mean_sigm': sigm['mean'].values[0],
+                                                                            'hdi_3%_sigm': sigm['hdi_3%'].values[0],
+                                                                            'hdi_97%_sigm': sigm['hdi_97%'].values[0]},
+                                                                           ignore_index=True)
+            # Get the difference betwen 2 sessions:
+            if session_index + 1 < len(sessions_id_list):
+                baseline_1, zpdes_1 = get_traces_from_path_infos(common_path, condition,
+                                                                 sessions_id_list[session_index + 1])
+                diff_within_groups_mu_baseline = baseline_1['traces'].posterior['mu'] - baseline_0['traces'].posterior[
+                    'mu']
+                diff_within_groups_sigm_baseline = baseline_1['traces'].posterior['sigma'] - \
+                                                   baseline_0['traces'].posterior['sigma']
+                diff_within_groups_mu_zpdes = zpdes_1['traces'].posterior['mu'] - zpdes_0['traces'].posterior[
+                    'mu']
+                diff_within_groups_sigm_zpdes = zpdes_1['traces'].posterior['sigma'] - zpdes_0['traces'].posterior[
+                    'sigma']
+                mu_baseline, sigm_baseline = az.summary(diff_within_groups_mu_baseline), az.summary(
+                    diff_within_groups_sigm_baseline)
+                mu_zpdes, sigm_zpdes = az.summary(diff_within_groups_mu_zpdes), az.summary(
+                    diff_within_groups_sigm_zpdes)
+                groups = ['baseline', 'zpdes']
+                for ii, (group_mu, group_sig) in enumerate([(mu_baseline, sigm_baseline), (mu_zpdes, sigm_zpdes)]):
+                    df_btw_sessions = df_btw_sessions.append({'group': groups[ii],
+                                                              'condition': condition,
+                                                              'session_id_0': session_id,
+                                                              'session_id_1': sessions_id_list[session_index + 1],
+                                                              'mean_mu': group_mu['mean'].values[0],
+                                                              'hdi_3%_mu': group_mu['hdi_3%'].values[0],
+                                                              'hdi_97%_mu': group_mu['hdi_97%'].values[0],
+                                                              'mean_sigm': group_sig['mean'].values[0],
+                                                              'hdi_3%_sigm': group_sig['hdi_3%'].values[0],
+                                                              'hdi_97%_sigm': group_sig['hdi_97%'].values[0]},
+                                                             ignore_index=True)
+                diff_btw_grps_btw_sessions_mu = az.summary(diff_within_groups_mu_zpdes - diff_within_groups_mu_baseline)
+                diff_btw_grps_btw_sessions_sigm = az.summary(
+                    diff_within_groups_sigm_zpdes - diff_within_groups_sigm_baseline)
+                df_btw_groups_btw_sessions = df_btw_groups_btw_sessions.append({
+                    'condition': condition,
+                    'session_id_0': session_id,
+                    'session_id_1': sessions_id_list[session_index + 1],
+                    'mean_mu': diff_btw_grps_btw_sessions_mu['mean'].values[0],
+                    'hdi_3%_mu': diff_btw_grps_btw_sessions_mu['hdi_3%'].values[0],
+                    'hdi_97%_mu': diff_btw_grps_btw_sessions_mu['hdi_97%'].values[0],
+                    'mean_sigm': diff_btw_grps_btw_sessions_sigm['mean'].values[0],
+                    'hdi_3%_sigm': diff_btw_grps_btw_sessions_sigm['hdi_3%'].values[0],
+                    'hdi_97%_sigm': diff_btw_grps_btw_sessions_sigm['hdi_97%'].values[0]}, ignore_index=True
+                )
+    df_btw_groups_per_sessions.to_csv(common_path + f'group_diff_per_session/grp_diff_per_sess.csv')
+    df_btw_sessions.to_csv(common_path + f'diff_btw_sessions/diff_btw_session.csv')
+    df_btw_groups_btw_sessions.to_csv(common_path + f'group_diff_btw_sessions/grp_diff_btw_session.csv')
+
+
+def get_traces_from_path_infos(common_path, condition, session_id):
+    path_baseline = common_path + f'{questionnaire}_baseline_results/{questionnaire}_baseline-'
+    path_zpdes = common_path + f'{questionnaire}_zpdes_results/{questionnaire}_zpdes-'
+    tmp_path_baseline = path_baseline + f"{condition}-{session_id}-trace"
+    tmp_path_zpdes = path_zpdes + f"{condition}-{session_id}-trace"
+    # Load traces
+    with open(tmp_path_baseline, 'rb') as buff:
+        baseline = pickle.load(buff)
+    with open(tmp_path_zpdes, 'rb') as buff:
+        zpdes = pickle.load(buff)
+    return baseline, zpdes
+
+
 def treat_questionnaire():
-    questionnaires = ['nasa_tlx', 'ues', 'sims', 'tens']
+    # questionnaires = ['ues', 'tens', 'sims']
+    questionnaires = ['ues']
+    # questionnaires = ['nasa_tlx']
     for questionnaire in questionnaires:
         print(questionnaire)
         baseline = pd.read_csv(f'questionnaires/{questionnaire}/{questionnaire}_baseline.csv')
@@ -138,10 +265,43 @@ def treat_questionnaire():
         df = pd.concat([baseline, zpdes])
         df = df.drop(columns=['Unnamed: 0'])
         condition_list = list(df.loc[:, df.columns != 'condition'].columns.values)
-        model = GLModel(data=df, folder='questionnaires', name=questionnaire, group='all', stim_cond_list=condition_list,
-                        sample_size=1000)
-        model.run()
+        # Anova results
+        get_mixed_anova(questionnaire, ['engagement_score'])
+        get_anova_results(questionnaire)
+        # Bayesian models:
+        model = GLModel(data=df, folder='questionnaires', name=questionnaire, group='all',
+                        stim_cond_list=condition_list,
+                        sample_size=8000)
+        # model.run()
         print(f'DONE {questionnaire}')
+
+
+def get_anova_results(questionnaire):
+    return_csv = pd.DataFrame()
+    baseline_split = pd.read_csv(f'questionnaires/{questionnaire}/{questionnaire}_baseline_split.csv')
+    zpdes_split = pd.read_csv(f'questionnaires/{questionnaire}/{questionnaire}_zpdes_split.csv')
+    baseline_split['condition'] = 'baseline'
+    zpdes_split['condition'] = 'zpdes'
+    df_split = pd.concat([baseline_split, zpdes_split])
+    df_split = df_split.drop(columns=['Unnamed: 0'])
+    condition_list = list(df_split.drop(columns=['session_id', 'condition', 'id_participant']).columns.values)
+    for condition in condition_list:
+        model = ols(f'{condition} ~ C(session_id) + C(condition) + C(session_id):C(condition)', data=df_split).fit()
+        tmp_df = sm.stats.anova_lm(model, typ=2)
+        tmp_df['subscale'] = condition
+        tmp_df['questionnaire'] = questionnaire
+        return_csv = return_csv.append(copy.deepcopy(tmp_df))
+    return_csv.to_csv(f'questionnaires/{questionnaire}/anova_results.csv')
+
+
+def get_mixed_anova(questionnaire, conditions):
+    """
+    Test functions for 2-way anova mixed
+    """
+    all_df = pd.read_csv(f'../psychometrics/{questionnaire}/{questionnaire}_all.csv')
+    all_df = all_df.drop(columns=['Unnamed: 0', 'FA', 'PU', 'AE', 'RW']).query('session_id == 2 | session_id == 4')
+    pg.mixed_anova(dv='engagement_score', between='condition', within='session_id', subject='id_participant',
+                   data=all_df)
 
 
 if __name__ == '__main__':
@@ -149,5 +309,20 @@ if __name__ == '__main__':
     # add_rope_on_traces()
     # compute_BF_for_all_tasks()
     # get_mu_diff_group_csv()
-    # get_RT_posteriors()
-    treat_questionnaire()
+    # get_RT_cost_posteriors()
+    # treat_questionnaire()
+    # pairwise_comparison_questionnaire()
+    dict_questionnaire = {
+        # 'ues': (['engagement_score', 'AE', 'FA', 'PU', 'RW'], [0, 2, 4, 5, 7, 9]),
+        'sims': (['Intrinsic_motivation', 'Identified_regulation', 'External_regulation', 'Amotivation'], [1, 4, 5, 8]),
+        # 'sims': (['Amotivation'], [1, 4, 5, 8]),
+        'tens': (['Competence', 'Autonomy'], [1, 4, 5, 8]),
+        'nasa_tlx': (
+            # ['Mental_demand', 'Physical_demand', 'Temporal_demand', 'Performance', 'Effort', 'Frustration',
+            #  'load_index'],
+            ['Mental_demand', 'Physical_demand', 'Temporal_demand', 'Performance', 'Effort', 'Frustration', 'load_index'],
+            [i for i in range(1, 8)])
+    }
+    for questionnaire, cdt_sessions in dict_questionnaire.items():
+        # pairwise_comparison_questionnaire(questionnaire)
+        compute_diff_questionnaire_per_session(questionnaire, cdt_sessions[0], cdt_sessions[1])
