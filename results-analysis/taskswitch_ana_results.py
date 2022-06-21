@@ -404,8 +404,8 @@ def get_stan_RT():
 
 
 if __name__ == '__main__':
-    path = "../outputs/v0_prolific/results_v0_prolific/taskswitch"
-    study = "v0_prolific"
+    path = "../outputs/v0_axa/results_v0_axa/taskswitch"
+    study = "v0_axa"
     # -------------------------------------------------------------------#
     dataframe = format_data(path)
     # Plot accuracy

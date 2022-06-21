@@ -87,8 +87,8 @@ def get_stan_accuracy(dataframe, conditions_names, nb_trials, study):
 
 
 if __name__ == '__main__':
-    path = "../outputs/v0_prolific/results_v0_prolific/loadblindness"
-    study = "v0_prolific"
+    path = "../outputs/v0_axa/results_v0_axa/loadblindness"
+    study = "v0_axa"
     dataframe, conditions_names, nb_trials = format_data(path)
     # -------------------------------------------------------------------#
     # Latent factor analysis

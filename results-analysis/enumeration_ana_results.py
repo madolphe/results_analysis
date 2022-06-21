@@ -53,11 +53,11 @@ def plt_RT():
     # plt.show()
 
 
-def format_data():
+def format_data(study):
     # FIRST TREAT THE CSV AND PARSE IT TO DF
     # csv_path = "../outputs/enumeration/enumeration.csv"
     # csv_path = "../outputs/v1_ubx/results_v1_ubx/enumeration.csv"
-    csv_path = "../outputs/v0_prolific/results_v0_prolific/enumeration/enumeration.csv"
+    csv_path = f"../outputs/{study}/results_{study}/enumeration/enumeration.csv"
     dataframe = pd.read_csv(csv_path, sep=",")
     dataframe['result_response_exact'] = dataframe.apply(compute_result_exact_answers, axis=1)
     dataframe['mean_rt_session'] = dataframe.apply(compute_mean_per_row, axis=1)
@@ -80,7 +80,7 @@ def format_data():
     return dataframe, pre_response_exact, post_response_exact, condition_names, condition_possibilities
 
 
-def get_lfa_csv(dataframe, condition_possibilities, condition_names):
+def get_lfa_csv(dataframe, condition_possibilities, condition_names, study):
     # Latent factor analysis:
     # from here written by mswym
     for index, condition in zip(condition_possibilities, condition_names):
@@ -90,7 +90,7 @@ def get_lfa_csv(dataframe, condition_possibilities, condition_names):
     #     '../outputs/v1_ubx/enumeration_lfa_v1.csv',
     #     index=False)
     dataframe[['participant_id', 'task_status', 'condition'] + condition_names].to_csv(
-        '../outputs/v0_prolific/enumeration_lfa_v1.csv',
+        f'../outputs/{study}/enumeration_lfa_v1.csv',
         index=False)
     # summarize two days experiments
     sum_observers = []
@@ -122,12 +122,13 @@ def get_stan_accuracy(dataframe, condition_names, study):
 
 
 if __name__ == '__main__':
+    study = 'v0_axa'
     # -------------------------------------------------------------------#
     # FORMAT ALL DATA:
-    dataframe, pre_response_exact, post_response_exact, condition_names, condition_possibilities = format_data()
+    dataframe, pre_response_exact, post_response_exact, condition_names, condition_possibilities = format_data(study)
     # -------------------------------------------------------------------#
     # GET CSV FOR ANALYSIS
-    get_lfa_csv(dataframe, condition_possibilities, condition_names)
+    get_lfa_csv(dataframe, condition_possibilities, condition_names, study)
     # -------------------------------------------------------------------#
     # BAYES ACCURACY ANALYSIS
-    get_stan_accuracy(dataframe, condition_names, study='v0_prolific')
+    get_stan_accuracy(dataframe, condition_names, study=study)

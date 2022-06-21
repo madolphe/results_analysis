@@ -141,8 +141,8 @@ def get_RT_stan(study):
 
 
 if __name__ == '__main__':
-    path = "../outputs/v0_prolific/results_v0_prolific/memorability"
-    study = "v0_prolific"
+    path = "../outputs/v0_axa/results_v0_axa/memorability"
+    study = "v0_axa"
     test_status = ["PRE_TEST", "POST_TEST"]
     conditions = [*[f"{elt}" for elt in range(2, 6)], "100"]
     conditions_names_hit_miss = [f"{elt}-hit-miss" for elt in conditions]

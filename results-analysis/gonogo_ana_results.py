@@ -289,8 +289,8 @@ def get_stan_RT(dataframe, conditions_full_names, study):
 
 if __name__ == '__main__':
     # csv_path = "../outputs/v1_ubx/results_v1_ubx/gonogo.csv"
-    path = "../outputs/v0_prolific/results_v0_prolific/gonogo"
-    study = "v0_prolific"
+    path = "../outputs/v0_axa/results_v0_axa/gonogo"
+    study = "v0_axa"
     pre_test, post_test, dataframe = format_data(path)
     # -------------------------------------------------------------------#
     outcomes_names, dataframe, nb_trials, conditions_full_names = get_lfa_csv(dataframe, path)

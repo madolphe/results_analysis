@@ -78,8 +78,8 @@ def get_stan_accuracy(dataframe, outcomes_names_acc, nb_trials, study):
 
 
 if __name__ == '__main__':
-    path = "../outputs/v0_prolific/results_v0_prolific/moteval"
-    study = "v0_prolific"
+    path = "../outputs/v0_axa/results_v0_axa/moteval"
+    study = "v0_axa"
     ### With new participants (id=2 and 4) this script doesnt work!!! ###
     # -------------------------------------------------------------------#
     dataframe, outcomes_names_acc, nb_trials = format_data(path)

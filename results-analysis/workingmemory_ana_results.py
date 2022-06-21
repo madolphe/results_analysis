@@ -108,8 +108,8 @@ def get_stan_accuracy():
 
 
 if __name__ == '__main__':
-    path = "../outputs/v0_prolific/results_v0_prolific/workingmemory"
-    study = "v0_prolific"
+    path = "../outputs/v0_axa/results_v0_axa/workingmemory"
+    study = "v0_axa"
     # -------------------------------------------------------------------#
     dataframe = format_data(path)
     # -------------------------------------------------------------------#
