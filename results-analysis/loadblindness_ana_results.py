@@ -117,42 +117,4 @@ def get_stan_accuracy(dataframe, conditions_names, nb_trials, study):
 
 if __name__ == '__main__':
     study = "v0_axa"
-    # run(study)
-    # sumirize two days experiments
-    # sum_observers = []
-    # # extract observer index information
-    # indices_id = extract_id(dataframe, num_count=2)
-    # for ob in indices_id:
-    #     tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
-    #     sum_observers.append([ob] + [np.mean(tmp_df.accuracy_near), np.sum(tmp_df.accuracy_far)])
-    # sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + conditions_names)
-    # # for save summary data
-    # sum_observers['total_resp'] = sum_observers.apply(lambda row: 40, axis=1)  # two days task
-    # sum_observers.to_csv(f'{path}/sumdata_loadblindness.csv', header=True, index=False)
-    # def format_for_pymc(df_lb):
-    #     # # LOADBLINDNESS # #
-    #     # df_lb = pd.read_csv(os.path.join(path, "loadblindness_lfa.csv"))
-    #     lb_cdt = ['near', 'far']
-    #     df_lb[[col for col in df_lb.columns if 'accuracy' in col]] = df_lb[[col for col in df_lb.columns if
-    #                                                                         'accuracy' in col]] * 20
-    #     df_lb = df_lb.rename(columns={'accuracy_near': 'near-correct', 'accuracy_far': 'far-correct'})
-    #     # df_lb['total_resp'] = 20
-    #     for cdt in lb_cdt:
-    #         df_lb[cdt + '-nb'] = 20
-    #     df_lb['total-task-correct'] = convert_to_global_task(df_lb, [col + '-correct' for col in lb_cdt])
-    #     df_lb['total-task-nb'] = 40
-    #     lb_cdt.append('total-task')
-    #     return df_lb, lb_cdt
-# def get_pymc_trace(data, condition_list, model_object, study, sample_size=4000):
-#     model_baseline = model_object(data[data['condition'] == 'baseline'],
-#                                   name='loadblindness', group='baseline', folder=f'{study}-pooled_model',
-#                                   stim_cond_list=condition_list,
-#                                   sample_size=sample_size)
-#     model_baseline.run()
-#     model_zpdes = model_object(data[data['condition'] == 'zpdes'],
-#                                name='loadblindness', group='zpdes', folder=f'{study}-pooled_model',
-#                                stim_cond_list=condition_list,
-#                                sample_size=sample_size)
-#     model_zpdes.run()
-    # df_load = dataframe[['participant_id', 'task_status', 'condition'] + conditions_names]
     # get_stan_accuracy(dataframe, conditions_names, nb_trials, study)

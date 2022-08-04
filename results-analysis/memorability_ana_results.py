@@ -197,7 +197,7 @@ def get_RT_stan(study, dataframe, conditions, conditions_names_rt):
 
 if __name__ == '__main__':
     study = "v0_axa"
-    fit_model(study)
+    # fit_model(study)
     # BAYES ACCURACY ANALYSIS
     # For accuracy analysis, let's focus on the outcomes:
     # Just drop second part of df that is useless:
@@ -207,51 +207,3 @@ if __name__ == '__main__':
     # BAYES RT ANALYSIS:
     # get_RT_stan(study)
     print('finished')
-    # -------------------------------------------------------------------#
-    # def get_lfa_csv(sum_observers, dataframe, path, conditions, conditions_names_hit_miss, conditions_names_rt,
-    #                 conditions_names_fa_cr):
-    #     tmp_overall_results = []
-    #     indices_id = extract_id(dataframe, num_count=4)
-    #     columns, keywords = [], ['out_mat_hit_miss_sum', 'out_mat_fa_cr_sum', 'out_mat_rt_cond', 'out_mat_rt_cond_std']
-    #     for keyword in keywords:
-    #         for condition in conditions:
-    #             columns.append(f"{keyword}-{condition}")
-    #     sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + columns)
-    #     # for save summary data
-    #     sum_observers.to_csv(f'{path}/sumdata_memorability.csv', header=True, index=False)
-    #     sum_observers['total_resp'] = sum_observers.apply(lambda row: 16, axis=1)
-    #     dataframe['total_resp'] = dataframe.apply(lambda row: 16, axis=1)
-    #     # dataframe[conditions_names_hit_miss] = dataframe[conditions_names_hit_miss] / nb_trials
-    #     # dataframe[conditions_names_fa_cr] = dataframe[conditions_names_fa_cr] / nb_trials
-    #     dataframe[['participant_id', 'task_status', 'condition'] + conditions_names_hit_miss + conditions_names_rt +
-    #               conditions_names_fa_cr].to_csv(f'{path}/memorability_lfa.csv', index=False)
-    #     return dataframe[['participant_id', 'task_status', 'condition'] + conditions_names_hit_miss + conditions_names_rt +
-    #                      conditions_names_fa_cr]
-    # def format_for_pymc(df_memora):
-    #     # # MEMORABILITY # #
-    #     # df_memora = pd.read_csv(os.path.join(path, "memorability_lfa.csv"))
-    #     memora_cdt = ['2', '3', '4', '5', '100']
-    #     for col in df_memora.columns:
-    #         if 'hit-miss' in col:
-    #             df_memora = df_memora.rename(columns={col: col.replace('hit-miss', 'correct')})
-    #         if 'fa' in col:
-    #             df_memora = df_memora.drop(columns=[col])
-    #     for col in memora_cdt:
-    #         df_memora[col + '-nb'] = 16
-    #     df_memora['total-task-correct'] = convert_to_global_task(df_memora, [col + '-correct' for col in memora_cdt])
-    #     df_memora['total-task-nb'] = 80
-    #     df_memora.dropna(inplace=True)
-    #     df_memora = df_memora.groupby('participant_id').filter(lambda x: len(x) > 1)
-    #     memora_cdt.append('total-task')
-    #     return df_memora, memora_cdt
-    # def get_pymc_trace(data, condition_list, model_object, model_type, study, sample_size=4000):
-    #     model_baseline = model_object(data[data['condition'] == 'baseline'],
-    #                                   name='memorability', group='baseline', folder=f'{study}-{model_type}',
-    #                                   stim_cond_list=condition_list,
-    #                                   sample_size=sample_size)
-    #     model_baseline.run()
-    #     model_zpdes = model_object(data[data['condition'] == 'zpdes'],
-    #                                name='memorability', group='zpdes', folder=f'{study}-{model_type}',
-    #                                stim_cond_list=condition_list,
-    #                                sample_size=sample_size)
-    #     model_zpdes.run()

@@ -103,65 +103,15 @@ def get_stan_accuracy(dataframe, outcomes_names_acc, nb_trials, study):
 
 if __name__ == '__main__':
     study = "v0_axa"
-    fit_model(study)
-
-# def get_lfa_csv(dataframe, outcomes_names_acc, path):
-#     # THEN EXTRACT COLUMNS FOR FUTURE LATENT FACTOR ANALYSIS
-#     # extract observer index information
-#     indices_id = extract_id(dataframe, num_count=2)
-#     # summarize two days experiments for Latent Factor Analysis
-#     sum_observers = []
-#     for ob in indices_id:
-#         tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
-#         sum_observers.append([ob] + [np.mean(tmp_df[index]) for index in outcomes_names_acc])
-#     sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + outcomes_names_acc)
-#     sum_observers['total_resp'] = dataframe.apply(count_number_of_trials, axis=1)  # two days task
-#     # for save summary data
-#     # sum_observers.to_csv('../outputs/moteval/sumdata_moteval.csv', index=False)
-#     outcomes_names_rt = ["1-rt", "4-rt", "8-rt"]
-#     dataframe[['participant_id', 'task_status', 'condition'] + outcomes_names_acc + outcomes_names_rt].to_csv(
-#         f'{path}/moteval_lfa.csv', index=False)
-#     return dataframe[['participant_id', 'task_status', 'condition'] + outcomes_names_acc + outcomes_names_rt]
-
-#
-# def format_for_pymc(df_mot):
-#     # # MOT # #
-#     # df_mot = pd.read_csv(os.path.join(path, "moteval_lfa.csv"))
-#     # mot_cdt = ['1', '4', '8']
-#     # df_mot = df_mot.rename(change_accuracy_for_correct_column, axis='columns')
-#     # df_mot[[col for col in df_mot.columns if 'correct' in col]] = df_mot[[col for col in df_mot.columns if
-#     #                                                                       'correct' in col]] * 15 * 5
-#     # for cdt in mot_cdt:
-#     #     df_mot[cdt + '-nb'] = 15 * 5
-#     # # df_mot['total_resp'] = 15 * 5
-#     # df_mot['total-task-correct'] = convert_to_global_task(df_mot, [col + '-correct' for col in mot_cdt])
-#     # df_mot['total-task-nb'] = 45 * 5
-#     # mot_cdt.append('total-task')
-#     return df_mot, mot_cdt
-# def get_pymc_trace(data, condition_list, model_object, study, sample_size=4000):
-# model_baseline = model_object(data[data['condition'] == 'baseline'],
-#                               name='moteval', group='baseline', folder=f'{study}-pooled_model',
-#                               stim_cond_list=condition_list,
-#                               sample_size=sample_size)
-# model_baseline.run()
-# model_zpdes = model_object(data[data['condition'] == 'zpdes'],
-#                            name='moteval', group='zpdes', folder=f'{study}-pooled_model',
-#                            stim_cond_list=condition_list,
-#                            sample_size=sample_size)
-# model_zpdes.run()
-
-# -------------------------------------------------------------------#
-# df_mot = get_lfa_csv(dataframe, outcomes_names_acc, path)
-# -------------------------------------------------------------------#
-# get_stan_accuracy(dataframe, outcomes_names_acc, nb_trials, study)
-# -------------------------------------------------------------------#
-# BAYES RT ANALYSIS:
-# '''
-# stan_rt_distributions = get_stan_RT_distributions(dataframe, ["1", "4", "8"])
-# plt_args = {'list_xlim': [0.75, 3.25], 'list_ylim': [0, 1],
-#             'list_set_xticklabels': ['1', '4', '8'], 'list_set_xticks': [1, 2, 3],
-#             'list_set_yticklabels': ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
-#             'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]}
-# plot_all_rt_figures(stan_rt_distributions, outcomes_names_rt, dataframe=dataframe, task_name='moteval',
-#                     plot_args=plt_args)
-# '''
+    # fit_model(study)
+    # -------------------------------------------------------------------#
+    # BAYES RT ANALYSIS:
+    # '''
+    # stan_rt_distributions = get_stan_RT_distributions(dataframe, ["1", "4", "8"])
+    # plt_args = {'list_xlim': [0.75, 3.25], 'list_ylim': [0, 1],
+    #             'list_set_xticklabels': ['1', '4', '8'], 'list_set_xticks': [1, 2, 3],
+    #             'list_set_yticklabels': ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
+    #             'list_set_yticks': [0, 0.2, 0.4, 0.6, 0.8, 1.0]}
+    # plot_all_rt_figures(stan_rt_distributions, outcomes_names_rt, dataframe=dataframe, task_name='moteval',
+    #                     plot_args=plt_args)
+    # '''

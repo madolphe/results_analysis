@@ -305,62 +305,7 @@ def get_stan_accuracy(dataframe, outcomes_names, nb_trials, study):
 
 if __name__ == '__main__':
     study = "v0_axa"
-    fit_model(study)
-# def get_lfa_csv(dataframe, path):
-    # # LATENT FACTOR ANALYSIS
-    # # summarize two days experiments
-    # condition_names = ["HR-accuracy", "FAR-accuracy", "HR-rt"]
-    # sum_observers = []
-    # # extract observer index information
-    # indices_id = extract_id(dataframe, num_count=2)
-    # for ob in indices_id:
-    #     tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
-    #     sum_observers.append(
-    #         [ob, np.sum(tmp_df.results_correct) / 36., np.sum(tmp_df.result_nb_omission) / 36.,
-    #          np.mean(tmp_df["HR-rt"])])
-    # sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + condition_names)
-    # # for save summary data
-    # # sum_observers.to_csv('../outputs/gonogo/sumdata_gonogo.csv', header=True, index=False)
-    # sum_observers['total_resp'] = sum_observers.apply(lambda row: 36, axis=1)  # two days task
-    # outcomes_names = ["HR-accuracy", "FAR-accuracy"]
-    # nb_trials = int(len(dataframe['results_responses'][0]) / 2)
-    # dataframe['HR-accuracy'] = dataframe.apply(lambda row: row['results_correct'] / 18, axis=1)
-    # dataframe["FAR-accuracy"] = dataframe.apply(lambda row: row['result_nb_omission'] / 18, axis=1)
-    # conditions_full_names = ["HR-rt"]
-    # dataframe[['participant_id', 'task_status', 'condition'] + outcomes_names + conditions_full_names].to_csv(
-    #     f"{path}/gonogo_lfa.csv", index=False)
-    # return outcomes_names, dataframe, nb_trials, conditions_full_names
-
-
-# def format_for_pymc(df_go):
-#     # # GO / NO GO # #
-#     # df_go = pd.read_csv(os.path.join(path, "gonogo_lfa.csv"))
-#     df_go = df_go.rename(columns={'HR-accuracy': 'GO-accuracy', 'FAR-accuracy': 'NOGO-accuracy', 'HR-rt': 'GO-rt'})
-#     go_cdt = ['GO', 'NOGO']
-#     df_go = df_go.rename(change_accuracy_for_correct_column, axis='columns')
-#     df_go[[col for col in df_go.columns if 'correct' in col]] = df_go[[col for col in df_go.columns if
-#                                                                        'correct' in col]] * 18
-#     for cdt in go_cdt:
-#         df_go[cdt + '-nb'] = 20
-#     df_go['total-task-correct'] = df_go['GO-correct'] + (18 - df_go['NOGO-correct'])
-#     df_go['total-task-nb'] = 36
-#     go_cdt.append('total-task')
-#     return df_go, go_cdt
-
-
-# def get_pymc_trace(data, condition_list, model_object, study, sample_size=4000):
-#     model_baseline = model_object(data[data['condition'] == 'baseline'],
-#                                   name='gonogo', group='baseline', folder=f'{study}-pooled_model',
-#                                   stim_cond_list=condition_list,
-#                                   sample_size=sample_size)
-#     model_baseline.run()
-#     model_zpdes = model_object(data[data['condition'] == 'zpdes'],
-#                                name='gonogo', group='zpdes', folder=f'{study}-pooled_model',
-#                                stim_cond_list=condition_list,
-#                                sample_size=sample_size)
-#     model_zpdes.run()
-    # -------------------------------------------------------------------#
-    # outcomes_names, df_go, nb_trials, conditions_full_names = get_lfa_csv(dataframe, path)
+    # fit_model(study)
     # -------------------------------------------------------------------#
     # Bayes accuracy analysis:
     # get_stan_accuracy(dataframe, outcomes_names, nb_trials, study)

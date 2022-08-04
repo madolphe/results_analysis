@@ -437,58 +437,6 @@ def get_stan_RT(study, dataframe, condition_names_rt):
 if __name__ == '__main__':
     study = "v0_axa"
     # fit_model(study)
-
-# def get_lfa_csv(path, dataframe):
-# dataframe.to_csv(f"{path}/taskswitch_treatment.csv")
-# # sumirize two days experiments
-# sum_observers = []
-# sum_observers_forsave = []
-# condition_names = ['parity-switch-correct', 'parity-unswitch-correct', 'relative-switch-correct',
-#                    'relative-unswitch-correct']
-# column_nb_to_keep = ['nb_total', 'relative-switch-nb', 'relative-unswitch-nb', 'parity-switch-nb',
-#                      'parity-unswitch-nb']
-# condition_names_accuracy = [f"{condition}-accuracy" for condition in condition_names]
-# condition_names_rt = ['parity-switching-cost-rt', 'relative-switching-cost-rt']
-# # for condition in condition_names:
-# #     for condition_acc in condition_names_accuracy:
-# #         dataframe[condition_acc] = dataframe[f"{condition}-correct"] / dataframe[f"{condition}-nb"]
-# dataframe[['participant_id', 'task_status',
-#            'condition'] + condition_names + condition_names_rt + column_nb_to_keep].to_csv(
-#     f"{path}/taskswitch_lfa.csv", index=False)
-# extract observer index information
-# indices_id = extract_id(dataframe, num_count=2)
-# for ob in indices_id:
-#     tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
-#     participant_tmp = []
-#     participant_tmp.append(ob)
-#     for condition in condition_names:
-#         participant_tmp.append(np.sum(tmp_df[f"{condition}-correct"]))
-#         participant_tmp.append(np.sum(tmp_df[f"{condition}-nb"]))
-#         participant_tmp.append(np.mean(tmp_df[f"{condition}-correct"] / tmp_df[f"{condition}-nb"]))
-#         participant_tmp.append(np.mean(tmp_df[f"{condition}-rt"]))
-#     sum_observers.append(participant_tmp)
-# columns, keywords = ['participant_id'], ['correct', 'nb', 'accuracy', 'rt']
-# for condition in condition_names:
-#     for keyword in keywords:
-#         columns.append(f"{condition}-{keyword}")
-# sum_observers = pd.DataFrame(sum_observers, columns=columns)
-# for save summary data
-# # sum_observers.to_csv('../outputs/taskswitch/sumdata_taskswitch.csv', header=True, index=False)
-# return dataframe[
-#     ['participant_id', 'task_status', 'condition'] + condition_names + condition_names_rt + column_nb_to_keep]
-# def get_pymc_trace(data, condition_list, model_object, study, sample_size=4000):
-#     model_baseline = model_object(data[data['condition'] == 'baseline'],
-#                                   name='taskswitch', group='baseline', folder=f'{study}-pooled_model',
-#                                   stim_cond_list=condition_list,
-#                                   sample_size=sample_size)
-#     model_baseline.run()
-#     model_zpdes = model_object(data[data['condition'] == 'zpdes'],
-#                                name='taskswitch', group='zpdes', folder=f'{study}-pooled_model',
-#                                stim_cond_list=condition_list,
-#                                sample_size=sample_size)
-#     model_zpdes.run()
-    # condition_list = ['parity-switch', 'parity-unswitch', 'relative-switch', 'relative-unswitch', 'switch', 'unswitch',
-    #                   'relative', 'parity', 'total-task']
     # Plot accuracy
     # boxplot_pre_post("accuracy", "accuracy")
     # # Mean RT

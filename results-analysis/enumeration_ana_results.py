@@ -134,85 +134,8 @@ def get_stan_accuracy(dataframe, condition_names, study):
 if __name__ == '__main__':
     # study = 'v0_axa'
     # run(study)
+    # -------------------------------------------------------------------#
+    # BAYES ACCURACY ANALYSIS w pystan
+    # get_stan_accuracy(dataframe[dataframe['condition'] == 'zpdes'], condition_names, study=study)
+    # -------------------------------------------------------------------#
     pass
-# def plot_traces(study, model_type, model=None):
-#     root_path = f"{study}-{model_type}"
-#     dataframe, pre_response_exact, post_response_exact, condition_names, condition_possibilities = format_data(study)
-#     df_enum = get_lfa_csv(dataframe, condition_possibilities, condition_names, study, save=False)
-#     data, condition_list = format_for_pymc(df_enum)
-#     dict_traces_baseline = {
-#         condition: f"{root_path}/enumeration/enumeration_baseline_results/enumeration_baseline-{condition}-trace" for
-#         condition in condition_list}
-#     dict_traces_zpdes = {
-#         condition: f"{root_path}/enumeration/enumeration_zpdes_results/enumeration_zpdes-{condition}-trace" for
-#         condition in condition_list}
-#     model_baseline = model(data[data['condition'] == 'baseline'],
-#                            name='enumeration', group='baseline', folder=root_path,
-#                            stim_cond_list=condition_list, traces_path=dict_traces_baseline,
-#                            sample_size=4000)
-#     model_zpdes = model(data[data['condition'] == 'zpdes'],
-#                         name='enumeration', group='zpdes', folder=root_path,
-#                         stim_cond_list=condition_list, traces_path=dict_traces_zpdes,
-#                         sample_size=4000)
-#     # model_baseline.plot_posterior_and_population()
-#     model_baseline.plot_comparison_posterior_and_population(model_zpdes)
-
-# def get_lfa_csv(dataframe, condition_possibilities, condition_names, study, save=True):
-#     # Latent factor analysis:
-#     # from here written by mswym
-#     for index, condition in zip(condition_possibilities, condition_names):
-#         print(index, condition, dataframe[str(index)].apply(lambda row: len(row))[0])
-#         dataframe[f"{condition}"] = dataframe[f"{index}-sum"] / dataframe[str(index)].apply(lambda row: len(row))
-#     # dataframe[['participant_id', 'task_status', 'condition'] + condition_names].to_csv(
-#     #     '../outputs/v1_ubx/enumeration_lfa_v1.csv',
-#     #     index=False)
-#     if save:
-#         dataframe[['participant_id', 'task_status', 'condition'] + condition_names].to_csv(
-#             f'../outputs/{study}/enumeration_lfa_v1.csv',
-#             index=False)
-#     # summarize two days experiments
-#     # sum_observers = []
-#     # extract observer index information
-#     # indices_id = extract_id(dataframe, num_count=2)
-#     # for ob in indices_id:
-#     #     tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
-#     #     sum_observers.append([ob] + [tmp_df[col].mean(axis=0) for col in tmp_df.columns if "accuracy" in col])
-#     # sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + condition_names)
-#     # sum_observers.to_csv('../outputs/enumeration/sumdata_enumeration.csv', header=True, index=False)
-#     return dataframe[['participant_id', 'task_status', 'condition'] + condition_names]
-
-
-# def format_for_pymc(df_enum):
-#     # # ENUMERATION  # #
-#     # Keep the accuracy and the total nb of correct elements to plot the population easily afterward
-#     # df_enum = pd.read_csv(os.path.join(path, "enumeration_lfa_v1.csv"))
-#     df = df_enum
-#     df_enum = df_enum.rename(change_accuracy_for_correct_column, axis='columns')
-#     df_enum[[col for col in df_enum.columns if 'correct' in col]] = df_enum[[col for col in df_enum.columns if
-#                                                                              'correct' in col]] * 20
-#     # Keep accuracy in the columns (for plotting purposes)
-#     df_enum = pd.concat([df_enum, df[[col for col in df.columns if 'accuracy' in col]]], axis=1)
-#     enum_cdt = ['5', '6', '7', '8', '9']
-#     for cdt in enum_cdt:
-#         df_enum[cdt + '-nb'] = 20
-#     # df_enum['total_resp'] = 20
-#     df_enum['total-task-correct'] = convert_to_global_task(df_enum, [col + '-correct' for col in enum_cdt])
-#     df_enum['total-task-nb'] = 20 * len(enum_cdt)
-#     df_enum = df_enum.groupby('participant_id').filter(lambda x: len(x) > 1)
-#     enum_cdt.append('total-task')
-#     return df_enum, enum_cdt
-# def get_pymc_trace(data, condition_list, model_object, study, sample_size=4000):
-#     model_baseline = model_object(data[data['condition'] == 'baseline'],
-#                                   name='enumeration', group='baseline', folder=f'{study}-pooled_model',
-#                                   stim_cond_list=condition_list,
-#                                   sample_size=sample_size)
-#     model_baseline.run()
-#     model_zpdes = model_object(data[data['condition'] == 'zpdes'],
-#                                name='enumeration', group='zpdes', folder=f'{study}-pooled_model',
-#                                stim_cond_list=condition_list,
-#                                sample_size=sample_size)
-#     model_zpdes.run()
-# -------------------------------------------------------------------#
-# BAYES ACCURACY ANALYSIS w pystan
-# get_stan_accuracy(dataframe[dataframe['condition'] == 'zpdes'], condition_names, study=study)
-# -------------------------------------------------------------------#
