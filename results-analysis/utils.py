@@ -7,6 +7,37 @@ from matplotlib.ticker import MultipleLocator
 import copy
 
 
+def get_pymc_trace(data, condition_list, model_object, model_type, study, task, sample_size=4000):
+    model_baseline = model_object(data[data['condition'] == 'baseline'],
+                                  name=task, group='baseline', folder=f'{study}-{model_type}',
+                                  stim_cond_list=condition_list,
+                                  sample_size=sample_size)
+    model_baseline.run()
+    model_zpdes = model_object(data[data['condition'] == 'zpdes'],
+                               name=task, group='zpdes', folder=f'{study}-{model_type}',
+                               stim_cond_list=condition_list,
+                               sample_size=sample_size)
+    model_zpdes.run()
+
+
+def add_difference_pre_post(df, conditions):
+    new_df = df.groupby('participant_id')[conditions].diff().dropna()
+    new_df['task_status'], new_df['participant_id'] = 'diff', df['participant_id'].unique()
+    new_df['condition'] = df.groupby(['participant_id', 'condition']).median().reset_index()['condition'].values
+    return new_df
+
+
+def retrieve_and_init_models(root_path, task, condition_list, data, model, group, sample_size=4000):
+    dict_traces = {
+        condition: f"{root_path}/{task}/{task}_{group}_results/traces/{task}_{group}-{condition}-trace" for
+        condition in condition_list}
+    model = model(data[data['condition'] == group],
+                  name=task, group=group, folder=root_path,
+                  stim_cond_list=condition_list, traces_path=dict_traces,
+                  sample_size=4000)
+    return model
+
+
 def extract_mu_ci_from_summary_accuracy(dataframe, ind_cond):
     # 3 means the mu, ci_min, and ci_max
     out = np.zeros((len(ind_cond), 3))

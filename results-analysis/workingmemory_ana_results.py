@@ -1,4 +1,40 @@
 from utils import *
+from pymc.data import change_accuracy_for_correct_column, convert_to_global_task
+from utils import retrieve_and_init_models, add_difference_pre_post, get_pymc_trace
+
+
+# ### UTILS FUNCTIONS FOR TREATING THE DATA ###
+def format_data(path, save_lfa):
+    task = "workingmemory"
+    # FIRST TREAT THE CSV AND PARSE IT TO DF
+    csv_path = f"{path}/{task}.csv"
+    dataframe = pd.read_csv(csv_path, sep=",")
+    # Conditions:
+    number_condition = [4, 5, 6, 7, 8]
+    # Few pre-processing
+    dataframe = delete_uncomplete_participants(dataframe)
+    dataframe["results_correct"] = dataframe.apply(lambda row: transform_string_to_row(row, "results_correct"),
+                                                   axis=1)
+    dataframe["results_num_stim"] = dataframe.apply(lambda row: transform_string_to_row(row, "results_num_stim"),
+                                                    axis=1)
+    # Other pre-processing (get accuracies and nb_correct
+    for t in number_condition:
+        dataframe[str(t)] = dataframe.apply(lambda row: compute_numbercond(row, t), axis=1)
+        dataframe[f'{t}-correct'] = dataframe.apply(lambda row: compute_sum_to_row(row, str(t)), axis=1)
+        dataframe[f'{t}-nb'] = dataframe.apply(lambda row: len(row[str(t)]), axis=1)
+        dataframe[f'{t}-accuracy'] = dataframe[f'{t}-correct'] / dataframe[f'{t}-nb']
+    dataframe['total-task-correct'] = convert_to_global_task(dataframe, [f'{col}-correct' for col in number_condition])
+    dataframe['total-task-nb'] = 12 * len(number_condition)
+    dataframe['total-task-accuracy'] = dataframe['total-task-correct'] / dataframe['total-task-nb']
+    condition_accuracy_names = [f"{elt}-accuracy" for elt in number_condition] + ['total-task-accuracy']
+    condition_correct_names = [f"{elt}-correct" for elt in number_condition] + ['total-task-correct']
+    condition_nb_names = [f"{elt}-nb" for elt in number_condition] + ['total-task-nb']
+    base = ['participant_id', 'task_status', 'condition']
+    dataframe = dataframe[base + condition_accuracy_names + condition_correct_names + condition_nb_names]
+    # If save_mode, store the dataframe into csv:
+    if save_lfa:
+        dataframe.to_csv(f'{path}/workingmemory_lfa.csv', index=False)
+    return dataframe
 
 
 def delete_uncomplete_participants(dataframe):
@@ -37,58 +73,36 @@ def extract_id(dataframe, num_count):
     return indices_id
 
 
-def extract_mu_ci_from_summary_accuracy(dataframe, ind_cond):
-    out = np.zeros((len(ind_cond), 3))  # 3 means the mu, ci_min, and ci_max
-    for t, ind in enumerate(ind_cond):
-        out[t, 0] = dataframe[ind].mu_theta
-        out[t, 1] = dataframe[ind].ci_min
-        out[t, 2] = dataframe[ind].ci_max
-    return out
+# ## RUN FITTED MODELS AND PLOT VISUALISATIONS ###
+def retrieve_zpdes_vs_baseline(study, conditions_to_keep, model_type, model=None):
+    task = "workingmemory"
+    path = f"../outputs/{study}/results_{study}/{task}"
+    df = format_data(path, save_lfa=False)
+    condition_list = ['4', '5', '6', '7', '8', 'total-task']
+    columns = [f"{c}-accuracy" for c in condition_list] + [f"{c}-correct" for c in condition_list]
+    df = pd.concat([df, add_difference_pre_post(df, columns)], axis=0)
+    root_path = f"{study}-{model_type}"
+    model_baseline = retrieve_and_init_models(root_path, task, conditions_to_keep, df, model, group="baseline")
+    model_zpdes = retrieve_and_init_models(root_path, task, conditions_to_keep, df, model, group="zpdes")
+    return model_zpdes, model_baseline
 
 
-def format_data(path):
-    # FIRST TREAT THE CSV AND PARSE IT TO DF
-    # data loading
-    csv_path = f"{path}/workingmemory.csv"
-    dataframe = pd.read_csv(csv_path, sep=",")
-    dataframe = delete_uncomplete_participants(dataframe)
-    dataframe["results_correct"] = dataframe.apply(lambda row: transform_string_to_row(row, "results_correct"),
-                                                   axis=1)
-    dataframe["results_num_stim"] = dataframe.apply(lambda row: transform_string_to_row(row, "results_num_stim"),
-                                                    axis=1)
-    number_condition = [4, 5, 6, 7, 8]
-    for t in number_condition:
-        dataframe[str(t)] = dataframe.apply(lambda row: compute_numbercond(row, t), axis=1)
-        dataframe['sum-' + str(t)] = dataframe.apply(lambda row: compute_sum_to_row(row, str(t)), axis=1)
-        dataframe[f'{t}-nb'] = dataframe.apply(lambda row: len(row[str(t)]), axis=1)
-        dataframe[f'{t}-accuracy'] = dataframe['sum-' + str(t)] / dataframe[f'{t}-nb']
-    return dataframe
+def run_visualisation(study, conditions_to_keep, model_type, model=None):
+    model_zpdes, model_baseline = retrieve_zpdes_vs_baseline(study, conditions_to_keep, model_type, model)
+    model_baseline.plot_posterior_and_population()
+    model_baseline.plot_comparison_posterior_and_population(model_zpdes)
 
 
-def get_lfa_csv(path):
-    number_condition = [4, 5, 6, 7, 8]
-    condition_accuracy_names = [f"{elt}-accuracy" for elt in number_condition]
-    dataframe[['participant_id', 'task_status', 'condition'] + condition_accuracy_names].to_csv(
-        f'{path}/workingmemory_lfa.csv', index=False)
-    # extract observer index information
-    indices_id = extract_id(dataframe, num_count=2)
-    # sumirize two days experiments
-    sum_observers = []
-    condition_names = [f'{elt}-accuracy' for elt in range(4, 9)]
-    # Each condition have same number of trials i.e 12
-    nb_trials = len(dataframe.loc[0, '4'])
-    for ob in indices_id:
-        tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
-        # Summation over the two sessions:
-        sum_observers.append([ob] + [np.sum(tmp_df[f"sum-{col}"]) / (2 * nb_trials) for col in number_condition])
-        # sum_observers.append(
-        #     [np.sum(tmp_df.sum4), np.sum(tmp_df.sum5), np.sum(tmp_df.sum6), np.sum(tmp_df.sum7), np.sum(tmp_df.sum8)])
-    sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + condition_names)
-    sum_observers['total_resp'] = sum_observers.apply(lambda row: 2 * nb_trials, axis=1)  # two days task
-    # sum_observers.to_csv('../outputs/workingmemory/sumdata_workingmemory.csv', header=True, index=False)
+# ## FITTING MODELS:####
+def fit_model(study, conditions_to_fit, model=None, model_type="pooled_model"):
+    task = "workingmemory"
+    path = f"../outputs/{study}/results_{study}/{task}"
+    df = format_data(path, save_lfa=False)
+    if model:
+        get_pymc_trace(df, conditions_to_fit, task=task, model_object=model, model_type=model_type, study=study)
 
 
-def get_stan_accuracy():
+def get_stan_accuracy(dataframe):
     condition_names = [f'{elt}-accuracy' for elt in range(4, 9)]
     number_condition = [4, 5, 6, 7, 8]
     nb_trials = len(dataframe.loc[0, '4'])
@@ -110,14 +124,50 @@ def get_stan_accuracy():
 if __name__ == '__main__':
     path = "../outputs/v0_axa/results_v0_axa/workingmemory"
     study = "v0_axa"
-    # -------------------------------------------------------------------#
-    dataframe = format_data(path)
-    # -------------------------------------------------------------------#
-    # THEN EXTRACT COLUMNS FOR FUTURE LATENT FACTOR ANALYSIS
-    # condition extraction
-    get_lfa_csv(path)
-    # -------------------------------------------------------------------#
-    # BAYES ACCURACY ANALYSIS
-    get_stan_accuracy()
-    # -------------------------------------------------------------------#
-    print('finished')
+    # run(study)
+    # Keep this old version for some times:
+    # extract observer index information
+    # indices_id = extract_id(dataframe, num_count=2)
+    # sumirize two days experiments
+    # sum_observers = []
+    # condition_names = [f'{elt}-accuracy' for elt in range(4, 9)]
+    # # Each condition have same number of trials i.e 12
+    # nb_trials = len(dataframe.loc[0, '4'])
+    # for ob in indices_id:
+    #     tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
+    #     # Summation over the two sessions:
+    #     sum_observers.append([ob] + [np.sum(tmp_df[f"sum-{col}"]) / (2 * nb_trials) for col in number_condition])
+    # sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + condition_names)
+    # sum_observers['total_resp'] = sum_observers.apply(lambda row: 2 * nb_trials, axis=1)  # two days task
+    # def format_for_pymc(df_wm):
+    #     # # WORKING MEMORY # #
+    #     # df_wm = pd.read_csv(os.path.join(path, "workingmemory_lfa.csv"))
+    #     wm_cdt = ['4', '5', '6', '7', '8']
+    #     df_wm = df_wm.rename(change_accuracy_for_correct_column, axis='columns')
+    #     df_wm[[col for col in df_wm.columns if 'correct' in col]] = df_wm[[col for col in df_wm.columns if
+    #                                                                        'correct' in col]] * 12
+    #     # df_wm['total_resp'] = 12
+    #     for cdt in wm_cdt:
+    #         df_wm[cdt + '-nb'] = 12
+    #     df_wm['total-task-correct'] = convert_to_global_task(df_wm, [col + '-correct' for col in wm_cdt])
+    #     df_wm['total-task-nb'] = 12 * len(wm_cdt)
+    #     wm_cdt.append('total-task')
+    #     return df_wm, wm_cdt
+    # def extract_mu_ci_from_summary_accuracy(dataframe, ind_cond):
+    #     out = np.zeros((len(ind_cond), 3))  # 3 means the mu, ci_min, and ci_max
+    #     for t, ind in enumerate(ind_cond):
+    #         out[t, 0] = dataframe[ind].mu_theta
+    #         out[t, 1] = dataframe[ind].ci_min
+    #         out[t, 2] = dataframe[ind].ci_max
+    #     return out
+# def get_pymc_trace(data, condition_list, model_object, study, sample_size=4000):
+#     model_baseline = model_object(data[data['condition'] == 'baseline'],
+#                                   name='workingmemory', group='baseline', folder=f'{study}-pooled_model',
+#                                   stim_cond_list=condition_list,
+#                                   sample_size=sample_size)
+#     model_baseline.run()
+#     model_zpdes = model_object(data[data['condition'] == 'zpdes'],
+#                                name='workingmemory', group='zpdes', folder=f'{study}-pooled_model',
+#                                stim_cond_list=condition_list,
+#                                sample_size=sample_size)
+#     model_zpdes.run()

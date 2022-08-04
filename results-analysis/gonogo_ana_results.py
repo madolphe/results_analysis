@@ -2,6 +2,8 @@
 
 from sklearn.linear_model import LinearRegression
 from utils import *
+from pymc.data import change_accuracy_for_correct_column, convert_to_global_task
+from utils import retrieve_and_init_models, add_difference_pre_post, get_pymc_trace
 
 
 def transform_str_to_list(row, columns):
@@ -133,7 +135,7 @@ def compute_number_of_omissions(row: pd.core.series.Series) -> int:
 
 
 def compute_result_sum_hr(row):
-    return 18 - row['result_nb_omission']
+    return 18 - row['NOGO-correct']
 
 
 def compute_numbercond(row, ind_cond):
@@ -173,7 +175,7 @@ def extract_mu_ci_from_summary_rt(dataframe):
     return out
 
 
-def plt_commision_errors():
+def plt_commision_errors(dataframe):
     # commission errors (i.e., falsely pressing the button in no-go trials; also called false alarms)
     dataframe.groupby(["task_status", "result_commission_errors"]).count()["participant_id"].unstack(
         "task_status")[['PRE_TEST', 'POST_TEST']].plot.bar()
@@ -182,7 +184,7 @@ def plt_commision_errors():
     plt.close()
 
 
-def plt_reliability():
+def plt_reliability(pre_test, post_test):
     reg = LinearRegression().fit(np.expand_dims(pre_test.values, axis=1), post_test.values)
     score = reg.score(np.expand_dims(pre_test.values, axis=1), post_test.values)
     plt.scatter(x=pre_test, y=post_test, c='red')
@@ -194,7 +196,7 @@ def plt_reliability():
     plt.close()
 
 
-def plt_omission_errors():
+def plt_omission_errors(dataframe):
     # omission errors (i.e., falsely not pressing the button in go trials; also called misses):
     dataframe.groupby(["task_status", "result_nb_omission"]).count()["participant_id"].unstack("task_status")[
         ['PRE_TEST', 'POST_TEST']].plot.bar()
@@ -203,15 +205,15 @@ def plt_omission_errors():
     plt.close()
 
 
-def format_data(path):
-    dataframe = pd.read_csv(f"{path}/gonogo.csv", sep=",")
-    dataframe = dataframe.apply(lambda row: transform_str_to_list(row, [
+def format_data(path, save_lfa):
+    df = pd.read_csv(f"{path}/gonogo.csv", sep=",")
+    df = df.apply(lambda row: transform_str_to_list(row, [
         'results_responses', 'results_rt', 'results_ind_previous', 'results_targetvalue']), axis=1)
-    dataframe['result_nb_omission'] = dataframe.apply(compute_number_of_omissions, axis=1)
-    dataframe['result_commission_errors'] = dataframe.apply(compute_nb_commission_errors, axis=1)
-    dataframe = delete_uncomplete_participants(dataframe)
+    df['NOGO-correct'] = df.apply(compute_number_of_omissions, axis=1)
+    df['result_commission_errors'] = df.apply(compute_nb_commission_errors, axis=1)
+    dataframe = delete_uncomplete_participants(df)
     # false alarm relative to sequence length
-    dataframe['nb_blocks'] = dataframe.apply(compute_number_of_keyboard_input, axis=1)
+    df['nb_blocks'] = df.apply(compute_number_of_keyboard_input, axis=1)
     participant_id, nb_blocks, nb_go = find_participant_with_fewer_blocks(dataframe)
     blocks_list = [nb_go, nb_blocks - nb_go]
     NB_BLOCKS_TO_KEEP = min(blocks_list)
@@ -219,45 +221,72 @@ def format_data(path):
     print(f"ID {participant_id} has the smallest nb of blocks recorded ({nb_blocks}) with {nb_go} go blocks.")
     print(f"Nb of blocks to keep: {NB_BLOCKS_TO_KEEP}")
     print(f"Blocks to keep are go blocks: {is_go_blocks}")
-    dataframe = dataframe.apply(lambda row: delete_non_recorded_blocks(row, NB_BLOCKS_TO_KEEP), axis=1)
-    dataframe['nb_blocks'] = dataframe.apply(compute_number_of_keyboard_input, axis=1)
+    df = df.apply(lambda row: delete_non_recorded_blocks(row, NB_BLOCKS_TO_KEEP), axis=1)
+    df['nb_blocks'] = df.apply(compute_number_of_keyboard_input, axis=1)
     # Reaction times in or the number of correct go-trials (i.e., hits):
-    dataframe['result_clean_rt'] = dataframe.apply(list_of_correct_hits, axis=1)
-    dataframe['HR-nb'] = dataframe.apply(lambda row: len(row['result_clean_rt']), axis=1)
-    dataframe['HR-rt'] = dataframe.apply(compute_means, axis=1)
-    post_test = dataframe[dataframe['task_status'] == 'POST_TEST']['HR-rt']
-    pre_test = dataframe[dataframe['task_status'] == 'PRE_TEST']['HR-rt']
-    # Save data
-    # dataframe.to_csv("../outputs/v1_ubx/gonogo_treatment.csv")
-    dataframe.to_csv(f"{path}/gonogo_treatment.csv")
-    dataframe['results_correct'] = dataframe.apply(compute_result_sum_hr, axis=1)
-    return pre_test, post_test, dataframe
+    df['result_clean_rt'] = df.apply(list_of_correct_hits, axis=1)
+    df['HR-nb'] = df.apply(lambda row: len(row['result_clean_rt']), axis=1)
+    df['GO-rt'] = df.apply(compute_means, axis=1)
+    df['GO-correct'] = df.apply(compute_result_sum_hr, axis=1)
+    df['GO-accuracy'] = df.apply(lambda row: row['GO-correct'] / NB_BLOCKS_TO_KEEP, axis=1)
+    df['NOGO-accuracy'] = df.apply(lambda row: row['NOGO-correct'] / NB_BLOCKS_TO_KEEP, axis=1)
+    conditions = ['GO', 'NOGO', 'total-task']
+    conditions_accuracy = [f'{cdt}-accuracy' for cdt in conditions]
+    conditions_correct = [f'{cdt}-correct' for cdt in conditions]
+    conditions_nb = [f'{cdt}-nb' for cdt in conditions]
+    for cdt in conditions_nb:
+        df[cdt] = NB_BLOCKS_TO_KEEP
+    conditions_RT = ['GO-rt']
+    base = ['participant_id', 'task_status', 'condition']
+    df['total-task-correct'] = df['GO-correct'] + (NB_BLOCKS_TO_KEEP - df['NOGO-correct'])
+    df['total-task-nb'] = NB_BLOCKS_TO_KEEP * 2
+    df['total-task-accuracy'] = df['total-task-correct'] / df['total-task-nb']
+    df = df[base + conditions_accuracy + conditions_RT + conditions_nb + conditions_correct]
+    if save_lfa:
+        df.to_csv(f"{path}/gonogo_lfa.csv", index=False)
+    return df
 
 
-def get_lfa_csv(dataframe, path):
-    # LATENT FACTOR ANALYSIS
-    # summarize two days experiments
-    condition_names = ["HR-accuracy", "FAR-accuracy", "HR-rt"]
-    sum_observers = []
-    # extract observer index information
-    indices_id = extract_id(dataframe, num_count=2)
-    for ob in indices_id:
-        tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
-        sum_observers.append(
-            [ob, np.sum(tmp_df.results_correct) / 36., np.sum(tmp_df.result_nb_omission) / 36.,
-             np.mean(tmp_df["HR-rt"])])
-    sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + condition_names)
-    # for save summary data
-    # sum_observers.to_csv('../outputs/gonogo/sumdata_gonogo.csv', header=True, index=False)
-    sum_observers['total_resp'] = sum_observers.apply(lambda row: 36, axis=1)  # two days task
-    outcomes_names = ["HR-accuracy", "FAR-accuracy"]
-    nb_trials = int(len(dataframe['results_responses'][0]) / 2)
-    dataframe['HR-accuracy'] = dataframe.apply(lambda row: row['results_correct'] / 18, axis=1)
-    dataframe["FAR-accuracy"] = dataframe.apply(lambda row: row['result_nb_omission'] / 18, axis=1)
-    conditions_full_names = ["HR-rt"]
-    dataframe[['participant_id', 'task_status', 'condition'] + outcomes_names + conditions_full_names].to_csv(
-        f"{path}/gonogo_lfa.csv", index=False)
-    return outcomes_names, dataframe, nb_trials, conditions_full_names
+# ## RUN FITTED MODELS AND PLOT VISUALISATIONS ###
+def retrieve_zpdes_vs_baseline(study, conditions_to_keep, model_type, model=None):
+    task = "gonogo"
+    path = f"../outputs/{study}/results_{study}/{task}"
+    root_path = f"{study}-{model_type}"
+    df = format_data(path, save_lfa=False)
+    condition_list = ['GO', 'NOGO', 'total-task']
+    columns = [f"{c}-accuracy" for c in condition_list] + [f"{c}-correct" for c in condition_list]
+    df = pd.concat([df, add_difference_pre_post(df, columns)], axis=0)
+    model_baseline = retrieve_and_init_models(root_path, task, conditions_to_keep, df, model, group="baseline")
+    model_zpdes = retrieve_and_init_models(root_path, task, conditions_to_keep, df, model, group="zpdes")
+    return model_zpdes, model_baseline
+
+
+def run_visualisation(study, conditions_to_keep, model_type, model=None):
+    model_zpdes, model_baseline = retrieve_zpdes_vs_baseline(study, conditions_to_keep, model_type, model)
+    model_baseline.plot_posterior_and_population()
+    model_baseline.plot_comparison_posterior_and_population(model_zpdes)
+
+
+# ## RUN FITTED MODELS AND PLOT VISUALISATIONS ###
+def fit_model(study, conditions_to_fit, model=None, model_type="pooled_model"):
+    task = "gonogo"
+    path = f"../outputs/{study}/results_{study}/{task}"
+    df = format_data(path, save_lfa=False)
+    if model:
+        get_pymc_trace(df, conditions_to_fit, task=task, model_object=model, model_type=model_type, study=study)
+
+
+def get_stan_RT(dataframe, conditions_full_names, study):
+    values_conditions = ["HR"]
+    stan_rt_distributions = get_stan_RT_distributions(dataframe, values_conditions, 'gonogo')
+    plt_args = {'list_xlim': [-0.5, 0.5], 'list_ylim': [0, 1],
+                'list_set_xticklabels': ['HR-rt'], 'list_set_xticks': [0],
+                'list_set_yticklabels': ['0', '250', '500', '750'], 'list_set_yticks': [0, 250, 500, 750],
+                'val_ticks': 25,
+                'scale_jitter': 0.1,
+                'scale_panel': 2}
+    plot_all_rt_figures(stan_rt_distributions, conditions_full_names, dataframe=dataframe, task_name='gonogo',
+                        plot_args=plt_args, study=study)
 
 
 def get_stan_accuracy(dataframe, outcomes_names, nb_trials, study):
@@ -274,30 +303,68 @@ def get_stan_accuracy(dataframe, outcomes_names, nb_trials, study):
                               plot_args=plot_args, study=study)
 
 
-def get_stan_RT(dataframe, conditions_full_names, study):
-    values_conditions = ["HR"]
-    stan_rt_distributions = get_stan_RT_distributions(dataframe, values_conditions, 'gonogo')
-    plt_args = {'list_xlim': [-0.5, 0.5], 'list_ylim': [0, 1],
-                'list_set_xticklabels': ['HR-rt'], 'list_set_xticks': [0],
-                'list_set_yticklabels': ['0', '250', '500', '750'], 'list_set_yticks': [0, 250, 500, 750],
-                'val_ticks': 25,
-                'scale_jitter': 0.1,
-                'scale_panel': 2}
-    plot_all_rt_figures(stan_rt_distributions, conditions_full_names, dataframe=dataframe, task_name='gonogo',
-                        plot_args=plt_args, study=study)
-
-
 if __name__ == '__main__':
-    # csv_path = "../outputs/v1_ubx/results_v1_ubx/gonogo.csv"
-    path = "../outputs/v0_axa/results_v0_axa/gonogo"
     study = "v0_axa"
-    pre_test, post_test, dataframe = format_data(path)
+    fit_model(study)
+# def get_lfa_csv(dataframe, path):
+    # # LATENT FACTOR ANALYSIS
+    # # summarize two days experiments
+    # condition_names = ["HR-accuracy", "FAR-accuracy", "HR-rt"]
+    # sum_observers = []
+    # # extract observer index information
+    # indices_id = extract_id(dataframe, num_count=2)
+    # for ob in indices_id:
+    #     tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
+    #     sum_observers.append(
+    #         [ob, np.sum(tmp_df.results_correct) / 36., np.sum(tmp_df.result_nb_omission) / 36.,
+    #          np.mean(tmp_df["HR-rt"])])
+    # sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + condition_names)
+    # # for save summary data
+    # # sum_observers.to_csv('../outputs/gonogo/sumdata_gonogo.csv', header=True, index=False)
+    # sum_observers['total_resp'] = sum_observers.apply(lambda row: 36, axis=1)  # two days task
+    # outcomes_names = ["HR-accuracy", "FAR-accuracy"]
+    # nb_trials = int(len(dataframe['results_responses'][0]) / 2)
+    # dataframe['HR-accuracy'] = dataframe.apply(lambda row: row['results_correct'] / 18, axis=1)
+    # dataframe["FAR-accuracy"] = dataframe.apply(lambda row: row['result_nb_omission'] / 18, axis=1)
+    # conditions_full_names = ["HR-rt"]
+    # dataframe[['participant_id', 'task_status', 'condition'] + outcomes_names + conditions_full_names].to_csv(
+    #     f"{path}/gonogo_lfa.csv", index=False)
+    # return outcomes_names, dataframe, nb_trials, conditions_full_names
+
+
+# def format_for_pymc(df_go):
+#     # # GO / NO GO # #
+#     # df_go = pd.read_csv(os.path.join(path, "gonogo_lfa.csv"))
+#     df_go = df_go.rename(columns={'HR-accuracy': 'GO-accuracy', 'FAR-accuracy': 'NOGO-accuracy', 'HR-rt': 'GO-rt'})
+#     go_cdt = ['GO', 'NOGO']
+#     df_go = df_go.rename(change_accuracy_for_correct_column, axis='columns')
+#     df_go[[col for col in df_go.columns if 'correct' in col]] = df_go[[col for col in df_go.columns if
+#                                                                        'correct' in col]] * 18
+#     for cdt in go_cdt:
+#         df_go[cdt + '-nb'] = 20
+#     df_go['total-task-correct'] = df_go['GO-correct'] + (18 - df_go['NOGO-correct'])
+#     df_go['total-task-nb'] = 36
+#     go_cdt.append('total-task')
+#     return df_go, go_cdt
+
+
+# def get_pymc_trace(data, condition_list, model_object, study, sample_size=4000):
+#     model_baseline = model_object(data[data['condition'] == 'baseline'],
+#                                   name='gonogo', group='baseline', folder=f'{study}-pooled_model',
+#                                   stim_cond_list=condition_list,
+#                                   sample_size=sample_size)
+#     model_baseline.run()
+#     model_zpdes = model_object(data[data['condition'] == 'zpdes'],
+#                                name='gonogo', group='zpdes', folder=f'{study}-pooled_model',
+#                                stim_cond_list=condition_list,
+#                                sample_size=sample_size)
+#     model_zpdes.run()
     # -------------------------------------------------------------------#
-    outcomes_names, dataframe, nb_trials, conditions_full_names = get_lfa_csv(dataframe, path)
+    # outcomes_names, df_go, nb_trials, conditions_full_names = get_lfa_csv(dataframe, path)
     # -------------------------------------------------------------------#
     # Bayes accuracy analysis:
-    get_stan_accuracy(dataframe, outcomes_names, nb_trials, study)
+    # get_stan_accuracy(dataframe, outcomes_names, nb_trials, study)
     # -------------------------------------------------------------------#
     # BAYES RT ANALYSIS:
-    get_stan_RT(dataframe, conditions_full_names, study)
+    # get_stan_RT(dataframe, conditions_full_names, study)
     # print('finished')

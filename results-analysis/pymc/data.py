@@ -1,3 +1,5 @@
+import copy
+
 import pandas as pd
 import os
 
@@ -8,7 +10,8 @@ def change_accuracy_for_correct_column(column_name: str):
 
 def get_data(path='../../outputs/v1_ubx/'):
     # # ENUMERATION  # #
-    df_enum = pd.read_csv(os.path.join(path, "enumeration_lfa_v1.csv"))
+    df_enum_csv = pd.read_csv(os.path.join(path, "enumeration_lfa_v1.csv"))
+    df_enum = copy.deepcopy(df_enum_csv)
     df_enum = df_enum.rename(change_accuracy_for_correct_column, axis='columns')
     df_enum[[col for col in df_enum.columns if 'correct' in col]] = df_enum[[col for col in df_enum.columns if
                                                                              'correct' in col]] * 20

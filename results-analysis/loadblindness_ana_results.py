@@ -1,4 +1,6 @@
 from utils import *
+from pymc.data import change_accuracy_for_correct_column, convert_to_global_task
+from utils import retrieve_and_init_models, add_difference_pre_post, get_pymc_trace
 
 
 def compute_nearfarcond(row, ind_nearfar):
@@ -34,9 +36,9 @@ def compute_sum_to_row(row, column):
     return np.sum(row[column])
 
 
-def format_data(path):
+def format_data(path, save_lfa=False):
     csv_path = f"{path}/loadblindness.csv"
-    conditions_names = ['accuracy_near', 'accuracy_far']
+    conditions_names = ['near', 'far', 'total-task']
     dataframe = pd.read_csv(csv_path, sep=",")
     dataframe = delete_uncomplete_participants(dataframe)
     dataframe["results_responses_pos"] = dataframe.apply(
@@ -45,32 +47,59 @@ def format_data(path):
     dataframe["results_target_distance"] = dataframe.apply(
         lambda row: transform_string_to_row(row, "results_target_distance"),
         axis=1)
-    # extract far
+    # For each condition:
     dataframe['far_response'] = dataframe.apply(lambda row: compute_nearfarcond(row, 1), axis=1)
     dataframe['near_response'] = dataframe.apply(lambda row: compute_nearfarcond(row, 0), axis=1)
-    dataframe['sum_far'] = dataframe.apply(lambda row: compute_sum_to_row(row, "far_response"), axis=1)
-    dataframe['sum_near'] = dataframe.apply(lambda row: compute_sum_to_row(row, "near_response"), axis=1)
+    dataframe['far-correct'] = dataframe.apply(lambda row: compute_sum_to_row(row, "far_response"), axis=1)
+    dataframe['near-correct'] = dataframe.apply(lambda row: compute_sum_to_row(row, "near_response"), axis=1)
+    dataframe['near-nb'], dataframe['far-nb'] = dataframe['near_response'].apply(lambda row: len(row)), dataframe[
+        'far_response'].apply(lambda row: len(row))
     dataframe['total_resp'] = dataframe.apply(lambda row: 20, axis=1)
-    dataframe['accuracy_near'] = dataframe['sum_near'] / dataframe['near_response'].apply(lambda row: len(row))
-    dataframe['accuracy_far'] = dataframe['sum_far'] / dataframe['far_response'].apply(lambda row: len(row))
-    nb_trials = len(dataframe['near_response'][0])
-    dataframe[['participant_id', 'task_status', 'condition'] + conditions_names].to_csv(
-        f'{path}/loadblindness_lfa.csv', index=False)
-    return dataframe, conditions_names, nb_trials
+    dataframe['near-accuracy'] = dataframe['near-correct'] / dataframe['near-nb']
+    dataframe['far-accuracy'] = dataframe['far-correct'] / dataframe['far-nb']
+
+    # Total task:
+    dataframe['total-task-correct'] = dataframe['far-correct'] + dataframe['near-correct']
+    dataframe['total-task-accuracy'] = (dataframe['near-accuracy'] + dataframe['far-accuracy']) / 2
+    dataframe['total-task-nb'] = dataframe['near-nb'] + dataframe['far-nb']
+
+    # nb_trials = len(dataframe['near_response'][0])
+    # dataframe = dataframe[['participant_id', 'task_status', 'condition'] + conditions_names]
+    if save_lfa:
+        dataframe.to_csv(f'{path}/loadblindness_lfa.csv', index=False)
+    return dataframe
 
 
-def get_lfa_csv(dataframe, conditions_names, path):
-    # sumirize two days experiments
-    sum_observers = []
-    # extract observer index information
-    indices_id = extract_id(dataframe, num_count=2)
-    for ob in indices_id:
-        tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
-        sum_observers.append([ob] + [np.mean(tmp_df.accuracy_near), np.sum(tmp_df.accuracy_far)])
-    sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + conditions_names)
-    # for save summary data
-    sum_observers['total_resp'] = sum_observers.apply(lambda row: 40, axis=1)  # two days task
-    sum_observers.to_csv(f'{path}/sumdata_loadblindness.csv', header=True, index=False)
+# ## RUN FITTED MODELS AND PLOT VISUALISATIONS ###
+def retrieve_zpdes_vs_baseline(study, conditions_to_keep, model_type, model=None):
+    task = "loadblindness"
+    path = f"../outputs/{study}/results_{study}/{task}"
+    df = format_data(path)
+    condition_list = ['near', 'far', 'total-task']
+    base = ['participant_id', 'task_status', 'condition']
+    columns_accuracy = [f"{c}-accuracy" for c in condition_list]
+    columns_correct = [f"{c}-correct" for c in condition_list]
+    df = df[base+columns_correct+columns_accuracy]
+    df = pd.concat([df, add_difference_pre_post(df, columns_accuracy)], axis=0)
+    root_path = f"{study}-{model_type}"
+    model_baseline = retrieve_and_init_models(root_path, task, conditions_to_keep, df, model, group="baseline")
+    model_zpdes = retrieve_and_init_models(root_path, task, conditions_to_keep, df, model, group="zpdes")
+    return model_zpdes, model_baseline
+
+
+def run_visualisation(study, conditions_to_keep, model_type, model=None):
+    model_zpdes, model_baseline = retrieve_zpdes_vs_baseline(study, conditions_to_keep, model_type, model)
+    model_baseline.plot_posterior_and_population()
+    model_baseline.plot_comparison_posterior_and_population(model_zpdes)
+
+
+# ## FITTING MODELS:####
+def fit_model(study, conditions_to_fit, model=None, model_type="pooled_model"):
+    task = "loadblindness"
+    path = f"../outputs/{study}/results_{study}/{task}"
+    df = format_data(path, save_lfa=False)
+    if model:
+        get_pymc_trace(df, conditions_to_fit, task=task, model_object=model, model_type=model_type, study=study)
 
 
 def get_stan_accuracy(dataframe, conditions_names, nb_trials, study):
@@ -87,15 +116,43 @@ def get_stan_accuracy(dataframe, conditions_names, nb_trials, study):
 
 
 if __name__ == '__main__':
-    path = "../outputs/v0_axa/results_v0_axa/loadblindness"
     study = "v0_axa"
-    dataframe, conditions_names, nb_trials = format_data(path)
-    # -------------------------------------------------------------------#
-    # Latent factor analysis
-    get_lfa_csv(dataframe, conditions_names, path)
-    # -------------------------------------------------------------------#
-    get_stan_accuracy(dataframe, conditions_names, nb_trials, study)
-    # -------------------------------------------------------------------#
-    # BAYES ANALYSIS
-    # calculate the mean distribution and the credible interval
-    print('finished')
+    # run(study)
+    # sumirize two days experiments
+    # sum_observers = []
+    # # extract observer index information
+    # indices_id = extract_id(dataframe, num_count=2)
+    # for ob in indices_id:
+    #     tmp_df = dataframe.groupby(["participant_id"]).get_group(ob)
+    #     sum_observers.append([ob] + [np.mean(tmp_df.accuracy_near), np.sum(tmp_df.accuracy_far)])
+    # sum_observers = pd.DataFrame(sum_observers, columns=['participant_id'] + conditions_names)
+    # # for save summary data
+    # sum_observers['total_resp'] = sum_observers.apply(lambda row: 40, axis=1)  # two days task
+    # sum_observers.to_csv(f'{path}/sumdata_loadblindness.csv', header=True, index=False)
+    # def format_for_pymc(df_lb):
+    #     # # LOADBLINDNESS # #
+    #     # df_lb = pd.read_csv(os.path.join(path, "loadblindness_lfa.csv"))
+    #     lb_cdt = ['near', 'far']
+    #     df_lb[[col for col in df_lb.columns if 'accuracy' in col]] = df_lb[[col for col in df_lb.columns if
+    #                                                                         'accuracy' in col]] * 20
+    #     df_lb = df_lb.rename(columns={'accuracy_near': 'near-correct', 'accuracy_far': 'far-correct'})
+    #     # df_lb['total_resp'] = 20
+    #     for cdt in lb_cdt:
+    #         df_lb[cdt + '-nb'] = 20
+    #     df_lb['total-task-correct'] = convert_to_global_task(df_lb, [col + '-correct' for col in lb_cdt])
+    #     df_lb['total-task-nb'] = 40
+    #     lb_cdt.append('total-task')
+    #     return df_lb, lb_cdt
+# def get_pymc_trace(data, condition_list, model_object, study, sample_size=4000):
+#     model_baseline = model_object(data[data['condition'] == 'baseline'],
+#                                   name='loadblindness', group='baseline', folder=f'{study}-pooled_model',
+#                                   stim_cond_list=condition_list,
+#                                   sample_size=sample_size)
+#     model_baseline.run()
+#     model_zpdes = model_object(data[data['condition'] == 'zpdes'],
+#                                name='loadblindness', group='zpdes', folder=f'{study}-pooled_model',
+#                                stim_cond_list=condition_list,
+#                                sample_size=sample_size)
+#     model_zpdes.run()
+    # df_load = dataframe[['participant_id', 'task_status', 'condition'] + conditions_names]
+    # get_stan_accuracy(dataframe, conditions_names, nb_trials, study)

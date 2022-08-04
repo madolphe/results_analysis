@@ -1,9 +1,0 @@
-{
-    "enumeration":["5-accuracy","6-accuracy","7-accuracy","8-accuracy","9-accuracy"],
-    "moteval":["1-accuracy","4-accuracy","8-accuracy"],
-    "loadblindness":["accuracy_near","accuracy_far"],
-    "taskswitch":["parity-switch-correct","parity-unswitch-correct","relative-switch-correct","relative-unswitch-correct"],
-    "gonogo":["HR-accuracy","FAR-accuracy"],
-    "memorability":["2-hit-miss","3-hit-miss","4-hit-miss","5-hit-miss","100-hit-miss","2-fa-cr","3-fa-cr","4-fa-cr","5-fa-cr","100-fa-cr"],
-    "workingmemory":["4-accuracy","5-accuracy","6-accuracy","7-accuracy","8-accuracy"]
-}
