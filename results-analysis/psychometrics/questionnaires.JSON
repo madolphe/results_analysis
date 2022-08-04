@@ -1,0 +1,22 @@
+{
+    "ues":
+        {
+            "components": ["engagement_score","FA","PU","AE","RW"],
+            "session_ids": [0,2,4,5,7,9]
+        },
+    "nasa_tlx":
+        {
+            "components": ["Mental_demand", "Physical_demand", "Temporal_demand", "Performance", "Effort", "Frustration","load_index"],
+            "session_ids": [1,2,3,4,5,6,7,8]
+        },
+    "sims":
+        {
+            "components": ["Intrinsic_motivation","Identified_regulation","External_regulation","Amotivation"],
+            "session_ids": [1,4,5,8]
+        },
+    "tens":
+        {
+            "components": ["Competence","Autonomy"],
+            "session_ids": [1,4,5,8]
+        }
+}

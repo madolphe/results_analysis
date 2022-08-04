@@ -50,7 +50,6 @@ def treat_nasa_tlx(df):
     # df_tlx_baseline['load_index'], df_tlx_zpdes['load_index'] = df_tlx_baseline.loc[:,
     #                                                             df_tlx_baseline.columns != 'id_participant'].sum(
     #     axis=1), df_tlx_zpdes.loc[:, df_tlx_zpdes.columns != 'id_participant'].sum(axis=1)
-
     # get 6 plots (one for each dims - 2 curves (ZPDES vs Baseline) through time
     display_cols_value(df_tlx_baseline, df_tlx_zpdes, 'nasa_tlx')
     new_df_baseline = get_mean_per_week(df_tlx_baseline, 4, 8)
@@ -213,6 +212,6 @@ def save_boxplots(df, conditions, instrument, additional_tag="", reverse=False):
 
 if __name__ == '__main__':
     treat_nasa_tlx(nasa)
-    # treat_UES(ues)
-    # treat_SIMS(sims)
-    # treat_TENS(tens)
+    treat_UES(ues)
+    treat_SIMS(sims)
+    treat_TENS(tens)
