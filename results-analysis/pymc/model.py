@@ -22,18 +22,18 @@ class PooledModel:
         self.group = group
         self.sample_size = sample_size
         self.folder = folder
-        if self.folder not in os.listdir():
-            os.mkdir(self.folder)
-        if self.name not in os.listdir(self.folder):
-            os.mkdir(f"{self.folder}/{self.name}")
-        if f"{self.name}_{self.group}_results" not in os.listdir(f"{self.folder}/{self.name}"):
-            os.mkdir(f"{self.folder}/{self.name}/{self.name}_{self.group}_results")
-        if "CV_graph" not in os.listdir(f"{self.folder}/{self.name}/{self.name}_{self.group}_results"):
-            os.mkdir(f"{self.folder}/{self.name}/{self.name}_{self.group}_results/CV_graph")
-        if "traces" not in os.listdir(f"{self.folder}/{self.name}/{self.name}_{self.group}_results"):
-            os.mkdir(f"{self.folder}/{self.name}/{self.name}_{self.group}_results/traces")
-        if "summary_csv" not in os.listdir(f"{self.folder}/{self.name}/{self.name}_{self.group}_results"):
-            os.mkdir(f"{self.folder}/{self.name}/{self.name}_{self.group}_results/summary_csv")
+        if self.folder not in os.listdir("../outputs/"):
+            os.mkdir(f"../outputs/{self.folder}")
+        if self.name not in os.listdir(f"../outputs/{self.folder}"):
+            os.mkdir(f"../outputs/{self.folder}/{self.name}")
+        if f"{self.name}_{self.group}_results" not in os.listdir(f"../outputs/{self.folder}/{self.name}"):
+            os.mkdir(f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results")
+        if "CV_graph" not in os.listdir(f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results"):
+            os.mkdir(f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results/CV_graph")
+        if "traces" not in os.listdir(f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results"):
+            os.mkdir(f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results/traces")
+        if "summary_csv" not in os.listdir(f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results"):
+            os.mkdir(f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results/summary_csv")
         self.stim_condition_list = stim_cond_list
         self.condition = None
         self.time = time.time()
@@ -59,7 +59,7 @@ class PooledModel:
             self.get_figures(rope=(-0.1, 0.1))
             print(f'Finish plotting figures, time elapsed: {time.time() - self.time}')
             az.summary(self.traces).to_csv(
-                f"{self.folder}/{self.name}/{self.name}_{self.group}_results/summary_csv/summary-{self.name}-{self.condition}.csv")
+                f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results/summary_csv/summary-{self.name}-{self.condition}.csv")
         self.plot_summary_custom_estimated_posteriors()
 
     def describe_data(self):
@@ -107,7 +107,7 @@ class PooledModel:
             rope={'difference_of_means': [{'rope': rope}]}
         )
         plt.savefig(
-            f"{self.folder}/{self.name}/{self.name}_{self.group}_results/posteriors-{self.name}_{self.group}-{self.condition}")
+            f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results/posteriors-{self.name}_{self.group}-{self.condition}")
         plt.close()
 
     def plot_posterior_and_population(self):
@@ -150,7 +150,7 @@ class PooledModel:
             plt.xticks(ticks=[i for i in range(len(means))], labels=x_ticks)
             plt.title(f"Bayesian estimation \n Task: {self.name} - {component_participant}")
             plt.savefig(
-                f"{self.folder}/{self.name}/{self.name}_{self.group}_results/posterior-population-{self.name}_{self.group}")
+                f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results/posterior-population-{self.name}_{self.group}")
             # plt.show()
             means, hdis_3, hdis_97 = [], [], []
 
@@ -191,7 +191,7 @@ class PooledModel:
                 # Then store hdi for each condition
                 try:
                     summary, summary_ref = az.summary(traces).loc[[component_trace]], az.summary(traces_ref).loc[
-                    [component_trace]]
+                        [component_trace]]
                 except Exception:
                     print("aaah")
                 means.append(summary['mean'].values[0])
@@ -216,7 +216,7 @@ class PooledModel:
             plt.ylim(heights[0] - 0.5, heights[-1] + 0.5)
             plt.title(f"{self.name} - {component_participant}")
             plt.savefig(
-                f"{self.folder}/{self.name}/{self.name}_{self.group}_results/comparison-{self.name}_{self.group}-{self.condition}")
+                f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results/comparison-{self.name}_{self.group}-{self.condition}")
 
     def plot_summary_custom_estimated_posteriors(self):
         self.plot_summary_custom_estimated_posteriors_base()
@@ -254,23 +254,23 @@ class PooledModel:
             axs[index, 1].set_ylim(y_lim_min, y_lim_max)
         fig.tight_layout()
         fig.savefig(
-            f"{self.folder}/{self.name}/{self.name}_{self.group}_results/summary-custom-posteriors-{self.name}_{self.group}-{self.condition}")
+            f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results/summary-custom-posteriors-{self.name}_{self.group}-{self.condition}")
 
     def plot_CV_figures(self):
         az.plot_trace(self.traces)
         plt.savefig(
-            f"{self.folder}/{self.name}/{self.name}_{self.group}_results/CV_graph/CV-trace-{self.name}_{self.group}-{self.condition}")
+            f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results/CV_graph/CV-trace-{self.name}_{self.group}-{self.condition}")
         az.plot_forest(self.traces)
         plt.savefig(
-            f"{self.folder}/{self.name}/{self.name}_{self.group}_results/CV_graph/CV-forest-{self.name}_{self.group}-{self.condition}")
+            f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results/CV_graph/CV-forest-{self.name}_{self.group}-{self.condition}")
         az.plot_energy(self.traces)
         plt.savefig(
-            f"{self.folder}/{self.name}/{self.name}_{self.group}_results/CV_graph/CV-energy-{self.name}_{self.group}-{self.condition}")
+            f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results/CV_graph/CV-energy-{self.name}_{self.group}-{self.condition}")
         plt.close()
 
     def save_trace(self):
         with open(
-                f"{self.folder}/{self.name}/{self.name}_{self.group}_results/traces/{self.name}_{self.group}-{self.condition}-trace",
+                f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results/traces/{self.name}_{self.group}-{self.condition}-trace",
                 'wb') as buff:
             pickle.dump({'traces': self.traces}, buff)
 
@@ -280,7 +280,7 @@ class PooledModel:
         summary = az.summary(self.traces)
         summary['ROPE_in_HDI'] = (rope[1] >= hdi[0]) or (rope[0] <= hdi[1])
         summary.to_csv(
-            f"{self.folder}/{self.name}/{self.name}_{self.group}_results/summary_csv/{self.condition}-infos.csv")
+            f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results/summary_csv/{self.condition}-infos.csv")
 
     @staticmethod
     def compute_effect_size(traces, param, prior_odds):
@@ -463,7 +463,7 @@ class GLModel(PooledModel):
                   'slope': [{'rope': (-0.1, 0.1)}]}
         )
         plt.savefig(
-            f"{self.folder}/{self.name}/{self.name}_{self.group}_results/posteriors-{self.name}_{self.group}-{self.condition}.png")
+            f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results/posteriors-{self.name}_{self.group}-{self.condition}.png")
         plt.close()
 
     def get_infos(self):
@@ -471,7 +471,8 @@ class GLModel(PooledModel):
         hdi = az.hdi(self.traces, hdi_prob=0.95)['slope'].values  # the 95% HDI interval of the difference
         summary = az.summary(self.traces)
         summary['ROPE_in_HDI'] = (rope[1] >= hdi[0]) or (rope[0] <= hdi[1])
-        summary.to_csv(f"{self.folder}/{self.name}/{self.name}_{self.group}_results/{self.condition}-infos.csv")
+        summary.to_csv(
+            f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results/{self.condition}-infos.csv")
 
 
 class PooledModelRTGLMSimulations(PooledModel):
@@ -534,7 +535,7 @@ class NormalNormalQuestionnaireModel(PooledModel):
                 self.get_figures(rope=(-0.1, 0.1))
                 print(f'Finish plotting figures, time elapsed: {time.time() - self.time}')
                 az.summary(self.traces).to_csv(
-                    f"{self.folder}/{self.name}/{self.name}_{self.group}_results/summary-{self.name}-{self.condition}.csv")
+                    f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results/summary-{self.name}-{self.condition}.csv")
                 # I do this after :)
                 # Compare pairwise traces:
                 # if (index_session_id+1) < len(self.session_id_list):

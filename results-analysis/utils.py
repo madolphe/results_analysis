@@ -29,7 +29,7 @@ def add_difference_pre_post(df, conditions):
 
 def retrieve_and_init_models(root_path, task, condition_list, data, model, group, sample_size=4000):
     dict_traces = {
-        condition: f"{root_path}/{task}/{task}_{group}_results/traces/{task}_{group}-{condition}-trace" for
+        condition: f"../outputs/{root_path}/{task}/{task}_{group}_results/traces/{task}_{group}-{condition}-trace" for
         condition in condition_list}
     model = model(data[data['condition'] == group],
                   name=task, group=group, folder=root_path,
