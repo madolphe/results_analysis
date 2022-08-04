@@ -11,7 +11,7 @@ from pymc.model import PooledModel, PooledModelRTSimulations, PooledModelRTCostS
 
 study = 'v1_ubx'
 model_type = 'pooled_model'
-with open('conditions.JSON', 'r') as f:
+with open('config/conditions.JSON', 'r') as f:
     all_conditions = json.load(f)
 
 

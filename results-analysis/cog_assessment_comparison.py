@@ -51,7 +51,7 @@ if __name__ == '__main__':
     study_ref = 'v1_ubx'
     study = 'v1_prolific'
     task_name = 'moteval'
-    with open('conditions.JSON', 'r') as f:
+    with open('config/conditions_acc.JSON', 'r') as f:
         all_conditions = json.load(f)
     for task, conditions in all_conditions.items():
         results_prolific_zpdes, results_prolific_baseline, results_ubx_zpdes, \
