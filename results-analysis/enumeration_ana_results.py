@@ -82,9 +82,9 @@ def format_data(path, save_lfa=False):
     df['total-task-nb'] = 20 * len(conditions)
     df['total-task-accuracy'] = df['total-task-correct'] / df['total-task-nb']
     df = df[base + condition_correct + condition_accuracy + condition_nb]
-    # df = delete_uncomplete_participants(df)
+    df = delete_uncomplete_participants(df)
     if save_lfa:
-        df.to_csv(f'{path}/enumeration_lfa.csv', index=False)
+        df.to_csv(f"{path}/{task}_lfa.csv", index=False)
     return df
 
 

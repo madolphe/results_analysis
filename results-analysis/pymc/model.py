@@ -11,6 +11,8 @@ import copy
 import time
 import seaborn as sns
 from matplotlib.ticker import MultipleLocator
+from scipy.stats import bernoulli
+import pickle
 
 
 class PooledModel:
@@ -161,9 +163,9 @@ class PooledModel:
 
     def plot_comparison_posterior_and_population_base(self, model_to_compare, status_traces, status_participants,
                                                       x_ticks_min=0, x_ticks_max=1.1,
-                                                      x_ticks_step=0.1, x_lim_min=0, x_lim_max=1, x_ticks_min_diff=0,
-                                                      x_ticks_max_diff=1.1, x_ticks_step_diff=0.1, x_lim_min_diff=0,
-                                                      x_lim_max_diff=1):
+                                                      x_ticks_step=0.1, x_lim_min=0, x_lim_max=1, x_ticks_min_diff=-0.5,
+                                                      x_ticks_max_diff=0.5, x_ticks_step_diff=0.1, x_lim_min_diff=-0.5,
+                                                      x_lim_max_diff=0.5):
         """
         Dict traces of model to compare should contain same parameters estimations
         """
@@ -202,9 +204,9 @@ class PooledModel:
                 hdis_97_ref.append(summary_ref['hdi_97%'].values[0] - means_ref[-1])
             # means and hdi have been completed, now plot errorbars
             plt.errorbar(x=means, y=[height + 0.2 for height in heights], xerr=[hdis_3, hdis_97], fmt='s', markersize=4,
-                         capsize=8, c='red')
+                         capsize=8, c='red', label="Baseline")
             plt.errorbar(x=means_ref, y=[height - 0.2 for height in heights], xerr=[hdis_3_ref, hdis_97_ref], fmt='s',
-                         markersize=4, capsize=8, c='blue')
+                         markersize=4, capsize=8, c='blue', label="ZPDES")
             x_ticks = np.arange(x_ticks_min, x_ticks_max, x_ticks_step)
             plt.xlim(x_lim_min, x_lim_max)
             if component_participant == "difference_of_means":
@@ -215,8 +217,9 @@ class PooledModel:
             plt.yticks(heights, self.dict_traces.keys())
             plt.ylim(heights[0] - 0.5, heights[-1] + 0.5)
             plt.title(f"{self.name} - {component_participant}")
+            plt.legend()
             plt.savefig(
-                f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results/comparison-{self.name}_{self.group}-{self.condition}")
+                f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results/comparison-{self.name}_{self.group}-{component_trace}")
 
     def plot_summary_custom_estimated_posteriors(self):
         self.plot_summary_custom_estimated_posteriors_base()
@@ -509,7 +512,6 @@ class NormalNormalQuestionnaireModel(PooledModel):
                                                              folder=folder, traces_path=traces_path)
         self.session_id_list = session_id_list
         self.tmp_session_id = None
-        self.traces = {}
 
     def run(self, rope=(-0.01, 0.01)):
         """
@@ -517,7 +519,7 @@ class NormalNormalQuestionnaireModel(PooledModel):
         """
         for condition in self.stim_condition_list:
             for session_id in self.session_id_list:
-                self.condition = condition
+                self.condition = f"{condition}"
                 self.tmp_session_id = session_id
                 # self.tmp_session_id_1 = self.session_id_list[index_session_id + 1]
                 print(f'Start sampling for condition {condition}')
@@ -526,27 +528,11 @@ class NormalNormalQuestionnaireModel(PooledModel):
                 print(f'Finish sampling, time taken: {time.time() - self.time}')
                 self.time = time.time()
                 print('Start plotting figures')
-            # All traces are stored, let's keep it in backup_traces
-            backup_traces = copy.deepcopy(self.traces)
-            backup_condition = self.condition
-            for index_session_id, session_id in enumerate(self.session_id_list):
-                self.condition = backup_condition + f"-{session_id}"
-                self.traces = backup_traces[self.condition]
+            for session_id in self.session_id_list:
+                self.condition = f"{condition}-{session_id}"
                 self.get_figures(rope=(-0.1, 0.1))
-                print(f'Finish plotting figures, time elapsed: {time.time() - self.time}')
                 az.summary(self.traces).to_csv(
                     f"../outputs/{self.folder}/{self.name}/{self.name}_{self.group}_results/summary-{self.name}-{self.condition}.csv")
-                # I do this after :)
-                # Compare pairwise traces:
-                # if (index_session_id+1) < len(self.session_id_list):
-                #     pairwise_mu_diff = self.compare_traces(
-                #         backup_traces[f"{backup_condition}-{self.session_id_list[index_session_id + 1]}"],
-                #         param_name=f'mu')
-                #     pairwise_sigma_diff = self.compare_traces(
-                #         backup_traces[f"{backup_condition}-{self.session_id_list[index_session_id + 1]}"],
-                #         param_name=f'sigma')
-            # Restore the placeholder for traces
-            self.traces = {}
 
     def get_trace(self):
         obs = self.data.query(f'session_id == {self.tmp_session_id}')
@@ -555,11 +541,119 @@ class NormalNormalQuestionnaireModel(PooledModel):
             mu = pm.Uniform(name=f'mu', lower=0, upper=100)
             sigma = pm.Uniform(name=f'sigma', lower=0, upper=100)
             answer_pop = pm.Normal(name='answer_population', mu=mu, sd=sigma, observed=obs)
-            self.traces[f"{self.condition}-{self.tmp_session_id}"] = pm.sample(self.sample_size,
-                                                                               return_inferencedata=True)
+            self.traces = pm.sample(self.sample_size, cores=1, chains=4)
+            self.dict_traces[f"{self.condition}-{self.tmp_session_id}"] = self.traces
 
     # # SAVE AND PLOTS FUNCTIONS # #
     def get_figures(self, rope=(-0.01, 0.01)):
         self.plot_estimated_posteriors(rope=(-0.01, 0.01))
         self.plot_CV_figures()
         self.save_trace()
+
+    def compare_pairwise_traces(self):
+
+        if (index_session_id + 1) < len(self.session_id_list):
+            pairwise_mu_diff = self.compare_traces(
+                self.dict_traces[f"{backup_condition}-{self.session_id_list[index_session_id + 1]}"],
+                param_name=f'mu')
+            pairwise_sigma_diff = self.compare_traces(
+                self.dict_traces[f"{backup_condition}-{self.session_id_list[index_session_id + 1]}"],
+                param_name=f'sigma')
+
+
+class PowerAnalysis(PooledModel):
+
+    def run(self, rope=(-0.01, 0.01)):
+        for condition in self.stim_condition_list:
+            self.condition = condition
+            self.sample_size_estimation()
+
+    def sample_size_estimation(self):
+        n_trials = 15
+        nb_p = 3
+        sample_size = [15, 25, 50, 70, 100]
+        interval_widths = {s: [] for s in sample_size}
+        pre_test = self.get_data_status('PRE_TEST')
+        post_test = self.get_data_status('POST_TEST')
+        n_pre, n_post = pre_test[f'{self.condition}-nb'].values, post_test[f'{self.condition}-nb'].values
+        data_pre, data_post = pre_test[f'{self.condition}-correct'].values, post_test[
+            f'{self.condition}-correct'].values
+        pooled_model = self.get_model(n_pre, n_post, data_pre, data_post)
+        # Fit initial model:
+        with pooled_model:
+            # self.traces = pm.sample(self.sample_size, return_inferencedata=True)
+            self.traces = pm.sample(4000)
+            interval = az.hdi(self.traces, 0.05)
+            interval_width = interval['difference_of_means'][1] - interval['difference_of_means'][0]
+            interval_widths['initial_diff'] = interval_width
+        # Fit different sample size:
+        p_pre_mean, p_post_mean = [], []
+        # samples = pm.sample(5)
+        samples_p = {'pre_test_theta': self.traces['pre_test_theta'][-nb_p:],
+                     'post_test_theta': self.traces['post_test_theta'][-nb_p:]}
+        # Iterate over values of p:
+        for p_pre, p_post in zip(samples_p['pre_test_theta'], samples_p['post_test_theta']):
+            p_pre_mean.append(p_pre)
+            p_post_mean.append(p_post)
+            # Construct vector of different sample size
+            for s in sample_size:
+                print("-------------------")
+                print(f"Sample size : {s}")
+                n_pre, n_post, pre_obs, post_obs = [], [], [], []
+                # For each sample size, add vectors of length sample size with sample p_pre / p_post
+                for l in range(s):
+                    pre_obs.append(bernoulli.rvs(p_pre, size=n_trials).sum())
+                    post_obs.append(bernoulli.rvs(p_post, size=n_trials).sum())
+                    n_pre.append(n_trials)
+                    n_post.append(n_trials)
+                print(f"Vectors for the new population being tested is: {pre_obs, post_obs}")
+                new_model = self.get_model(n_pre, n_post, pre_obs, post_obs)
+                with new_model:
+                    # pm.set_data({'data_pre': np.array(pre_obs), 'data_post': np.array(post_obs)})
+                    trace = pm.sample(2000, progressbar=False)
+                    interval = az.hdi(trace, 0.05)
+                    interval_width = interval['difference_of_means'][1] - interval['difference_of_means'][0]
+                    interval_widths[s].append(float(interval_width))
+        self.plot_HDI_width(interval_widths, sample_size)
+
+    def get_model(self, n_pre, n_post, data_pre, data_post):
+        with pm.Model() as model:
+            # Data:
+            n_pre = pm.Data('n_pre', n_pre)
+            n_post = pm.Data('n_post', n_post)
+            data_pre = pm.Data('data_pre', data_pre)
+            data_post = pm.Data('data_post', data_post)
+            # prior on theta:
+            pre_test_theta = pm.Uniform(name="pre_test_theta", lower=0, upper=1)
+            post_test_theta = pm.Uniform(name="post_test_theta", lower=0, upper=1)
+            # likelihood
+            pre_test_binom = pm.Binomial(name="pre_test_binomial", p=pre_test_theta,
+                                         n=n_pre,
+                                         observed=data_pre)
+            post_test_binom = pm.Binomial(name="post_test_binomial", p=post_test_theta,
+                                          n=n_post,
+                                          observed=data_post)
+            diff_of_means = pm.Deterministic("difference_of_means", post_test_theta - pre_test_theta)
+        return model
+
+    def plot_HDI_width(self, interval_widths, sample_size):
+        plt.close()
+        means = []
+        for ss_key, values in interval_widths.items():
+            if ss_key != 'initial_diff':
+                means.append(np.mean(np.array(values)))
+        fig = plt.figure()
+        plt.scatter([10], interval_widths['initial_diff'], c='red')
+        plt.plot(sample_size, means)
+        plt.hlines(0.005, xmin=10, xmax=100, colors='red', linestyles='dashed')
+        plt.title(f"{self.group}-MOT-{self.condition} : \n Credible Interval Precision Curve (difference of means)")
+        plt.ylabel("Mean HDI Width")
+        plt.xlabel("Sample Size")
+        plt.savefig(f"{self.condition}_HDI_width.png")
+        # plt.show()
+        # Finaly save the widths in pickle object
+        interval_widths['sample_size'] = sample_size
+        with open('width.pickle', 'wb') as handle:
+            pickle.dump(interval_widths, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+# @TODO: add std before launching for all groups

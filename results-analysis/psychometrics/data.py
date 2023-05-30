@@ -1,6 +1,6 @@
 import pandas as pd
 
-study = 'v1_prolific'
+study = 'v1_ubx'
 df = pd.read_csv(f'{study}_all_answers.csv')
 df.drop(columns=['Unnamed: 0'], inplace=True)
 df.columns = ['id', 'condition', 'component', 'instrument', 'handle', 'session_id', 'value']

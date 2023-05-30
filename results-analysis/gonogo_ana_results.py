@@ -216,7 +216,7 @@ def format_data(path, save_lfa):
     dataframe = df
     # false alarm relative to sequence length
     df['nb_blocks'] = df.apply(compute_number_of_keyboard_input, axis=1)
-    participant_id, nb_blocks, nb_go = find_participant_with_fewer_blocks(dataframe)
+    participant_id, nb_blocks, nb_go = find_participant_with_fewer_blocks(df)
     blocks_list = [nb_go, nb_blocks - nb_go]
     NB_BLOCKS_TO_KEEP = min(blocks_list)
     is_go_blocks = blocks_list.index(NB_BLOCKS_TO_KEEP) == 0

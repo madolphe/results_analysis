@@ -7,7 +7,7 @@ from matplotlib.ticker import MultipleLocator
 import copy
 
 
-def get_pymc_trace(data, condition_list, model_object, model_type, study, task, sample_size=4000):
+def get_pymc_trace(data, condition_list, model_object, model_type, study, task, sample_size=10000):
     model_baseline = model_object(data[data['condition'] == 'baseline'],
                                   name=task, group='baseline', folder=f'{study}-{model_type}',
                                   stim_cond_list=condition_list,
@@ -201,7 +201,8 @@ def get_overall_dataframe_rt(dataframe, outcomes_names):
 
 def transform_str_to_list(row, columns):
     for column in columns:
-        row[column] = row[column].split(",")
+        if column in row:
+            row[column] = row[column].split(",")
     return row
 
 
