@@ -12,7 +12,7 @@ def format_data(path, save_lfa):
     # Conditions:
     number_condition = [4, 5, 6, 7, 8]
     # Few pre-processing
-    dataframe = delete_uncomplete_participants(dataframe)
+    # dataframe = delete_uncomplete_participants(dataframe)
     dataframe["results_correct"] = dataframe.apply(lambda row: transform_string_to_row(row, "results_correct"),
                                                    axis=1)
     dataframe["results_num_stim"] = dataframe.apply(lambda row: transform_string_to_row(row, "results_num_stim"),
@@ -94,10 +94,10 @@ def run_visualisation(study, conditions_to_keep, model_type, model=None):
 
 
 # ## FITTING MODELS:####
-def fit_model(study, conditions_to_fit, model=None, model_type="pooled_model"):
+def fit_model(study, conditions_to_fit, model=None, model_type="pooled_model", save_lfa=False):
     task = "workingmemory"
     path = f"../outputs/{study}/results_{study}/{task}"
-    df = format_data(path, save_lfa=False)
+    df = format_data(path, save_lfa=save_lfa)
     if model:
         get_pymc_trace(df, conditions_to_fit, task=task, model_object=model, model_type=model_type, study=study)
 

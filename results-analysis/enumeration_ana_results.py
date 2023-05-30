@@ -4,6 +4,7 @@ from utils import *
 from pymc.data import change_accuracy_for_correct_column, convert_to_global_task
 from utils import retrieve_and_init_models, add_difference_pre_post, get_pymc_trace
 
+from pathlib import Path
 
 # Treat data:
 def compute_result_exact_answers(row):
@@ -81,7 +82,9 @@ def format_data(path, save_lfa=False):
     df['total-task-nb'] = 20 * len(conditions)
     df['total-task-accuracy'] = df['total-task-correct'] / df['total-task-nb']
     df = df[base + condition_correct + condition_accuracy + condition_nb]
-    df = delete_uncomplete_participants(df)
+    # df = delete_uncomplete_participants(df)
+    if save_lfa:
+        df.to_csv(f'{path}/enumeration_lfa.csv', index=False)
     return df
 
 
@@ -106,10 +109,12 @@ def run_visualisation(study, conditions_to_keep, model_type, model=None):
 
 
 # ## FITTING MODELS:####
-def fit_model(study, conditions_to_fit, model=None, model_type="pooled_model"):
+def fit_model(study, conditions_to_fit, model=None, model_type="pooled_model", save_lfa=False):
     task = "enumeration"
-    path = f"../outputs/{study}/results_{study}/{task}"
-    df = format_data(path, save_lfa=False)
+    savedir = f"../outputs/{study}/results_{study}"
+    path = f"{savedir}/{task}"
+    Path(savedir).mkdir(parents=True, exist_ok=True)
+    df = format_data(path, save_lfa=save_lfa)
     if model:
         get_pymc_trace(df, conditions_to_fit, task=task, model_object=model, model_type=model_type, study=study)
 

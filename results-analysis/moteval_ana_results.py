@@ -37,7 +37,7 @@ def format_data(path, save_lfa=False):
     df = pd.read_csv(csv_path, sep=",")
     df = df.apply(lambda row: transform_str_to_list(row, [
         'results_responses', 'results_rt', 'results_speed_stim', 'results_correct']), axis=1)
-    df = delete_uncomplete_participants(df)
+    # df = delete_uncomplete_participants(df)
     df = df.apply(compute_mean_per_condition, axis=1)
     df.to_csv(f'{path}/moteval_treat.csv')
     nb_trials = len(df['results_correct'][0])
@@ -78,10 +78,10 @@ def run_visualisation(study, conditions_to_keep, model_type, model=None):
 
 
 # ## FITTING MODELS:####
-def fit_model(study, conditions_to_fit, model=None, model_type="pooled_model"):
+def fit_model(study, conditions_to_fit, model=None, model_type="pooled_model", save_lfa=False):
     task = "moteval"
     path = f"../outputs/{study}/results_{study}/{task}"
-    df = format_data(path)
+    df = format_data(path, save_lfa=save_lfa)
     if model:
         get_pymc_trace(df, conditions_to_fit, task=task, model_object=model, model_type=model_type, study=study)
 

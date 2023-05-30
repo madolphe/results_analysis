@@ -72,8 +72,24 @@ def init_from_traces_and_plot(study, accuracy_model=None, RT_model=None, accurac
                                              conditions_to_keep=all_conditions["RT"]["gonogo"])
 
 
+def get_csv_for_all(study):
+    enumeration_ana_results.fit_model(study=study, conditions_to_fit=all_conditions["accuracy"]["enumeration"],
+                                      save_lfa=True)
+    gonogo_ana_results.fit_model(study, conditions_to_fit=all_conditions["accuracy"]["gonogo"], save_lfa=True)
+    taskswitch_ana_results.fit_model(study, conditions_to_fit=all_conditions["accuracy"]["taskswitch"], save_lfa=True)
+    moteval_ana_results.fit_model(study, conditions_to_fit=all_conditions["accuracy"]["moteval"], save_lfa=True)
+    # memorability_ana_results.fit_model(study, conditions_to_fit=all_conditions["accuracy"]["memorability"],
+    #                                    save_lfa=True)
+    loadblindness_ana_results.fit_model(study, conditions_to_fit=all_conditions["accuracy"]["loadblindness"],
+                                        save_lfa=True)
+    workingmemory_ana_results.fit_model(study, conditions_to_fit=all_conditions["accuracy"]["workingmemory"],
+                                        save_lfa=True)
+    # memorability_ana_results.fit_model(study, conditions_to_fit=all_conditions["RT"]["memorability"], save_lfa=True)
+
+
 if __name__ == '__main__':
-    run_all(study, RT_model=PooledModelRTSimulations, RT_model_type="pooled_model_RT")
-    run_all(study, accuracy_model=PooledModel, accuracy_model_type="pooled_model")
-    init_from_traces_and_plot(study, RT_model=PooledModelRTSimulations, RT_model_type="pooled_model_RT")
-    init_from_traces_and_plot(study, accuracy_model=PooledModel, accuracy_model_type="pooled_model")
+    get_csv_for_all(study)
+    # run_all(study, RT_model=PooledModelRTSimulations, RT_model_type="pooled_model_RT")
+    # run_all(study, accuracy_model=PooledModel, accuracy_model_type="pooled_model")
+    # init_from_traces_and_plot(study, RT_model=PooledModelRTSimulations, RT_model_type="pooled_model_RT")
+    # init_from_traces_and_plot(study, accuracy_model=PooledModel, accuracy_model_type="pooled_model")

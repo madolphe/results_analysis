@@ -1,6 +1,6 @@
 # %% cell 2
 import numpy as np
-import stan
+# import stan
 import asyncio
 
 asyncio.run(asyncio.sleep(1))

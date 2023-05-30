@@ -82,12 +82,12 @@ def format_data(path, save_lfa):
     # Get memorability 1
     csv_path_short_range = f"{path}/memorability_1.csv"
     dataframe_short_range = pd.read_csv(csv_path_short_range)
-    dataframe_short_range = delete_uncomplete_participants(dataframe_short_range)
+    # dataframe_short_range = delete_uncomplete_participants(dataframe_short_range)
     dataframe_short_range['session'] = 1
     # Get memorability 2
     csv_path_long_range = f"{path}/memorability_2.csv"
     dataframe_long_range = pd.read_csv(csv_path_long_range)
-    dataframe_long_range = delete_uncomplete_participants(dataframe_long_range)
+    # dataframe_long_range = delete_uncomplete_participants(dataframe_long_range)
     dataframe_long_range['session'] = 2
     # Concatenate
     dataframe = pd.concat([dataframe_short_range, dataframe_long_range], axis=0)
@@ -148,10 +148,10 @@ def run_visualisation(study, conditions_to_keep, model_type, model=None):
 
 
 # ## FITTING MODELS:####
-def fit_model(study, conditions_to_fit, model=None, model_type="pooled_model"):
+def fit_model(study, conditions_to_fit, model=None, model_type="pooled_model", save_lfa=False):
     task = "memorability"
     path = f"../outputs/{study}/results_{study}/{task}"
-    df = format_data(path, save_lfa=False)
+    df = format_data(path, save_lfa=save_lfa)
     if model:
         get_pymc_trace(df, conditions_to_fit, task=task, model_object=model, model_type=model_type, study=study)
 

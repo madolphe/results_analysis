@@ -1,10 +1,11 @@
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5422529/
+import copy
 
 from sklearn.linear_model import LinearRegression
 from utils import *
 from pymc.data import change_accuracy_for_correct_column, convert_to_global_task
 from utils import retrieve_and_init_models, add_difference_pre_post, get_pymc_trace
-
+from pathlib import Path
 
 def transform_str_to_list(row, columns):
     for column in columns:
@@ -211,7 +212,8 @@ def format_data(path, save_lfa):
         'results_responses', 'results_rt', 'results_ind_previous', 'results_targetvalue']), axis=1)
     df['NOGO-correct'] = df.apply(compute_number_of_omissions, axis=1)
     df['result_commission_errors'] = df.apply(compute_nb_commission_errors, axis=1)
-    dataframe = delete_uncomplete_participants(df)
+    # dataframe = delete_uncomplete_participants(df)
+    dataframe = df
     # false alarm relative to sequence length
     df['nb_blocks'] = df.apply(compute_number_of_keyboard_input, axis=1)
     participant_id, nb_blocks, nb_go = find_participant_with_fewer_blocks(dataframe)
@@ -268,10 +270,12 @@ def run_visualisation(study, conditions_to_keep, model_type, model=None):
 
 
 # ## RUN FITTED MODELS AND PLOT VISUALISATIONS ###
-def fit_model(study, conditions_to_fit, model=None, model_type="pooled_model"):
+def fit_model(study, conditions_to_fit, model=None, model_type="pooled_model", save_lfa=False):
     task = "gonogo"
-    path = f"../outputs/{study}/results_{study}/{task}"
-    df = format_data(path, save_lfa=False)
+    savedir = f"../outputs/{study}/results_{study}"
+    path = f"{savedir}/{task}"
+    Path(savedir).mkdir(parents=True, exist_ok=True)
+    df = format_data(path, save_lfa=save_lfa)
     if model:
         get_pymc_trace(df, conditions_to_fit, task=task, model_object=model, model_type=model_type, study=study)
 

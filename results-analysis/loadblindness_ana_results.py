@@ -40,7 +40,7 @@ def format_data(path, save_lfa=False):
     csv_path = f"{path}/loadblindness.csv"
     conditions_names = ['near', 'far', 'total-task']
     dataframe = pd.read_csv(csv_path, sep=",")
-    dataframe = delete_uncomplete_participants(dataframe)
+    # dataframe = delete_uncomplete_participants(dataframe)
     dataframe["results_responses_pos"] = dataframe.apply(
         lambda row: transform_string_to_row(row, "results_responses_pos"),
         axis=1)
@@ -94,10 +94,10 @@ def run_visualisation(study, conditions_to_keep, model_type, model=None):
 
 
 # ## FITTING MODELS:####
-def fit_model(study, conditions_to_fit, model=None, model_type="pooled_model"):
+def fit_model(study, conditions_to_fit, model=None, model_type="pooled_model", save_lfa=False):
     task = "loadblindness"
     path = f"../outputs/{study}/results_{study}/{task}"
-    df = format_data(path, save_lfa=False)
+    df = format_data(path, save_lfa=save_lfa)
     if model:
         get_pymc_trace(df, conditions_to_fit, task=task, model_object=model, model_type=model_type, study=study)
 
