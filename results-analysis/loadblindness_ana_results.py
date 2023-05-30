@@ -66,7 +66,9 @@ def format_data(path, save_lfa=False):
     # nb_trials = len(dataframe['near_response'][0])
     # dataframe = dataframe[['participant_id', 'task_status', 'condition'] + conditions_names]
     if save_lfa:
-        dataframe.to_csv(f'{path}/loadblindness_lfa.csv', index=False)
+        base = ['participant_id', 'task_status', 'condition']
+        condition_accuracy_names = [f"{elt}-accuracy" for elt in conditions_names]
+        dataframe[base+condition_accuracy_names].to_csv(f'{path}/loadblindness_lfa.csv', index=False)
     return dataframe
 
 

@@ -1,0 +1,16 @@
+{
+    "accuracy":{
+        "enumeration":["5"],
+        "moteval":["1"],
+        "loadblindness":["near"],
+        "taskswitch":["parity-switch"],
+        "gonogo":["GO"],
+        "memorability":["2-hit"],
+        "workingmemory":["4"]
+        },
+    "RT":{
+        "taskswitch":["parity-switching-cost"],
+        "gonogo":["GO"],
+        "memorability":["2"]
+        }
+}

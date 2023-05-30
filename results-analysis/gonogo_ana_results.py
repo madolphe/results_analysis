@@ -211,10 +211,10 @@ def format_data(path, save_lfa):
         'results_responses', 'results_rt', 'results_ind_previous', 'results_targetvalue']), axis=1)
     df['NOGO-correct'] = df.apply(compute_number_of_omissions, axis=1)
     df['result_commission_errors'] = df.apply(compute_nb_commission_errors, axis=1)
-    dataframe = delete_uncomplete_participants(df)
+    df = delete_uncomplete_participants(df)
     # false alarm relative to sequence length
     df['nb_blocks'] = df.apply(compute_number_of_keyboard_input, axis=1)
-    participant_id, nb_blocks, nb_go = find_participant_with_fewer_blocks(dataframe)
+    participant_id, nb_blocks, nb_go = find_participant_with_fewer_blocks(df)
     blocks_list = [nb_go, nb_blocks - nb_go]
     NB_BLOCKS_TO_KEEP = min(blocks_list)
     is_go_blocks = blocks_list.index(NB_BLOCKS_TO_KEEP) == 0

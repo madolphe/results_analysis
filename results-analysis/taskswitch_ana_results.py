@@ -346,7 +346,7 @@ def add_conditions(df):
     return df
 
 
-def format_data(path, lfa_save=False):
+def format_data(path, save_lfa=False):
     # DATAFRAME CREATION
     csv_path = f"{path}/taskswitch.csv"
     dataframe = pd.read_csv(csv_path, sep=",")
@@ -360,8 +360,8 @@ def format_data(path, lfa_save=False):
     dataframe = dataframe[base + condition_names_correct + condition_names_rt + column_nb_to_keep]
     for cdt in conditions:
         dataframe[f"{cdt}-accuracy"] = dataframe[f"{cdt}-correct"] / dataframe[f"{cdt}-nb"]
-    if lfa_save:
-        dataframe.save(f"{path}/taskswitch_lfa.csv", index=False)
+    if save_lfa:
+        dataframe.to_csv(f"{path}/taskswitch_lfa.csv", index=False)
     return dataframe
 
 
@@ -386,7 +386,7 @@ def run_visualisation(study, conditions_to_keep, model_type, model=None):
 def fit_model(study, conditions_to_fit, model=None, model_type="pooled_model", lfa_save=False):
     task = "taskswitch"
     path = f"../outputs/{study}/results_{study}/{task}"
-    df = format_data(path, lfa_save=lfa_save)
+    df = format_data(path, save_lfa=lfa_save)
     if model:
         get_pymc_trace(df, conditions_to_fit, task=task, model_object=model, model_type=model_type, study=study)
     print('finished')

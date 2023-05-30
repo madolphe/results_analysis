@@ -3,6 +3,14 @@ from pymc.data import change_accuracy_for_correct_column, convert_to_global_task
 from utils import retrieve_and_init_models, add_difference_pre_post, get_pymc_trace
 
 
+def is_one(result):
+    """From a scalar accuracy (between 0 and 1), returns 1 if result is 1 and 0 otherwise"""
+    if result == 1:
+        return 1
+    else:
+        return 0
+
+
 def compute_mean_per_condition(row):
     """
     3 conditions for MOT: speed=1,4 or 8
@@ -11,15 +19,25 @@ def compute_mean_per_condition(row):
     dict_mean_accuracy_per_condition = {}
     dict_mean_rt_per_condition = {}
     for idx, condition_key in enumerate(row['results_speed_stim']):
-        if condition_key not in dict_mean_accuracy_per_condition:
-            dict_mean_accuracy_per_condition[condition_key] = []
-            dict_mean_rt_per_condition[condition_key] = []
-        dict_mean_accuracy_per_condition[condition_key].append(float(row['results_correct'][idx]))
-        dict_mean_rt_per_condition[condition_key].append(float(row['results_rt'][idx]))
+        if f"{condition_key}-speed" not in dict_mean_accuracy_per_condition:
+            dict_mean_accuracy_per_condition[f"{condition_key}-speed"] = []
+            dict_mean_rt_per_condition[f"{condition_key}-speed"] = []
+        dict_mean_accuracy_per_condition[f"{condition_key}-speed"].append(float(row['results_correct'][idx]))
+        dict_mean_rt_per_condition[f"{condition_key}-speed"].append(float(row['results_rt'][idx]))
+    if 'results_num_target' in row:
+        for idx, condition_key in enumerate(row['results_num_target']):
+            if f"{condition_key}-nb-targets" not in dict_mean_accuracy_per_condition:
+                dict_mean_accuracy_per_condition[f"{condition_key}-nb-targets"] = []
+                dict_mean_rt_per_condition[f"{condition_key}-nb-targets"] = []
+            dict_mean_accuracy_per_condition[f"{condition_key}-nb-targets"].append(float(row['results_correct'][idx]))
+            dict_mean_rt_per_condition[f"{condition_key}-nb-targets"].append(float(row['results_rt'][idx]))
     for key in dict_mean_accuracy_per_condition.keys():
+        # Before getting the mean accuracy, we need to parse each trial to a binary success vector (i.e 0=failure, 1=success)
         row[f"{key}-rt"] = np.mean(dict_mean_rt_per_condition[key])
-        row[f"{key}-accuracy"] = np.mean(dict_mean_accuracy_per_condition[key])
+        row[f"{key}-accuracy"] = np.mean(list(map(lambda x: is_one(x), dict_mean_accuracy_per_condition[key])))
+        row[f"{key}-correct"] = np.sum(list(map(lambda x: is_one(x), dict_mean_accuracy_per_condition[key])))
         row[f"{key}-nb"] = len(dict_mean_accuracy_per_condition[key])
+
     return row
 
 
@@ -36,22 +54,30 @@ def format_data(path, save_lfa=False):
     csv_path = f"{path}/moteval.csv"
     df = pd.read_csv(csv_path, sep=",")
     df = df.apply(lambda row: transform_str_to_list(row, [
-        'results_responses', 'results_rt', 'results_speed_stim', 'results_correct']), axis=1)
+        'results_responses', 'results_rt', 'results_speed_stim', 'results_correct', 'results_num_target']), axis=1)
     df = delete_uncomplete_participants(df)
     df = df.apply(compute_mean_per_condition, axis=1)
     df.to_csv(f'{path}/moteval_treat.csv')
     nb_trials = len(df['results_correct'][0])
-    conditions = [1, 4, 8]
-    outcomes_names_acc = [f"{cdt}-accuracy" for cdt in conditions]
-    outcomes_names_rt = [f"{cdt}-rt" for cdt in conditions]
+    # Declare all conditions:
+    conditions_speed = [1, 4, 8]
+    outcomes_names_acc = [f"{cdt}-speed-accuracy" for cdt in conditions_speed]
+    outcomes_names_rt = [f"{cdt}-speed-rt" for cdt in conditions_speed]
+    outcomes_names_correct = [f"{cdt}-speed-correct" for cdt in conditions_speed]
+    outcomes_names_nb = [f"{cdt}-speed-nb" for cdt in conditions_speed]
+    conditions_nb_targets = [3, 5]
+    if "results_num_target" in df.columns:
+        outcomes_names_acc = outcomes_names_acc + [f"{cdt}-nb-targets-accuracy" for cdt in conditions_nb_targets]
+        outcomes_names_rt = outcomes_names_rt + [f"{cdt}-nb-targets-rt" for cdt in conditions_nb_targets]
+        outcomes_names_correct = outcomes_names_correct + [f"{cdt}-nb-targets-correct" for cdt in conditions_nb_targets]
+        outcomes_names_nb = outcomes_names_nb + [f"{cdt}-nb-targets-nb" for cdt in conditions_nb_targets]
     base = ['participant_id', 'task_status', 'condition']
-    df = df[base + outcomes_names_acc + outcomes_names_rt]
-    for cdt in conditions:
-        df[f'{cdt}-nb'] = 15
-        df[f'{cdt}-correct'] = df[f'{cdt}-accuracy'] * 15
-    df['total-task-correct'] = convert_to_global_task(df, [f"{col}-correct" for col in conditions])
-    df['total-task-accuracy'] = df[[f"{col}" for col in outcomes_names_acc]].mean(axis=1)
-    df['total-task-nb'] = 45
+    df = df[base + outcomes_names_acc + outcomes_names_rt + outcomes_names_correct + outcomes_names_nb]
+    # Only taking nb-targets (otherwise overlapping):
+    df['total-task-correct'] = convert_to_global_task(df, [col for col in
+                                                           [f"{cdt}-speed-correct" for cdt in conditions_speed]])
+    df['total-task-accuracy'] = df['total-task-correct'] / nb_trials
+    df['total-task-nb'] = nb_trials
     if save_lfa:
         df.to_csv(f'{path}/moteval_lfa.csv', index=False)
     return df

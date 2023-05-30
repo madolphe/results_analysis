@@ -34,6 +34,33 @@ def format_questionnaire(df):
     return pd.DataFrame(participants_rows)
 
 
+def get_JASP_format(df):
+    # Init an empty list; each elt will be a list with [participant_id, condition, sess_0, sess_i..., sess_n]
+    # Get list of participants
+    participants = list(df['id_participant'].unique())
+    # Get list of subcomponents
+    components = list(df.drop(['id_participant', 'session_id', 'condition'], axis=1).columns)
+    # Get list of session_ids
+    sessions_ids = list(df['session_id'].unique())
+    all_participants = []
+    # For participant in df, tmp_list = []
+    for participant in participants:
+        # For each component, tmp_list.append(participant_id, condition, sub_component)
+        tmp_participant = df[df['id_participant'] == participant]
+        for component in components:
+            # For each session_id, tmp_list.append(df[participant_id, session_id, sub_component].value)
+            tmp_list = [participant, tmp_participant['condition'].unique()[0], component]
+            for sessions_id in sessions_ids:
+                # When done; transform it into DF with columns names [participant_id, condition, sess_0, sess_i..., sess_n]
+                val = tmp_participant.query(f"session_id=={sessions_id}")[component].values[0]
+                tmp_list.append(val)
+            all_participants.append(copy.deepcopy(tmp_list))
+    new_df = pd.DataFrame(all_participants,
+                          columns=['participant_id', 'group', 'component'] + [f"value_{sess_id}" for sess_id in
+                                                                              sessions_ids])
+    return new_df
+
+
 def get_mean_std(df_baseline, df_zpdes):
     df_baseline_mean = df_baseline.groupby('session_id').mean()
     df_baseline_std = df_baseline.groupby('session_id').std()

@@ -1,7 +1,7 @@
 {
     "accuracy":{
         "enumeration":["5","6","7","8","9"],
-        "moteval":["1","4","8"],
+        "moteval":["1-speed","4-speed","8-speed","3-nb-targets","5-nb-targets"],
         "loadblindness":["near","far"],
         "taskswitch":["parity-switch","parity-unswitch","relative-switch", "relative-unswitch",
                       "switch", "unswitch", "parity", "relative"],

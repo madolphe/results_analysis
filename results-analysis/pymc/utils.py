@@ -1,7 +1,7 @@
 import copy
 
-from data import get_data
-from model import PooledModel, PooledModelRTSimulations, GLModel, PooledModelRTCostSimulations, \
+from pymc.data import get_data
+from pymc.model import PooledModel, PooledModelRTSimulations, GLModel, PooledModelRTCostSimulations, \
     NormalNormalQuestionnaireModel
 import pandas as pd
 import numpy as np
@@ -12,7 +12,8 @@ import arviz as az
 import pickle
 import os
 
-tasks = get_data()
+# get_data is not working anymore (path problems)
+# tasks = get_data()
 
 
 def create_csv_summary(rope=[-0.01, 0.01]):
@@ -148,20 +149,19 @@ def get_RT_cost_posteriors():
         model_zpdes.compare_traces(model_baseline.traces, 'difference_of_means')
 
 
-def pairwise_comparison_questionnaire(questionnaire):
-    data = pd.read_csv(f'../psychometrics/{questionnaire}/{questionnaire}_all.csv')
+def pairwise_comparison_questionnaire(study, questionnaire):
+    data = pd.read_csv(f'../outputs/psychometrics_outputs/{study}/{questionnaire}/{questionnaire}_all.csv')
     # data = data.groupby('id_participant').filter(lambda x: len(x) == 6)
     baseline, zpdes = data.query('condition == "baseline"'), data.query('condition == "zpdes"')
     condition_list = list(zpdes.columns.drop(['Unnamed: 0', 'condition', 'session_id', 'id_participant']))
     session_id_list = zpdes['session_id'].unique().tolist()
-    # session_id_list = [2, 4]
+    session_id_list = [2]
     for group, data in {'zpdes': zpdes, 'baseline': baseline}.items():
         model = NormalNormalQuestionnaireModel(data=data,
                                                folder='questionnaires_parwise', name=questionnaire,
                                                group=group,
                                                stim_cond_list=condition_list, sample_size=2000,
-                                               session_id_list=session_id_list
-                                               )
+                                               session_id_list=session_id_list)
         model.run()
 
 
