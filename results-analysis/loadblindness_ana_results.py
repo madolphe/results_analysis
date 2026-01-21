@@ -1,5 +1,5 @@
 from utils import *
-from pymc.data import change_accuracy_for_correct_column, convert_to_global_task
+from pymc_wrapper.data import change_accuracy_for_correct_column, convert_to_global_task
 from utils import retrieve_and_init_models, add_difference_pre_post, get_pymc_trace
 
 
@@ -68,7 +68,11 @@ def format_data(path, save_lfa=False):
     if save_lfa:
         base = ['participant_id', 'task_status', 'condition']
         condition_accuracy_names = [f"{elt}-accuracy" for elt in conditions_names]
-        dataframe[base+condition_accuracy_names].to_csv(f'{path}/loadblindness_lfa.csv', index=False)
+        condition_correct_names = [f"{elt}-correct" for elt in conditions_names]
+        condition_nb_names = [f"{elt}-nb" for elt in conditions_names]
+        dataframe[base + condition_accuracy_names + condition_correct_names + condition_nb_names].to_csv(
+            f'{path}/loadblindness_lfa.csv',
+            index=False)
     return dataframe
 
 
@@ -81,7 +85,7 @@ def retrieve_zpdes_vs_baseline(study, conditions_to_keep, model_type, model=None
     base = ['participant_id', 'task_status', 'condition']
     columns_accuracy = [f"{c}-accuracy" for c in condition_list]
     columns_correct = [f"{c}-correct" for c in condition_list]
-    df = df[base+columns_correct+columns_accuracy]
+    df = df[base + columns_correct + columns_accuracy]
     df = pd.concat([df, add_difference_pre_post(df, columns_accuracy)], axis=0)
     root_path = f"{study}-{model_type}"
     model_baseline = retrieve_and_init_models(root_path, task, conditions_to_keep, df, model, group="baseline")

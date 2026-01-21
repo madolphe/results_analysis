@@ -1,0 +1,25 @@
+
+ Bayesian analysis Difficulty_expectation: 
+Bayesian model summary:
+                            mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat     P(>0)  P(||>0.001)  P(dir>0.001)       SDDR
+Intercept                  3.141  0.200   2.761    3.516      0.001    0.001   18727.0   26081.0    1.0  1.000000     1.000000      1.000000        NaN
+group_slope               -0.005  0.282  -0.531    0.529      0.002    0.001   19018.0   26145.0    1.0  0.492389     0.997222      0.507611   3.542432
+session_id_slope           0.048  0.032  -0.012    0.107      0.000    0.000   25935.0   28802.0    1.0  0.934000     0.992528      0.934000  10.272180
+group_session_interaction  0.043  0.044  -0.040    0.127      0.000    0.000   26644.0   29365.0    1.0  0.832444     0.988167      0.832444  14.457655
+sigma                      0.880  0.045   0.798    0.966      0.000    0.000   37522.0   31151.0    1.0       NaN          NaN           NaN        NaN
+ Bayesian analysis Easy_Feasible_Zone: 
+Bayesian model summary:
+                            mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat     P(>0)  P(||>0.001)  P(dir>0.001)       SDDR
+Intercept                  2.717  0.173   2.402    3.055      0.002    0.001   12782.0   22235.0    1.0  1.000000     1.000000      1.000000        NaN
+group_slope                0.103  0.241  -0.354    0.548      0.002    0.002   12672.0   21873.0    1.0  0.668556     0.996833      0.668556   3.750403
+session_id_slope           0.046  0.025  -0.001    0.091      0.000    0.000   26609.0   30156.0    1.0  0.967861     0.994361      0.967861   6.959515
+group_session_interaction -0.045  0.034  -0.109    0.020      0.000    0.000   27094.0   30413.0    1.0  0.093944     0.990333      0.906056  12.058024
+sigma                      0.673  0.033   0.613    0.736      0.000    0.000   34837.0   29358.0    1.0       NaN          NaN           NaN        NaN
+ Bayesian analysis Hard_Feasible_Zone: 
+Bayesian model summary:
+                            mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat     P(>0)  P(||>0.001)  P(dir>0.001)       SDDR
+Intercept                  4.339  0.178   4.003    4.670      0.002    0.001   13793.0   24183.0    1.0  1.000000     1.000000      1.000000        NaN
+group_slope               -0.616  0.250  -1.091   -0.151      0.002    0.001   14647.0   22854.0    1.0  0.006250     0.999806      0.993750   0.200483
+session_id_slope           0.020  0.026  -0.029    0.069      0.000    0.000   25511.0   28486.0    1.0  0.774583     0.977306      0.774583  28.138112
+group_session_interaction  0.039  0.037  -0.030    0.108      0.000    0.000   25734.0   29638.0    1.0  0.855389     0.987639      0.855389  15.484537
+sigma                      0.721  0.036   0.654    0.789      0.000    0.000   34309.0   30369.0    1.0       NaN          NaN           NaN        NaN

@@ -1,0 +1,114 @@
+               Mixed Linear Model Regression Results
+====================================================================
+Model:               MixedLM    Dependent Variable:    Mental_demand
+No. Observations:    576        Method:                REML         
+No. Groups:          72         Scale:                 6.3491       
+Min. group size:     8          Log-Likelihood:        -1436.8387   
+Max. group size:     8          Converged:             Yes          
+Mean group size:     8.0                                            
+--------------------------------------------------------------------
+                          Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+--------------------------------------------------------------------
+Intercept                 15.897    0.578 27.481 0.000 14.763 17.031
+group[T.zpdes]             1.511    0.807  1.873 0.061 -0.070  3.093
+session_id                -0.235    0.066 -3.576 0.000 -0.364 -0.106
+group[T.zpdes]:session_id  0.041    0.092  0.444 0.657 -0.139  0.220
+Group Var                  7.857    0.619                           
+====================================================================
+
+ Shapiro test: 0.897784948348999, p=3.7726614309171374e-19 
+               Mixed Linear Model Regression Results
+====================================================================
+Model:               MixedLM   Dependent Variable:   Physical_demand
+No. Observations:    576       Method:               REML           
+No. Groups:          72        Scale:                5.9928         
+Min. group size:     8         Log-Likelihood:       -1443.6753     
+Max. group size:     8         Converged:            Yes            
+Mean group size:     8.0                                            
+--------------------------------------------------------------------
+                          Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+--------------------------------------------------------------------
+Intercept                  5.597    0.733  7.636 0.000  4.160  7.033
+group[T.zpdes]            -0.793    1.022 -0.775 0.438 -2.797  1.211
+session_id                 0.020    0.064  0.309 0.757 -0.105  0.145
+group[T.zpdes]:session_id  0.012    0.089  0.133 0.895 -0.163  0.186
+Group Var                 15.163    1.173                           
+====================================================================
+
+ Shapiro test: 0.8788056373596191, p=8.590399908333904e-21 
+               Mixed Linear Model Regression Results
+====================================================================
+Model:               MixedLM   Dependent Variable:   Temporal_demand
+No. Observations:    576       Method:               REML           
+No. Groups:          72        Scale:                10.1434        
+Min. group size:     8         Log-Likelihood:       -1579.5495     
+Max. group size:     8         Converged:            Yes            
+Mean group size:     8.0                                            
+--------------------------------------------------------------------
+                          Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+--------------------------------------------------------------------
+Intercept                  9.748    0.804 12.126 0.000  8.172 11.324
+group[T.zpdes]             1.260    1.121  1.123 0.261 -0.938  3.458
+session_id                -0.034    0.083 -0.405 0.685 -0.196  0.129
+group[T.zpdes]:session_id -0.127    0.116 -1.098 0.272 -0.354  0.100
+Group Var                 16.460    1.004                           
+====================================================================
+
+ Shapiro test: 0.9810628890991211, p=8.41755763758556e-07 
+               Mixed Linear Model Regression Results
+====================================================================
+Model:                 MixedLM    Dependent Variable:    Performance
+No. Observations:      576        Method:                REML       
+No. Groups:            72         Scale:                 12.1692    
+Min. group size:       8          Log-Likelihood:        -1609.3164 
+Max. group size:       8          Converged:             Yes        
+Mean group size:       8.0                                          
+--------------------------------------------------------------------
+                          Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+--------------------------------------------------------------------
+Intercept                 11.223    0.699 16.052 0.000  9.853 12.594
+group[T.zpdes]            -0.546    0.975 -0.560 0.576 -2.458  1.366
+session_id                -0.145    0.091 -1.593 0.111 -0.323  0.033
+group[T.zpdes]:session_id  0.303    0.127  2.386 0.017  0.054  0.552
+Group Var                  9.723    0.582                           
+====================================================================
+
+ Shapiro test: 0.994456946849823, p=0.034676335752010345 
+               Mixed Linear Model Regression Results
+====================================================================
+Model:                MixedLM     Dependent Variable:     Effort    
+No. Observations:     576         Method:                 REML      
+No. Groups:           72          Scale:                  6.8952    
+Min. group size:      8           Log-Likelihood:         -1456.5669
+Max. group size:      8           Converged:              Yes       
+Mean group size:      8.0                                           
+--------------------------------------------------------------------
+                          Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+--------------------------------------------------------------------
+Intercept                 14.704    0.579 25.394 0.000 13.569 15.839
+group[T.zpdes]             1.641    0.808  2.031 0.042  0.057  3.224
+session_id                -0.161    0.068 -2.354 0.019 -0.295 -0.027
+group[T.zpdes]:session_id  0.053    0.096  0.556 0.578 -0.134  0.240
+Group Var                  7.548    0.578                           
+====================================================================
+
+ Shapiro test: 0.9170435070991516, p=3.09546933259553e-17 
+               Mixed Linear Model Regression Results
+====================================================================
+Model:                 MixedLM    Dependent Variable:    Frustration
+No. Observations:      576        Method:                REML       
+No. Groups:            72         Scale:                 10.2605    
+Min. group size:       8          Log-Likelihood:        -1585.8100 
+Max. group size:       8          Converged:             Yes        
+Mean group size:       8.0                                          
+--------------------------------------------------------------------
+                          Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+--------------------------------------------------------------------
+Intercept                  9.316    0.836 11.142 0.000  7.677 10.955
+group[T.zpdes]             1.673    1.166  1.434 0.151 -0.613  3.959
+session_id                -0.073    0.084 -0.879 0.379 -0.237  0.090
+group[T.zpdes]:session_id  0.055    0.117  0.470 0.638 -0.174  0.283
+Group Var                 18.242    1.100                           
+====================================================================
+
+ Shapiro test: 0.9872245788574219, p=6.253358151298016e-05 

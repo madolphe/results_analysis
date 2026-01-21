@@ -211,7 +211,7 @@ def delete_uncomplete_participants(dataframe: pd.DataFrame) -> pd.DataFrame:
 
     """
     mask = pd.DataFrame(dataframe.participant_id.value_counts() < 2)
-    participants_to_delete = mask[mask['participant_id'] == True].index.tolist()
+    participants_to_delete = mask[mask['count'] == True].index.tolist()
     for id in participants_to_delete:
         dataframe = dataframe[dataframe['participant_id'] != id]
     return dataframe
@@ -352,3 +352,48 @@ def plot_prepost_stan_distribution(conditions, stan_distributions, figname, vari
 
     fig.tight_layout()
     fig.savefig(figname)
+
+
+def plot_radar_pre_post(participant, study):
+    tasks = ["enumeration", "gonogo", "loadblindness", "memorability", "moteval", "taskswitch", "workingmemory", "ufov"]
+    # tasks = ["enumeration", "gonogo", "loadblindness", "moteval", "taskswitch", "workingmemory"]
+    cdt_in_task = {
+        "enumeration": ["total-task-accuracy"],
+        "gonogo": ["total-task-accuracy"],
+        "loadblindness": ["total-task-accuracy"],
+        "memorability": ["total-task-hit-accuracy"],
+        "moteval": ["total-task-accuracy"],
+        "taskswitch": ["total-task-accuracy"],
+        "workingmemory": ["total-task-accuracy"],
+        "ufov": ['final_accuracy']
+    }
+    radial_dim_names = []
+    pre_results, post_results = [], []
+    for task in tasks:
+        df = pd.read_csv(f"../outputs/{study}/results_{study}/{task}/{task}_lfa.csv")
+        df = df[df["participant_id"] == participant]
+        pre, post = df[df["task_status"] == "PRE_TEST"], df[df["task_status"] == "POST_TEST"]
+        for condition in cdt_in_task[task]:
+            pre_results.append(pre[condition].values[0])
+            post_results.append(post[condition].values[0])
+            radial_dim_names.append(f"{task}\n{condition}")
+    # Create angles for each dimension
+    angles = np.linspace(0, 2 * np.pi, len(pre_results), endpoint=False)
+    pre_results = np.concatenate((pre_results, [pre_results[0]]))
+    post_results = np.concatenate((post_results, [post_results[0]]))
+    angles = np.concatenate((angles, [angles[0]]))
+    radial_dim_names.append(radial_dim_names[0])
+    radial_dim_names[0] = ""
+    # Create polar chart
+    fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
+    ax.plot(angles, pre_results, color='green', linewidth=2, label="pre_test")
+    ax.plot(angles, post_results, color='blue', linewidth=2, label="post_test")
+    # ax.fill(angles, pre_results, color='lightblue', alpha=0.5)
+    ax.set_xticks(angles)
+    ax.set_xticklabels(radial_dim_names)
+    ax.set_yticklabels([])
+    ax.set_title(f'Pre/Post difference: p_id = {participant}')
+
+    # Display the chart
+    plt.legend(loc="center left", bbox_to_anchor=(1.3, 0.5))
+    plt.savefig(f"{participant}-pre-post.png", bbox_inches='tight')

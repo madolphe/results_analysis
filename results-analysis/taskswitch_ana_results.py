@@ -2,7 +2,7 @@ import copy
 from sklearn.linear_model import LinearRegression
 from utils import *
 from cal_stan_accuracy_rt import CalStan_accuracy, CalStan_rt
-from pymc.data import change_accuracy_for_correct_column, convert_to_global_task
+from pymc_wrapper.data import change_accuracy_for_correct_column, convert_to_global_task
 from utils import retrieve_and_init_models, get_pymc_trace
 
 
@@ -141,7 +141,10 @@ def compute_correct_answer(row, answer_type):
             [rt for elt, rt, sw in zip(seq_answer_parity, seq_parity_rt, seq_parity_switch) if (sw == 1)])
         relative_rt_switch = sum(
             [rt for elt, rt, sw in zip(seq_answer_relative, seq_relative_rt, seq_relative_switch) if (sw == 1)])
-        return (parity_rt_switch + relative_rt_switch) / (len(seq_parity_rt) + len(seq_relative_rt))
+        try:
+            return (parity_rt_switch + relative_rt_switch) / (len(seq_parity_rt) + len(seq_relative_rt))
+        except:
+            print("ag")
     elif answer_type == "check_unswitch_rt":
         parity_rt_unswitch = sum(
             [rt for elt, rt, sw in zip(seq_answer_parity, seq_parity_rt, seq_parity_switch) if (sw == 0 and elt == 1)])
@@ -247,6 +250,7 @@ def get_overall_dataframe_taskswitch(dataframe, outcomes_names):
 
 def treat_data(dataframe):
     # dataframe = delete_uncomplete_participants(dataframe)
+    # Remove participants that didn't provide at least 1 answer:
     dataframe["results_responses"] = dataframe.apply(lambda row: transform_string_to_row(row, "results_responses"),
                                                      axis=1)
     dataframe["results_trial_target"] = dataframe.apply(
@@ -255,6 +259,7 @@ def treat_data(dataframe):
         lambda row: transform_string_to_row(row, "results_indtask"), axis=1)
     dataframe["results_rt"] = dataframe.apply(
         lambda row: transform_string_to_row(row, "results_rt"), axis=1)
+    dataframe.drop(dataframe[dataframe['results_rt'].str.len() == 0].index, inplace=True)
     print(dataframe.info())
     # results_ind_switch : remove first element of each row by null
     # 3 blocks - 99 responses (idx: 0 - 33 - 66 , beggining of each block should be set to null)
@@ -319,6 +324,8 @@ def treat_data(dataframe):
     dataframe["relative-switching-cost-nb"] = dataframe.apply(
         lambda row: compute_correct_answer(row, "parity_check_unswitch_total"), axis=1)
     dataframe = add_conditions(dataframe)
+    dataframe['switch_indicator'] = dataframe.apply(
+        lambda row: list(map(lambda elt: int(elt), row['results_ind_switch'].split(","))), axis=1)
     return dataframe
 
 
@@ -351,7 +358,7 @@ def format_data(path, save_lfa=False):
     csv_path = f"{path}/taskswitch.csv"
     dataframe = pd.read_csv(csv_path, sep=",")
     dataframe = treat_data(dataframe)
-    base = ['participant_id', 'task_status', 'condition']
+    base = ['participant_id', 'task_status', 'condition', 'switch_indicator', 'results_rt']
     conditions = ['parity-switch', 'parity-unswitch', 'relative-switch', 'relative-unswitch', 'switch', 'unswitch',
                   'relative', 'parity', 'total-task']
     condition_names_correct = [f"{cdt}-correct" for cdt in conditions]

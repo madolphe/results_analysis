@@ -1,0 +1,95 @@
+               Mixed Linear Model Regression Results
+====================================================================
+Model:                 MixedLM     Dependent Variable:     FA       
+No. Observations:      292         Method:                 REML     
+No. Groups:            73          Scale:                  0.2008   
+Min. group size:       4           Log-Likelihood:         -285.8802
+Max. group size:       4           Converged:              Yes      
+Mean group size:       4.0                                          
+--------------------------------------------------------------------
+                          Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+--------------------------------------------------------------------
+Intercept                  2.402    0.174 13.803 0.000  2.061  2.743
+group[T.zpdes]            -0.207    0.244 -0.845 0.398 -0.686  0.272
+session_id                -0.017    0.021 -0.808 0.419 -0.057  0.024
+group[T.zpdes]:session_id -0.014    0.029 -0.485 0.628 -0.071  0.043
+Group Var                  0.727    0.335                           
+====================================================================
+
+ Shapiro test: 0.9855232834815979, p=0.004879639483988285 
+               Mixed Linear Model Regression Results
+====================================================================
+Model:                 MixedLM     Dependent Variable:     PU       
+No. Observations:      292         Method:                 REML     
+No. Groups:            73          Scale:                  0.2100   
+Min. group size:       4           Log-Likelihood:         -270.4465
+Max. group size:       4           Converged:              Yes      
+Mean group size:       4.0                                          
+--------------------------------------------------------------------
+                          Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+--------------------------------------------------------------------
+Intercept                  3.588    0.146 24.598 0.000  3.302  3.874
+group[T.zpdes]            -0.495    0.205 -2.417 0.016 -0.897 -0.094
+session_id                 0.000    0.021  0.000 1.000 -0.042  0.042
+group[T.zpdes]:session_id  0.042    0.030  1.409 0.159 -0.016  0.100
+Group Var                  0.386    0.185                           
+====================================================================
+
+ Shapiro test: 0.9889639616012573, p=0.025703882798552513 
+               Mixed Linear Model Regression Results
+====================================================================
+Model:                 MixedLM     Dependent Variable:     AE       
+No. Observations:      292         Method:                 REML     
+No. Groups:            73          Scale:                  0.2742   
+Min. group size:       4           Log-Likelihood:         -318.8610
+Max. group size:       4           Converged:              Yes      
+Mean group size:       4.0                                          
+--------------------------------------------------------------------
+                          Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+--------------------------------------------------------------------
+Intercept                  2.517    0.182 13.866 0.000  2.161  2.873
+group[T.zpdes]            -0.530    0.255 -2.078 0.038 -1.030 -0.030
+session_id                -0.028    0.024 -1.177 0.239 -0.076  0.019
+group[T.zpdes]:session_id  0.056    0.034  1.643 0.100 -0.011  0.123
+Group Var                  0.691    0.280                           
+====================================================================
+
+ Shapiro test: 0.9761574864387512, p=8.705985965207219e-05 
+               Mixed Linear Model Regression Results
+====================================================================
+Model:                 MixedLM     Dependent Variable:     RW       
+No. Observations:      292         Method:                 REML     
+No. Groups:            73          Scale:                  0.1783   
+Min. group size:       4           Log-Likelihood:         -270.0353
+Max. group size:       4           Converged:              Yes      
+Mean group size:       4.0                                          
+--------------------------------------------------------------------
+                          Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+--------------------------------------------------------------------
+Intercept                  2.612    0.166 15.728 0.000  2.286  2.937
+group[T.zpdes]            -0.277    0.233 -1.187 0.235 -0.734  0.180
+session_id                -0.009    0.020 -0.456 0.648 -0.047  0.029
+group[T.zpdes]:session_id -0.011    0.027 -0.383 0.702 -0.064  0.043
+Group Var                  0.670    0.327                           
+====================================================================
+
+ Shapiro test: 0.9749094843864441, p=5.364572280086577e-05 
+               Mixed Linear Model Regression Results
+====================================================================
+Model:              MixedLM   Dependent Variable:   engagement_score
+No. Observations:   292       Method:               REML            
+No. Groups:         73        Scale:                0.0990          
+Min. group size:    4         Log-Likelihood:       -188.0908       
+Max. group size:    4         Converged:            Yes             
+Mean group size:    4.0                                             
+--------------------------------------------------------------------
+                          Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+--------------------------------------------------------------------
+Intercept                  2.780    0.127 21.838 0.000  2.530  3.029
+group[T.zpdes]            -0.377    0.179 -2.109 0.035 -0.728 -0.027
+session_id                -0.014    0.015 -0.930 0.352 -0.042  0.015
+group[T.zpdes]:session_id  0.018    0.020  0.895 0.371 -0.022  0.058
+Group Var                  0.404    0.264                           
+====================================================================
+
+ Shapiro test: 0.9668861031532288, p=3.0350345241458854e-06 

@@ -1,5 +1,5 @@
 from utils import *
-from pymc.data import change_accuracy_for_correct_column, convert_to_global_task
+from pymc_wrapper.data import change_accuracy_for_correct_column, convert_to_global_task
 from utils import retrieve_and_init_models, add_difference_pre_post, get_pymc_trace
 
 

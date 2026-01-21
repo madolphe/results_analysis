@@ -3,7 +3,7 @@ import copy
 
 from sklearn.linear_model import LinearRegression
 from utils import *
-from pymc.data import change_accuracy_for_correct_column, convert_to_global_task
+from pymc_wrapper.data import change_accuracy_for_correct_column, convert_to_global_task
 from utils import retrieve_and_init_models, add_difference_pre_post, get_pymc_trace
 from pathlib import Path
 
@@ -80,7 +80,7 @@ def parse_to_int(elt: str) -> int:
 def compute_nb_commission_errors(row: pd.core.series.Series) -> int:
     """
         Take a dataframe row and returns the number of element 2 in the result response
-        2 == commission error
+        2 == commission error (i.e false alarm)
     """
     results_responses = list(
         map(parse_to_int, row["results_responses"]))  # 1 is click when expected, 0 no click when expected, 2 is mistake
@@ -135,8 +135,8 @@ def compute_number_of_omissions(row: pd.core.series.Series) -> int:
     return count
 
 
-def compute_result_sum_hr(row):
-    return 18 - row['NOGO-correct']
+def compute_result_sum_hr(row, NB_BLOCKS_TO_KEEP=25):
+    return NB_BLOCKS_TO_KEEP - row['NOGO-correct']
 
 
 def compute_numbercond(row, ind_cond):
@@ -210,8 +210,13 @@ def format_data(path, save_lfa):
     df = pd.read_csv(f"{path}/gonogo.csv", sep=",")
     df = df.apply(lambda row: transform_str_to_list(row, [
         'results_responses', 'results_rt', 'results_ind_previous', 'results_targetvalue']), axis=1)
+    # NOGO here represents in fact the miss:
     df['NOGO-correct'] = df.apply(compute_number_of_omissions, axis=1)
+    df['miss-nb'] = df.apply(compute_number_of_omissions, axis=1) #nb of miss
+
+    # Commission errors represent false alarm:
     df['result_commission_errors'] = df.apply(compute_nb_commission_errors, axis=1)
+    df['FA-correct'] = df.apply(compute_nb_commission_errors, axis=1) #nb of false alarm
     # dataframe = delete_uncomplete_participants(df)
     dataframe = df
     # false alarm relative to sequence length
@@ -229,15 +234,16 @@ def format_data(path, save_lfa):
     df['result_clean_rt'] = df.apply(list_of_correct_hits, axis=1)
     df['HR-nb'] = df.apply(lambda row: len(row['result_clean_rt']), axis=1)
     df['GO-rt'] = df.apply(compute_means, axis=1)
-    df['GO-correct'] = df.apply(compute_result_sum_hr, axis=1)
-    df['GO-accuracy'] = df.apply(lambda row: row['GO-correct'] / NB_BLOCKS_TO_KEEP, axis=1)
-    df['NOGO-accuracy'] = df.apply(lambda row: row['NOGO-correct'] / NB_BLOCKS_TO_KEEP, axis=1)
-    conditions = ['GO', 'NOGO', 'total-task']
+    df['GO-nb'] = nb_go
+    df['GO-correct'] = df.apply(lambda row: compute_result_sum_hr(row, nb_go), axis=1)
+    df['GO-accuracy'] = df.apply(lambda row: row['GO-correct'] / nb_go, axis=1)
+    df['NOGO-accuracy'] = df.apply(lambda row: row['NOGO-correct'] / nb_go, axis=1)
+    df['FA-accuracy'] = df.apply(lambda row: row['NOGO-correct'] / nb_blocks, axis=1)
+    df['FA-nb'] = min(nb_blocks - nb_go, NB_BLOCKS_TO_KEEP)
+    conditions = ['GO', 'FA', 'total-task']
     conditions_accuracy = [f'{cdt}-accuracy' for cdt in conditions]
     conditions_correct = [f'{cdt}-correct' for cdt in conditions]
     conditions_nb = [f'{cdt}-nb' for cdt in conditions]
-    for cdt in conditions_nb:
-        df[cdt] = NB_BLOCKS_TO_KEEP
     conditions_RT = ['GO-rt']
     base = ['participant_id', 'task_status', 'condition']
     df['total-task-correct'] = df['GO-correct'] + (NB_BLOCKS_TO_KEEP - df['NOGO-correct'])

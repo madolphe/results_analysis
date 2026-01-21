@@ -139,8 +139,8 @@ results-analysis/psychometrics/tens
 results-analysis/psychometrics/ues
 results-analysis/psychometrics/all_answers.csv
 results-analysis/psychometrics/psychometrics_outputs
-results-analysis/pymc/csv_results
-results-analysis/pymc/questionnaires/
-results-analysis/pymc/questionnaires_parwise/
+results-analysis/pymc_wrapper/csv_results
+results-analysis/pymc_wrapper/questionnaires/
+results-analysis/pymc_wrapper/questionnaires_parwise/
 *.csv
 results-analysis/archives

@@ -1,0 +1,120 @@
+Activity index: 0 
+Bayesian model summary:
+                            mean     sd  ...  P(dir>0.001)       SDDR
+Intercept                  0.891  0.045  ...      1.000000        NaN
+group_slope                0.030  0.063  ...      0.685667  14.251852
+session_id_slope          -0.006  0.020  ...      0.626389  49.283155
+group_session_interaction  0.004  0.026  ...      0.564333  37.189676
+sigma                      0.136  0.013  ...           NaN        NaN
+
+[5 rows x 13 columns]
+Activity index: 1 
+Bayesian model summary:
+                            mean     sd  ...  P(dir>0.001)       SDDR
+Intercept                  0.884  0.046  ...      1.000000        NaN
+group_slope               -0.017  0.064  ...      0.607806  15.230955
+session_id_slope          -0.027  0.020  ...      0.916083  20.205018
+group_session_interaction  0.032  0.027  ...      0.887778  17.889798
+sigma                      0.138  0.013  ...           NaN        NaN
+
+[5 rows x 13 columns]
+Activity index: 2 
+Bayesian model summary:
+                            mean     sd  ...  P(dir>0.001)       SDDR
+Intercept                  0.842  0.047  ...      1.000000        NaN
+group_slope               -0.077  0.065  ...      0.880944   7.543739
+session_id_slope          -0.001  0.021  ...      0.515833  48.077789
+group_session_interaction  0.044  0.028  ...      0.939194  10.443228
+sigma                      0.147  0.014  ...           NaN        NaN
+
+[5 rows x 13 columns]
+Activity index: 3 
+Bayesian model summary:
+                            mean     sd  ...  P(dir>0.001)       SDDR
+Intercept                  0.624  0.052  ...      1.000000        NaN
+group_slope                0.062  0.072  ...      0.806000   9.512658
+session_id_slope           0.032  0.025  ...      0.899250  17.007977
+group_session_interaction  0.001  0.033  ...      0.504833  30.380185
+sigma                      0.172  0.017  ...           NaN        NaN
+
+[5 rows x 13 columns]
+Activity index: 4 
+Bayesian model summary:
+                            mean     sd  ...  P(dir>0.001)       SDDR
+Intercept                  0.830  0.043  ...      1.000000        NaN
+group_slope               -0.056  0.060  ...      0.830389  10.719099
+session_id_slope          -0.009  0.018  ...      0.691583  49.164590
+group_session_interaction  0.030  0.025  ...      0.889861  20.091664
+sigma                      0.125  0.012  ...           NaN        NaN
+
+[5 rows x 13 columns]
+Activity index: 5 
+Bayesian model summary:
+                            mean     sd  ...  P(dir>0.001)       SDDR
+Intercept                  0.683  0.042  ...      1.000000        NaN
+group_slope               -0.012  0.058  ...      0.583389  17.164660
+session_id_slope           0.027  0.016  ...      0.949639  15.393955
+group_session_interaction  0.006  0.022  ...      0.600722  44.079475
+sigma                      0.112  0.011  ...           NaN        NaN
+
+[5 rows x 13 columns]
+Activity index: 6 
+Bayesian model summary:
+                            mean     sd  ...  P(dir>0.001)       SDDR
+Intercept                  0.634  0.048  ...      1.000000        NaN
+group_slope                0.028  0.068  ...      0.662861  13.542512
+session_id_slope           0.041  0.022  ...      0.964750   8.095787
+group_session_interaction -0.016  0.030  ...      0.710472  28.635592
+sigma                      0.152  0.014  ...           NaN        NaN
+
+[5 rows x 13 columns]
+Activity index: 7 
+Bayesian model summary:
+                            mean     sd  ...  P(dir>0.001)       SDDR
+Intercept                  0.523  0.048  ...      1.000000        NaN
+group_slope               -0.050  0.067  ...      0.773583  11.470251
+session_id_slope           0.001  0.022  ...      0.519278  46.410527
+group_session_interaction  0.041  0.029  ...      0.927000  12.619198
+sigma                      0.148  0.014  ...           NaN        NaN
+
+[5 rows x 13 columns]
+Activity index: 8 
+Bayesian model summary:
+                            mean     sd  ...  P(dir>0.001)       SDDR
+Intercept                  0.703  0.041  ...      1.000000        NaN
+group_slope               -0.052  0.056  ...      0.822833  11.682453
+session_id_slope           0.012  0.016  ...      0.776972  47.479510
+group_session_interaction  0.014  0.021  ...      0.745111  38.490545
+sigma                      0.107  0.010  ...           NaN        NaN
+
+[5 rows x 13 columns]
+Activity index: 9 
+Bayesian model summary:
+                            mean     sd  ...  P(dir>0.001)       SDDR
+Intercept                  0.609  0.040  ...      1.000000        NaN
+group_slope                0.007  0.055  ...      0.551000  17.951015
+session_id_slope           0.023  0.015  ...      0.937972  20.823005
+group_session_interaction -0.037  0.019  ...      0.968861   8.345974
+sigma                      0.098  0.009  ...           NaN        NaN
+
+[5 rows x 13 columns]
+Activity index: 10 
+Bayesian model summary:
+                            mean     sd  ...  P(dir>0.001)       SDDR
+Intercept                  0.590  0.040  ...      1.000000        NaN
+group_slope                0.007  0.055  ...      0.551417  18.374138
+session_id_slope           0.011  0.015  ...      0.777778  50.322653
+group_session_interaction  0.003  0.020  ...      0.555667  50.980726
+sigma                      0.100  0.009  ...           NaN        NaN
+
+[5 rows x 13 columns]
+Activity index: 11 
+Bayesian model summary:
+                            mean     sd  ...  P(dir>0.001)       SDDR
+Intercept                  0.509  0.041  ...      1.000000        NaN
+group_slope               -0.035  0.056  ...      0.733250  14.567749
+session_id_slope          -0.002  0.016  ...      0.547750  63.137898
+group_session_interaction -0.000  0.021  ...      0.512889  49.347216
+sigma                      0.104  0.010  ...           NaN        NaN
+
+[5 rows x 13 columns]

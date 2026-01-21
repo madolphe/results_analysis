@@ -1,0 +1,8 @@
+{
+  "accuracy": {
+    "loadblindness": {
+      "models": ["hierar_binom_n_var"],
+      "conditions": ["total-task"]
+    }
+  }
+}

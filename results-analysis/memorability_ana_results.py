@@ -2,7 +2,7 @@ from extract_sorted_memory import Results_memory
 from utils import *
 from utils import retrieve_and_init_models, add_difference_pre_post, get_pymc_trace
 
-from pymc.data import change_accuracy_for_correct_column, convert_to_global_task
+from pymc_wrapper.data import change_accuracy_for_correct_column, convert_to_global_task
 
 
 # Treat data:
@@ -26,7 +26,7 @@ def delete_uncomplete_participants(dataframe):
 
 def extract_id(dataframe, num_count):
     mask = pd.DataFrame(dataframe.participant_id.value_counts() == num_count)
-    indices_id = mask[mask['participant_id'] == True].index.tolist()
+    indices_id = mask[mask['count'] == True].index.tolist()
     return indices_id
 
 
@@ -117,6 +117,13 @@ def format_data(path, save_lfa):
     all_conditions += [f"{cdt}-nb" for cdt in real_conditions]
     all_conditions += [f"{cdt}-rt" for cdt in tmp_conditions]
     dataframe = dataframe[base + all_conditions]
+    dataframe['total-task-hit-correct'] = convert_to_global_task(dataframe, [f'{cdt}-hit-correct' for cdt in tmp_conditions])
+    dataframe['total-task-fa-correct'] = convert_to_global_task(dataframe, [f'{cdt}-fa-correct' for cdt in tmp_conditions])
+    dataframe['total-task-nb'] = 20 * len(tmp_conditions)
+    dataframe['total-task-hit-nb'] = 20 * len(tmp_conditions)
+    dataframe['total-task-hit-accuracy'] = dataframe['total-task-hit-correct'] / dataframe['total-task-nb']
+    dataframe['total-task-fa-accuracy'] = dataframe['total-task-fa-correct'] / dataframe['total-task-nb']
+    dataframe['total-task-hit-rt'] = dataframe[[col for col in dataframe.columns if '-rt' in col]].mean(axis=1)
     if save_lfa:
         dataframe.to_csv(f'{path}/memorability_lfa.csv', index=False)
     return dataframe

@@ -1,7 +1,7 @@
 import pandas as pd
 
 from utils import *
-from pymc.data import change_accuracy_for_correct_column, convert_to_global_task
+from pymc_wrapper.data import change_accuracy_for_correct_column, convert_to_global_task
 from utils import retrieve_and_init_models, add_difference_pre_post, get_pymc_trace
 
 from pathlib import Path
@@ -78,6 +78,7 @@ def format_data(path, save_lfa=False):
         df[f"{condition}-accuracy"] = df[f"{condition}-correct"] / df[f"{condition}-nb"]
     condition_accuracy.append("total-task-accuracy")
     condition_correct.append("total-task-correct")
+    condition_nb.append("total-task-nb")
     df['total-task-correct'] = convert_to_global_task(df, [f'{cdt}-correct' for cdt in conditions])
     df['total-task-nb'] = 20 * len(conditions)
     df['total-task-accuracy'] = df['total-task-correct'] / df['total-task-nb']

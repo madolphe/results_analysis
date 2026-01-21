@@ -1,0 +1,33 @@
+
+ Bayesian analysis Intrinsic_motivation: 
+Bayesian model summary:
+                            mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat     P(>0)  P(||>0.001)  P(dir>0.001)       SDDR
+Intercept                  3.362  0.168   3.048    3.680      0.001    0.001   23660.0   28049.0    1.0  1.000000     1.000000      1.000000        NaN
+group_slope               -0.704  0.236  -1.153   -0.267      0.002    0.001   23487.0   29401.0    1.0  0.001556     0.999972      0.998444   0.053826
+session_id_slope          -0.015  0.027  -0.067    0.036      0.000    0.000   32332.0   32168.0    1.0  0.295861     0.975361      0.704139  31.398960
+group_session_interaction -0.011  0.039  -0.083    0.062      0.000    0.000   32988.0   32784.0    1.0  0.384389     0.980833      0.615611  24.488205
+sigma                      0.839  0.055   0.739    0.944      0.000    0.000   25897.0   30548.0    1.0       NaN          NaN           NaN        NaN
+ Bayesian analysis Identified_regulation: 
+Bayesian model summary:
+                            mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat     P(>0)  P(||>0.001)  P(dir>0.001)       SDDR
+Intercept                  3.616  0.167   3.293    3.918      0.001    0.001   25258.0   28895.0    1.0  1.000000     1.000000      1.000000        NaN
+group_slope               -0.824  0.235  -1.252   -0.371      0.001    0.001   25286.0   30566.0    1.0  0.000306     1.000000      0.999694   0.009713
+session_id_slope          -0.017  0.027  -0.067    0.036      0.000    0.000   35233.0   30892.0    1.0  0.272250     0.975861      0.727750  30.501385
+group_session_interaction -0.003  0.038  -0.075    0.069      0.000    0.000   35843.0   33209.0    1.0  0.462750     0.980556      0.537250  25.864154
+sigma                      0.841  0.050   0.747    0.934      0.000    0.000   31328.0   31739.0    1.0       NaN          NaN           NaN        NaN
+ Bayesian analysis External_regulation: 
+Bayesian model summary:
+                            mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat     P(>0)  P(||>0.001)  P(dir>0.001)      SDDR
+Intercept                  3.456  0.167   3.146    3.773      0.001    0.001   24488.0   29837.0    1.0  1.000000     1.000000      1.000000       NaN
+group_slope               -0.804  0.235  -1.235   -0.349      0.002    0.001   24286.0   29404.0    1.0  0.000278     1.000000      0.999722  0.011517
+session_id_slope          -0.077  0.028  -0.129   -0.025      0.000    0.000   32116.0   30387.0    1.0  0.002667     0.999250      0.997333  0.795765
+group_session_interaction  0.062  0.039  -0.012    0.134      0.000    0.000   31623.0   31189.0    1.0  0.945278     0.994389      0.945278  7.409030
+sigma                      0.845  0.054   0.745    0.946      0.000    0.000   27861.0   29890.0    1.0       NaN          NaN           NaN       NaN
+ Bayesian analysis Amotivation: 
+Bayesian model summary:
+                            mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat     P(>0)  P(||>0.001)  P(dir>0.001)      SDDR
+Intercept                  2.038  0.172   1.713    2.360      0.001    0.001   26420.0   28955.0    1.0  1.000000     1.000000      1.000000       NaN
+group_slope               -0.105  0.242  -0.572    0.343      0.002    0.001   25773.0   30408.0    1.0  0.331694     0.997472      0.668306  3.785649
+session_id_slope          -0.081  0.029  -0.136   -0.027      0.000    0.000   35230.0   30912.0    1.0  0.002000     0.999694      0.998000  0.634819
+group_session_interaction  0.083  0.040   0.008    0.160      0.000    0.000   34549.0   30401.0    1.0  0.981472     0.997667      0.981472  3.057738
+sigma                      0.872  0.051   0.777    0.967      0.000    0.000   30991.0   33121.0    1.0       NaN          NaN           NaN       NaN

@@ -1,0 +1,19 @@
+               Mixed Linear Model Regression Results
+====================================================================
+Model:                 MixedLM     Dependent Variable:     SDI      
+No. Observations:      292         Method:                 REML     
+No. Groups:            73          Scale:                  8.9448   
+Min. group size:       4           Log-Likelihood:         -848.2650
+Max. group size:       4           Converged:              Yes      
+Mean group size:       4.0                                          
+--------------------------------------------------------------------
+                          Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+--------------------------------------------------------------------
+Intercept                  3.126    1.292  2.419 0.016  0.593  5.659
+group[T.zpdes]            -1.572    1.815 -0.866 0.386 -5.130  1.986
+session_id                 0.156    0.100  1.565 0.118 -0.039  0.351
+group[T.zpdes]:session_id -0.210    0.140 -1.503 0.133 -0.485  0.064
+Group Var                 50.646    3.419                           
+====================================================================
+
+ Shapiro test: 0.9752187132835388, p=6.0421309171942994e-05 

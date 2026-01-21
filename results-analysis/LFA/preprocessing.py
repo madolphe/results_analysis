@@ -1,13 +1,13 @@
 import pandas as pd
 from sklearn.decomposition import PCA
-
+study = "v0_prolific"
 tasks_names = ['gonogo', 'moteval', 'taskswitch', 'loadblindness', 'memorability', 'enumeration', 'workingmemory']
 import os
 
 print(os.getcwd())
 df_dict = {}
 for task_name in tasks_names:
-    df_dict[task_name] = pd.read_csv(f"../../outputs/{task_name}/{task_name}_lfa.csv")
+    df_dict[task_name] = pd.read_csv(f"../../outputs/{study}/results_{study}/{task_name}/{task_name}_lfa.csv")
 
 # Specific adjustements:
 # gonogo, moteval, loadblindness have already the lowest nb of columns
@@ -15,27 +15,26 @@ for task_name in tasks_names:
 # Task switch:
 # Drop nb trials and nb of correct in task switch:
 for col in df_dict['taskswitch'].columns:
-    if col != 'participant_id':
-        if 'rt' not in col and 'accuracy' not in col and 'task_status' not in col:
+    if col != 'participant_id' and col != 'condition':
+        if 'rt' not in col and 'accuracy' not in col and 'task_status' not in col and 'switching' not in col:
             df_dict['taskswitch'] = df_dict['taskswitch'].drop(columns=[col])
 # Still 8 columns - taking the mean between relative and parity ==> 4 columns
-
 # we only use the switching costs.
-        if 'switching' not in col and 'task_status' not in col:
-            df_dict['taskswitch'] = df_dict['taskswitch'].drop(columns=[col])
+#         if 'switching' not in col and 'task_status' not in col:
+#             df_dict['taskswitch'] = df_dict['taskswitch'].drop(columns=[col])
 
 for col in df_dict['gonogo'].columns:
-    if col != 'participant_id':
+    if col != 'participant_id' and col != 'condition':
         if 'rt' not in col and 'task_status' not in col:
             df_dict['gonogo'] = df_dict['gonogo'].drop(columns=[col])
 
 for col in df_dict['memorability'].columns:
-    if col != 'participant_id':
+    if col != 'participant_id' and col != 'condition':
         if 'rt' in col and 'task_status' not in col:
             df_dict['memorability'] = df_dict['memorability'].drop(columns=[col])
 
 for col in df_dict['moteval'].columns:
-    if col != 'participant_id':
+    if col != 'participant_id' and col != 'condition':
         if 'rt' in col and 'task_status' not in col:
             df_dict['moteval'] = df_dict['moteval'].drop(columns=[col])
 # Memorability 20 columns
@@ -79,7 +78,7 @@ for i, (task_name, df) in enumerate(df_dict.items()):
         dataframe = df
     else:
         dataframe = pd.merge(dataframe, df, on=['participant_id', 'task_status'], how='outer')
-
-dataframe.to_csv('tmp_merge_acp_all_including_rt.csv')
+# dataframe = dataframe[dataframe["participant_id"] != 196]
+dataframe.to_csv(f'tmp_merge_acp_all_including_rt_{study}.csv')
 
 

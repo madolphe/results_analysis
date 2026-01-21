@@ -13,12 +13,17 @@ import moteval_ana_results
 import memorability_ana_results
 import loadblindness_ana_results
 import workingmemory_ana_results
+import ufov_ana_results
 
-from pymc.utils import compute_diff_questionnaire_per_session, pairwise_comparison_questionnaire
+from pymc_wrapper.utils import compute_diff_questionnaire_per_session, pairwise_comparison_questionnaire
 
-from pymc.model import PooledModel, PooledModelRTSimulations, PooledModelRTCostSimulations, PowerAnalysis
+from pymc_wrapper.model import PooledModel, PooledModelRTSimulations, PooledModelRTCostSimulations, PowerAnalysis, \
+    PooledModelMOTAccuracy
 
-study = 'v2_prolific'
+from utils import plot_radar_pre_post
+
+# study = 'v2_prolific'
+study = 'v3_prolific'
 # study = 'v1_prolific'
 model_type = 'pooled_model'
 with open('config/conditions.JSON', 'r') as f:
@@ -27,6 +32,12 @@ with open('config/conditions.JSON', 'r') as f:
 
 def run_all(study, accuracy_model=None, RT_model=None, accuracy_model_type=None, RT_model_type=None):
     if accuracy_model:
+        moteval_ana_results.fit_model(study, model=accuracy_model,
+                                      conditions_to_fit=all_conditions["accuracy"]["moteval"],
+                                      model_type=accuracy_model_type)
+        moteval_ana_results.fit_model(study, model=PooledModelMOTAccuracy,
+                                      conditions_to_fit=all_conditions["accuracy"]["moteval"],
+                                      model_type="pooled_accuracy_mot")
         enumeration_ana_results.fit_model(study=study, model=accuracy_model,
                                           conditions_to_fit=all_conditions["accuracy"]["enumeration"],
                                           model_type=accuracy_model_type)
@@ -36,9 +47,6 @@ def run_all(study, accuracy_model=None, RT_model=None, accuracy_model_type=None,
         taskswitch_ana_results.fit_model(study, model=accuracy_model,
                                          conditions_to_fit=all_conditions["accuracy"]["taskswitch"],
                                          model_type=accuracy_model_type)
-        moteval_ana_results.fit_model(study, model=accuracy_model,
-                                      conditions_to_fit=all_conditions["accuracy"]["moteval"],
-                                      model_type=accuracy_model_type)
         memorability_ana_results.fit_model(study, conditions_to_fit=all_conditions["accuracy"]["memorability"],
                                            model=accuracy_model, model_type=accuracy_model_type)
         loadblindness_ana_results.fit_model(study, model=accuracy_model,
@@ -117,15 +125,19 @@ def run_questionnaires(study):
 
 def get_raw_csv_for_study(study, root="../outputs"):
     # First get all csv
-    enumeration_ana_results.format_data(f"{root}/{study}/results_{study}/enumeration", save_lfa=True)
+    tasks = ['moteval', 'enumeration', 'gonogo', 'loadblindness', 'memorability', 'taskswitch', 'workingmemory', 'ufov']
+    if "v3" not in study:
+        tasks.remove('ufov')
+    else:
+        ufov_ana_results.format_data(f"{root}/{study}/results_{study}/ufov", save_lfa=True)
     gonogo_ana_results.format_data(f"{root}/{study}/results_{study}/gonogo", save_lfa=True)
-    taskswitch_ana_results.format_data(f"{root}/{study}/results_{study}/taskswitch", save_lfa=True)
-    moteval_ana_results.format_data(f"{root}/{study}/results_{study}/moteval", save_lfa=True)
     memorability_ana_results.format_data(f"{root}/{study}/results_{study}/memorability", save_lfa=True)
+    enumeration_ana_results.format_data(f"{root}/{study}/results_{study}/enumeration", save_lfa=True)
+    moteval_ana_results.format_data(f"{root}/{study}/results_{study}/moteval", save_lfa=True)
+    taskswitch_ana_results.format_data(f"{root}/{study}/results_{study}/taskswitch", save_lfa=True)
     loadblindness_ana_results.format_data(f"{root}/{study}/results_{study}/loadblindness", save_lfa=True)
     workingmemory_ana_results.format_data(f"{root}/{study}/results_{study}/workingmemory", save_lfa=True)
     # Then merge everything into one df
-    tasks = ['moteval', 'enumeration', 'gonogo', 'loadblindness', 'memorability', 'taskswitch', 'workingmemory']
     all_tasks = [pd.read_csv(f"{root}/{study}/results_{study}/{task}/{task}_lfa.csv") for task in tasks]
     common_parameters = ['participant_id', 'condition', 'task_status']
     for task_name, (ii, task_df) in zip(tasks, enumerate(all_tasks)):
@@ -134,7 +146,8 @@ def get_raw_csv_for_study(study, root="../outputs"):
     df_merged = reduce(
         lambda left, right: pd.merge(left, right, on=common_parameters, how='outer'),
         all_tasks)
-    kept_conditions = list(set([k for k in df_merged.keys() if ('accuracy' in k) or ('rt' in k)]))
+    kept_conditions = list(
+        set([k for k in df_merged.keys() if ('accuracy' in k) or ('rt' in k) or ('nb' in k and k[-1] == 'b')]))
     kept_conditions.remove("participant_id")  # participant_id contains 'rt' ^^
     df_merged = df_merged[common_parameters + kept_conditions]
     df_merged.to_csv(f"{root}/{study}/all_cognitive_results_{study}.csv")
@@ -197,41 +210,11 @@ def get_frequentist_results(df, title, root):
     plt.close()
 
 
-def frequentist_comparaison_of_2_samples(study1, study2, root):
-    tasks = list(all_conditions['accuracy'].keys())
-    if "comparison" not in os.listdir(f'{root}'):
-        os.mkdir(f'{root}/comparison')
-        for task in tasks:
-            os.mkdir(f'{root}/comparison/{task}')
-    study = pd.read_csv(f"{root}/{study1}/all_cognitive_results_{study1}.csv")
-    study_ref = pd.read_csv(f"{root}/{study2}/all_cognitive_results_{study2}.csv")
-
-    common_columns = list(set(study.columns).intersection(study_ref.columns))
-    non_comparaison_cols = ['condition', 'task_status', 'participant_id', 'Unnamed: 0']
-    results = {}
-    for column in common_columns:
-        if column not in non_comparaison_cols:
-            results[column] = stats.ttest_ind(study[column].dropna(), study_ref[column].dropna())
-    df = pd.DataFrame(results)
-    for task in tasks:
-        df[[col for col in df.columns if task in col]].to_csv(f"{root}/comparison/{task}/{study1}-vs-{study2}.csv")
-
-    # Add conditions:
-    if len(study['condition'].unique()) > 1 or len(study_ref['condition'].unique()) > 1:
-        conditions_study = list(study['condition'].unique())
-        conditions_study_ref = list(study_ref['condition'].unique())
-        for condition in conditions_study:
-            for condition_ref in conditions_study_ref:
-                results = {}
-                for column in common_columns:
-                    if column not in non_comparaison_cols:
-                        results[column] = stats.ttest_ind(study[study['condition'] == condition][column].dropna(),
-                                                          study_ref[study_ref['condition'] == condition_ref][
-                                                              column].dropna(), equal_var=False)
-                df = pd.DataFrame(results)
-                for task in tasks:
-                    df[[col for col in df.columns if task in col]].to_csv(
-                        f"{root}/comparison/{task}/uneq-var-{study1}_{condition}-vs-{study2}_{condition_ref}.csv")
+def get_radar(participants=None):
+    if not participants:
+        participants = [544, 547, 543, 535, 541]
+    for p in participants:
+        plot_radar_pre_post(p, study)
 
 
 if __name__ == '__main__':
@@ -239,12 +222,13 @@ if __name__ == '__main__':
     get_plots_from_trace = False
     get_questionnaires = False
     get_sample_size = False
-    get_csv = False
-    get_diff_results = True
+    get_csv = True
+    get_diff_results = False
+    get_pre_post_radar = False
 
     if get_bayesian_models:
-        run_all(study, RT_model=PooledModelRTSimulations, RT_model_type="pooled_model_RT")
         run_all(study, accuracy_model=PooledModel, accuracy_model_type="pooled_model")
+        # run_all(study, RT_model=PooledModelRTSimulations, RT_model_type="pooled_model_RT")
 
     if get_plots_from_trace:
         init_from_traces_and_plot(study, accuracy_model=PooledModel, accuracy_model_type="pooled_model")
@@ -260,18 +244,25 @@ if __name__ == '__main__':
         run_questionnaires(study)
 
     # Get csv and get :
-    studies = ["v2_prolific", "v1_prolific", "v1_ubx", "v0_ubx", "v0_prolific", "control_merged", "training_merged"]
-    root_path = "../outputs/all_data_29_11_22"
+    studies = ["v3_prolific", "v3_utl", "v2_prolific", "v1_prolific", "v1_ubx", "v0_ubx", "v0_prolific"]
+    # studies = ["v0_ubx"]
+    # studies = ["v2_prolific", "v1_prolific", "v1_ubx", "v0_ubx", "v0_prolific"]
+    studies = ["v3_prolific", "v3_utl", "v0_ubx", "v0_prolific"]
+    # root_path = "../outputs/all_data_29_11_22"
+    root_path = "../outputs/"
     if get_csv:
         for study in studies:
             print(f'Study: {study}')
             df = get_raw_csv_for_study(study, root=root_path)
-            get_frequentist_results(df, study, root=root_path)
+            # get_frequentist_results(df, study, root=root_path)
 
-    if get_diff_results:
-        studies_to_compare = ["v2_prolific", "v1_prolific", "v1_ubx", "v0_ubx", "v0_prolific", "control_merged",
-                              "training_merged"]
-        for ii, study in enumerate(studies):
-            if ii + 1 < len(studies):
-                for study_to_compare in studies_to_compare[ii + 1:]:
-                    frequentist_comparaison_of_2_samples(study, study_to_compare, root=root_path)
+    # if get_diff_results:
+    # studies_to_compare = ["v2_prolific", "v1_prolific", "v1_ubx", "v0_ubx", "v0_prolific", "control_merged",
+    #                       "training_merged"]
+    # for ii, study in enumerate(studies):
+    #     if ii + 1 < len(studies):
+    #         for study_to_compare in studies_to_compare[ii + 1:]:
+    #             frequentist_comparaison_of_2_samples(study, study_to_compare, root=root_path)
+
+    if get_pre_post_radar:
+        get_radar()
